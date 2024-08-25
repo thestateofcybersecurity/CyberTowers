@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -49,6 +48,7 @@
             position: absolute;
             border-radius: 50%;
             z-index: 15;
+            transition: all 0.5s linear;
         }
         .radius-preview {
             position: absolute;
@@ -66,7 +66,7 @@
         }
         .path {
             position: absolute;
-            background-color: rgba(0, 255, 0, 0.4);
+            background-color: #0F0;
             z-index: 1;
         }
         button {
@@ -101,7 +101,7 @@
             <button onclick="upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
         </div>
     </div>
-
+    
     <script>
         const gameBoard = document.getElementById('gameBoard');
         const scoreValue = document.getElementById('scoreValue');
@@ -142,7 +142,7 @@
             {x: 800, y: 200}
         ];
 
-        function createPath() {
+       function createPath() {
             for (let i = 0; i < path.length - 1; i++) {
                 const start = path[i];
                 const end = path[i + 1];
@@ -164,6 +164,45 @@
                 }
                 
                 gameBoard.appendChild(pathSegment);
+            }
+        }
+
+        function fireProjectile(defense) {
+            const defenseRect = defense.getBoundingClientRect();
+            const defenseType = defense.dataset.type;
+            const level = parseInt(defense.dataset.level);
+            for (let threat of threats) {
+                const threatRect = threat.getBoundingClientRect();
+                const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
+                if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
+                    const projectile = document.createElement('div');
+                    projectile.className = 'projectile';
+                    projectile.style.left = `${defenseRect.left + 15}px`;
+                    projectile.style.top = `${defenseRect.top + 15}px`;
+                    projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
+                    gameBoard.appendChild(projectile);
+                    
+                    // Animate projectile
+                    setTimeout(() => {
+                        projectile.style.left = `${threatRect.left + 10}px`;
+                        projectile.style.top = `${threatRect.top + 10}px`;
+                    }, 0);
+
+                    setTimeout(() => {
+                        gameBoard.removeChild(projectile);
+                        const threatHealth = parseInt(threat.dataset.health) - defenseTypes[defenseType].damage * level;
+                        if (threatHealth <= 0) {
+                            gameBoard.removeChild(threat);
+                            threats = threats.filter(t => t !== threat);
+                            resources += threatTypes[threat.dataset.type].reward;
+                            resourcesValue.textContent = resources;
+                        } else {
+                            threat.dataset.health = threatHealth;
+                        }
+                    }, 500);
+
+                    break;
+                }
             }
         }
 
@@ -248,26 +287,6 @@
                     threat.style.top = `${currentY + vy}px`;
                 }
             });
-        }
-
-        function fireProjectile(defense) {
-            const defenseRect = defense.getBoundingClientRect();
-            const defenseType = defense.dataset.type;
-            const level = parseInt(defense.dataset.level);
-            for (let threat of threats) {
-                const threatRect = threat.getBoundingClientRect();
-                const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
-                if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
-                    const projectile = document.createElement('div');
-                    projectile.className = 'projectile';
-                    projectile.style.left = `${defenseRect.left + 15}px`;
-                    projectile.style.top = `${defenseRect.top + 15}px`;
-                    projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
-                    gameBoard.appendChild(projectile);
-                    projectiles.push({ element: projectile, target: threat, damage: defenseTypes[defenseType].damage * level });
-                    break;
-                }
-            }
         }
 
         function moveProjectiles() {
@@ -392,7 +411,6 @@
 
         function updateGame() {
             moveThreats();
-            moveProjectiles();
             if (threats.length === 0) {
                 wave++;
                 waveValue.textContent = wave;
