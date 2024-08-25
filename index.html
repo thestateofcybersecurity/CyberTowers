@@ -177,16 +177,6 @@
 
         let path = [];
 
-        // Make path a global variable
-        const path = [
-            {x: 0, y: 100},
-            {x: 600, y: 100},
-            {x: 600, y: 400},
-            {x: 200, y: 400},
-            {x: 200, y: 200},
-            {x: 800, y: 200}
-        ];
-
         // Cloud Network Path
         const cloudNetworkPath = [
             {x: 0, y: 50},
@@ -593,6 +583,7 @@
             });
 
             createPath();
+            startCloudNetworkLevel();  // or startDarkWebLevel();
             startWave();
 
             gameLoop = setInterval(updateGame, 50);
