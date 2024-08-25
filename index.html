@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,9 +96,9 @@
             background-color: #0F0;
             color: #000;
         }
-    </style>
-</head>
-<body>
+        #levelSelection {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -106,6 +107,10 @@
         <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
         <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
         <div id="gameBoard"></div>
+        <div id="levelSelection">
+            <button onclick="startCloudNetworkLevel()">Cloud Network Level</button>
+            <button onclick="startDarkWebLevel()">Dark Web Level</button>
+        </div>
         <div id="defenseSelection">
             <button onclick="selectDefense('firewall')">Firewall (100 MB)</button>
             <button onclick="selectDefense('antivirus')">Antivirus (200 MB)</button>
@@ -124,6 +129,8 @@
             <button id="speedButton">Speed: 1x</button>
         </div>
     </div>
+</body>
+</html>
     
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -167,6 +174,11 @@
             rootkit: { health: 100, speed: 0.8, damage: 15, reward: 50, icon: './api/rootkit.jpg', invisible: true },
             apt: { health: 150, speed: 1.5, damage: 25, reward: 75, icon: './api/apt.jpg', evolves: true }
         };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const gameBoard = document.getElementById('gameBoard');
+        let path = [];
+
         // Make path a global variable
         const path = [
             {x: 0, y: 100},
@@ -176,8 +188,37 @@
             {x: 200, y: 200},
             {x: 800, y: 200}
         ];
-
-       function createPath() {
+    
+        // Cloud Network Path
+        const cloudNetworkPath = [
+            {x: 0, y: 50},
+            {x: 400, y: 50},
+            {x: 400, y: 250},
+            {x: 800, y: 250},
+            {x: 800, y: 450},
+            {x: 400, y: 450},
+            {x: 400, y: 350},
+            {x: 0, y: 350},
+        ];
+    
+        // Dark Web Path
+        const darkWebPath = [
+            {x: 0, y: 100},
+            {x: 300, y: 100},
+            {x: 300, y: 400},
+            {x: 600, y: 400},
+            {x: 600, y: 200},
+            {x: 100, y: 200},
+            {x: 100, y: 300},
+            {x: 800, y: 300},
+        ];
+    
+        function createPath() {
+            // Clear existing path elements
+            const existingPaths = document.querySelectorAll('.path');
+            existingPaths.forEach(p => p.remove());
+    
+            // Create new path segments
             for (let i = 0; i < path.length - 1; i++) {
                 const start = path[i];
                 const end = path[i + 1];
@@ -200,6 +241,22 @@
                 
                 gameBoard.appendChild(pathSegment);
             }
+        }
+    
+        function startCloudNetworkLevel() {
+            path = cloudNetworkPath;
+            createPath();
+            startWave();
+        }
+    
+        function startDarkWebLevel() {
+            path = darkWebPath;
+            createPath();
+            startWave();
+        }
+    
+        function startWave() {
+            // Initialize waves and threat spawning logic
         }
 
         function fireProjectile(defense) {
