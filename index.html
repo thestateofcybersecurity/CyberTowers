@@ -23,9 +23,8 @@
             height: 400px;
             border: 2px solid #0F0;
             position: relative;
-            background-color: #001;
             overflow: hidden;
-            background-image: url('/api/background');
+            background-image: url('/api/background.jpg');
             background-size: cover;
         }
         .defense {
@@ -33,11 +32,6 @@
             height: 40px;
             position: absolute;
             border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            color: white;
             background-size: cover;
         }
         .threat {
@@ -97,15 +91,15 @@
         let selectedDefense = null;
 
         const defenseTypes = {
-            firewall: { color: 'blue', cost: 100, damage: 10, range: 100, fireRate: 1000, icon: '/api/firewall' },
-            antivirus: { color: 'green', cost: 200, damage: 20, range: 150, fireRate: 1500, icon: '/api/antivirus' },
-            encryption: { color: 'purple', cost: 300, damage: 30, range: 200, fireRate: 2000, icon: '/api/encrytption' }
+            firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: '/api/firewall.jpg' },
+            antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: '/api/antivirus.jpg' },
+            encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: '/api/encryption.jpg' }
         };
 
         const threatTypes = {
-            virus: { color: 'red', health: 50, speed: 2, damage: 5, reward: 20, icon: '/api/virus' },
-            trojan: { color: 'yellow', health: 80, speed: 1, damage: 10, reward: 30, icon: '/api/trojan' },
-            ransomware: { color: 'orange', health: 120, speed: 0.5, damage: 20, reward: 50, icon: '/api/ransomware' }
+            virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: '/api/virus.jpg' },
+            trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: '/api/trojan.jpg' },
+            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: '/api/ransomware.jpg' }
         };
 
         function createPath() {
@@ -122,7 +116,6 @@
                 defense.className = 'defense';
                 defense.style.left = `${x}px`;
                 defense.style.top = `${y}px`;
-                defense.style.backgroundColor = defenseTypes[type].color;
                 defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
                 defense.dataset.type = type;
                 gameBoard.appendChild(defense);
