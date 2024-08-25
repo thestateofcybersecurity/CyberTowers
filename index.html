@@ -252,8 +252,8 @@
         function startWave() {
             for (let i = 0; i < wave * 5; i++) {
                 setTimeout(() => {
-                    const threatTypes = Object.keys(threatTypes);
-                    const randomType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+                    const threatTypesList = Object.keys(threatTypes);
+                    const randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
                     createThreat(randomType);
                 }, i * 1000);
             }
