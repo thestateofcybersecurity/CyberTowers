@@ -99,6 +99,15 @@
         #levelSelection {
             margin-top: 10px;
         }
+        @keyframes flash {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .upgraded {
+            animation: flash 0.5s ease-in-out 3;
+        }
     </style>
 </head>
 <body>
@@ -115,6 +124,11 @@
             <div id="levelSelection">
                 <button onclick="selectLevel('cloud')">Cloud Network Level</button>
                 <button onclick="selectLevel('darkweb')">Dark Web Level</button>
+            </div>
+
+            <div id="tutorial" style="display: none;">
+                <div id="tutorialContent"></div>
+                <button onclick="nextTutorialStep()">Next</button>
             </div>
 
             <div id="defenseSelection">
@@ -149,6 +163,9 @@
         const waveValue = document.getElementById('waveValue');
         const upgradeMenu = document.getElementById('upgradeMenu');
         const speedButton = document.getElementById('speedButton');
+            speedButton.classList.add('upgraded');
+            setTimeout(() => speedButton.classList.remove('upgraded'), 500);
+        }
 
         let score = 100;
         let resources = 500;
@@ -163,14 +180,89 @@
         let processingPower = 100; // New resource type
         let dataBandwidth = 100; // New resource type
 
+        const tutorialSteps = [
+            "Welcome to Cybersecurity Defense! Your goal is to protect the system from various cyber threats.",
+            "Click on a defense type and then click on the game board to place it.",
+            "Different defenses have unique abilities. Experiment to find the best strategy!",
+            "Use the speed control to fast-forward the game if you want more challenge.",
+            "Good luck defending against the cyber threats!"
+        ];
+        
+        let currentTutorialStep = 0;
+        
+        function startTutorial() {
+            document.getElementById('tutorial').style.display = 'block';
+            showTutorialStep();
+        }
+        
+        function showTutorialStep() {
+            document.getElementById('tutorialContent').textContent = tutorialSteps[currentTutorialStep];
+        }
+        
+        function nextTutorialStep() {
+            currentTutorialStep++;
+            if (currentTutorialStep < tutorialSteps.length) {
+                showTutorialStep();
+            } else {
+                document.getElementById('tutorial').style.display = 'none';
+                currentTutorialStep = 0;
+            }
+        }
+        
+        // Call startTutorial() when the game starts or when a "Help" button is clicked
+        
         const defenseTypes = {
             firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
             antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
             encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: './api/encryption.jpg', projectileColor: '#0000FF' },
             ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' },
-            ids: { cost: 500, range: 300, icon: './api/ids.jpg', detectsInvisibility: true },
-            soc: { cost: 600, icon: './api/soc.jpg', deploysPatches: true },
-            honeypot: { cost: 150, range: 200, icon: './api/honeypot.jpg', attractsThreats: true }
+            ids: { 
+                cost: 500, 
+                damage: 25, 
+                range: 180, 
+                fireRate: 1800, 
+                icon: './api/ids.jpg', 
+                projectileColor: '#800080',
+                ability: function(threats) {
+                    // Detect and mark all threats in range
+                    threats.forEach(threat => {
+                        if (this.inRange(threat)) {
+                            threat.dataset.detected = 'true';
+                        }
+                    });
+                }
+            },
+            soc: { 
+                cost: 600, 
+                damage: 35, 
+                range: 220, 
+                fireRate: 2200, 
+                icon: './api/soc.jpg', 
+                projectileColor: '#FFA500',
+                ability: function(threats) {
+                    // Coordinate all defenses to focus fire on the strongest threat
+                    const strongestThreat = threats.reduce((max, threat) => 
+                        parseInt(threat.dataset.health) > parseInt(max.dataset.health) ? threat : max
+                    );
+                    defenses.forEach(defense => defense.target = strongestThreat);
+                }
+            },
+            honeypot: { 
+                cost: 150, 
+                damage: 0, 
+                range: 150, 
+                fireRate: 1000, 
+                icon: './api/honeypot.jpg', 
+                projectileColor: '#FFD700',
+                ability: function(threats) {
+                    // Attract nearby threats and slow them down
+                    threats.forEach(threat => {
+                        if (this.inRange(threat)) {
+                            threat.dataset.speed = parseFloat(threat.dataset.speed) * 0.5;
+                        }
+                    });
+                }
+            }
         };
 
         const threatTypes = {
@@ -466,7 +558,6 @@
 
         function upgrade(attribute) {
             if (selectedTowerForUpgrade && resources >= 100) {
-                const type = selectedTowerForUpgrade.dataset.type;
                 const level = parseInt(selectedTowerForUpgrade.dataset.level);
                 selectedTowerForUpgrade.dataset.level = level + 1;
                 resources -= 100;
@@ -489,8 +580,12 @@
 
                 upgradeMenu.style.display = 'none';
                 document.querySelector('.radius').style.display = 'none';
+
+                const defense = selectedTowerForUpgrade;
+                    defense.classList.add('upgraded');
+                    setTimeout(() => defense.classList.remove('upgraded'), 1500);
+                }
             }
-        }
 
             function startWave() {
                 const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
@@ -525,9 +620,23 @@
                 // Check if the player has deployed a significant number of antivirus defenses
                 return defenses.filter(d => d.dataset.type === 'antivirus').length > 3;
             }
+
+            let isPaused = false;
+
+            function togglePause() {
+                isPaused = !isPaused;
+                if (isPaused) {
+                    clearInterval(gameLoop);
+                    document.getElementById('pauseButton').textContent = 'Resume';
+                } else {
+                    gameLoop = setInterval(updateGame, 50 / gameSpeed);
+                    document.getElementById('pauseButton').textContent = 'Pause';
+                }
+            }
         
             function updateGame() {
-                moveThreats();
+                if (!isPaused) {
+                    moveThreats();
                 if (threats.length === 0) {
                     wave++;
                     waveValue.textContent = wave;
@@ -537,6 +646,31 @@
                 }
             }
 
+            let currentLevel = 'cloud';
+            
+            function selectLevel(level) {
+                currentLevel = level;
+                resetGame();
+                if (level === 'cloud') {
+                    // Set up cloud level specifics
+                    document.body.style.backgroundColor = '#E6F3FF';
+                } else if (level === 'darkweb') {
+                    // Set up dark web level specifics
+                    document.body.style.backgroundColor = '#1A1A1A';
+                }
+            }
+            
+            function resetGame() {
+                // Clear the game board, reset scores, etc.
+                wave = 1;
+                score = 100;
+                resources = 500;
+                threats = [];
+                defenses = [];
+                // ... other reset logic ...
+                startWave();
+            }
+                
             function updateResources() {
                 resourcesValue.textContent = resources;
                 // Update UI to display new resources
