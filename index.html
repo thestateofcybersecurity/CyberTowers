@@ -24,7 +24,7 @@
             border: 2px solid #0F0;
             position: relative;
             overflow: hidden;
-            background-image: url('/api/background.jpg');
+            background-image: url('./api/background.jpg');
             background-size: cover;
         }
         .defense {
@@ -91,15 +91,15 @@
         let selectedDefense = null;
 
         const defenseTypes = {
-            firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: '/api/firewall.jpg' },
-            antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: '/api/antivirus.jpg' },
-            encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: '/api/encryption.jpg' }
+            firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg' },
+            antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg' },
+            encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: './api/encryption.jpg' }
         };
 
         const threatTypes = {
-            virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: '/api/virus.jpg' },
-            trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: '/api/trojan.jpg' },
-            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: '/api/ransomware.jpg' }
+            virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: './api/virus.jpg' },
+            trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: './api/trojan.jpg' },
+            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: './api/ransomware.jpg' }
         };
 
         function createPath() {
