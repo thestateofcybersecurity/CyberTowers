@@ -169,10 +169,10 @@
         let projectiles = [];
         let selectedDefense = null;
         let selectedTowerForUpgrade = null;
-        let processingPower = 100; // New resource type
-        let dataBandwidth = 100; // New resource type
+        let processingPower = 100;
+        let dataBandwidth = 100;
+        let path = []; // Declare path at the top level
 
-        
         const gameBoard = document.getElementById('gameBoard');
         const scoreValue = document.getElementById('scoreValue');
         const resourcesValue = document.getElementById('resourcesValue');
@@ -275,9 +275,6 @@
             apt: { health: 150, speed: 1.5, damage: 25, reward: 75, icon: './api/apt.jpg', evolves: true }
         };
 
-        let path = [];
-
-        // Cloud Network Path
         const cloudNetworkPath = [
             {x: 0, y: 50},
             {x: 400, y: 50},
@@ -289,7 +286,6 @@
             {x: 0, y: 350},
         ];
     
-        // Dark Web Path
         const darkWebPath = [
             {x: 0, y: 100},
             {x: 300, y: 100},
@@ -301,7 +297,7 @@
             {x: 800, y: 300},
         ];
     
-        function createPath() {
+    function createPath() {
             // Clear existing path elements
             const existingPaths = document.querySelectorAll('.path');
             existingPaths.forEach(p => p.remove());
@@ -341,10 +337,6 @@
             path = darkWebPath;
             createPath();
             startWave();
-        }
-    
-        function startWave() {
-            // Initialize waves and threat spawning logic
         }
 
         function fireProjectile(defense) {
@@ -666,16 +658,6 @@
                 }
             }
         }
-
-        function selectLevel(level) {
-            currentLevel = level;
-            resetGame();
-            if (level === 'cloud') {
-                document.body.style.backgroundColor = '#E6F3FF';
-            } else if (level === 'darkweb') {
-                document.body.style.backgroundColor = '#1A1A1A';
-            }
-        }
         
         function resetGame() {
             wave = 1;
@@ -703,27 +685,6 @@
             
             clearInterval(gameLoop);
             gameLoop = setInterval(updateGame, 50 / gameSpeed);
-        }
-
-        function initGame() {
-            const speedButton = document.getElementById('speedButton');
-            if (speedButton) {
-                speedButton.addEventListener('click', changeSpeed);
-            } else {
-                console.error('Speed button not found in the DOM');
-            }
-    
-            const gameBoardElement = document.getElementById('gameBoard');
-            if (gameBoardElement) {
-                gameBoardElement.addEventListener('click', handleGameBoardClick);
-            } else {
-                console.error('Game board not found in the DOM');
-            }
-    
-            document.addEventListener('keydown', handleKeyPress);
-    
-            createPath();
-            selectLevel('cloud'); // Start with cloud level by default
         }
     
         function selectLevel(level) {
@@ -755,17 +716,58 @@
             gameBoard.appendChild(threat);
             threats.push(threat);
         }
+    
+        function startWave() {
+            const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
+            const threatTypesList = Object.keys(threatTypes);
+            
+            for (let i = 0; i < numThreats; i++) {
+                setTimeout(() => {
+                    let randomType;
         
+                    if (i % 5 === 0) {
+                        randomType = "phishing";
+                    } else if (i % 5 === 1) {
+                        randomType = "botnet";
+                    } else if (i % 5 === 2) {
+                        randomType = "worm";
+                    } else {
+                        randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
+                    }
+                    
+                    createThreat(randomType);
+                }, i * (2000 / Math.sqrt(wave)) / gameSpeed);
+            }
+        }
+        
+        function initGame() {
+            if (speedButton) {
+                speedButton.addEventListener('click', changeSpeed);
+            } else {
+                console.error('Speed button not found in the DOM');
+            }
+    
+            if (gameBoard) {
+                gameBoard.addEventListener('click', handleGameBoardClick);
+            } else {
+                console.error('Game board not found in the DOM');
+            }
+    
+            document.addEventListener('keydown', handleKeyPress);
+    
+            selectLevel('cloud'); // Start with cloud level by default
+        }
+    
         function handleGameBoardClick(e) {
             if (selectedDefense) {
-                const rect = e.target.getBoundingClientRect();
+                const rect = gameBoard.getBoundingClientRect();
                 const x = e.clientX - rect.left - 20;
                 const y = e.clientY - rect.top - 20;
                 createDefense(x, y, selectedDefense);
                 selectedDefense = null;
             }
         }
-        
+    
         function handleKeyPress(e) {
             switch(e.key) {
                 case '1':
@@ -782,16 +784,13 @@
                     break;
             }
         }
-
-            createPath();
-            startWave();
-            })
-
-            // Initialize the game
-            initGame();
-
-            // Start the game loop
-            gameLoop = setInterval(updateGame, 50);
+    
+        // Initialize the game
+        initGame();
+    
+        // Start the game loop
+        gameLoop = setInterval(updateGame, 50);
+    });
     
     </script>
 </body>
