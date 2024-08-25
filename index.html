@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cybersecurity Defense</title>
+    <title>Advanced Cybersecurity Defense</title>
     <style>
         body {
             display: flex;
@@ -19,8 +19,8 @@
             text-align: center;
         }
         #gameBoard {
-            width: 600px;
-            height: 400px;
+            width: 800px;
+            height: 500px;
             border: 2px solid #0F0;
             position: relative;
             overflow: hidden;
@@ -33,6 +33,7 @@
             position: absolute;
             border-radius: 50%;
             background-size: cover;
+            cursor: pointer;
         }
         .threat {
             width: 30px;
@@ -40,11 +41,18 @@
             position: absolute;
             background-size: cover;
         }
+        .projectile {
+            width: 10px;
+            height: 10px;
+            position: absolute;
+            border-radius: 50%;
+            background-color: #0F0;
+        }
         #score, #resources, #wave {
             font-size: 18px;
             margin: 10px 0;
         }
-        #defenseSelection {
+        #defenseSelection, #upgradeMenu {
             margin-top: 10px;
         }
         .path {
@@ -76,6 +84,12 @@
             <button onclick="selectDefense('firewall')">Firewall (100 MB)</button>
             <button onclick="selectDefense('antivirus')">Antivirus (200 MB)</button>
             <button onclick="selectDefense('encryption')">Encryption (300 MB)</button>
+            <button onclick="selectDefense('ai')">AI Defense (400 MB)</button>
+        </div>
+        <div id="upgradeMenu" style="display: none;">
+            <button onclick="upgrade('damage')">Upgrade Damage</button>
+            <button onclick="upgrade('range')">Upgrade Range</button>
+            <button onclick="upgrade('fireRate')">Upgrade Fire Rate</button>
         </div>
     </div>
 
@@ -84,28 +98,35 @@
         const scoreValue = document.getElementById('scoreValue');
         const resourcesValue = document.getElementById('resourcesValue');
         const waveValue = document.getElementById('waveValue');
+        const upgradeMenu = document.getElementById('upgradeMenu');
         let score = 100;
         let resources = 500;
         let wave = 1;
         let threats = [];
+        let defenses = [];
+        let projectiles = [];
         let selectedDefense = null;
+        let selectedTowerForUpgrade = null;
 
         const defenseTypes = {
-            firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg' },
-            antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg' },
-            encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: './api/encryption.jpg' }
+            firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
+            antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
+            encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: './api/encryption.jpg', projectileColor: '#0000FF' },
+            ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' }
         };
 
         const threatTypes = {
             virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: './api/virus.jpg' },
             trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: './api/trojan.jpg' },
-            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: './api/ransomware.jpg' }
+            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: './api/ransomware.jpg' },
+            worm: { health: 30, speed: 3, damage: 15, reward: 40, icon: './api/worm.jpg' },
+            botnet: { health: 200, speed: 0.3, damage: 30, reward: 100, icon: './api/botnet.jpg' }
         };
 
         function createPath() {
             const path = document.createElement('div');
             path.className = 'path';
-            path.style.top = '180px';
+            path.style.top = '230px';
             path.style.width = '100%';
             gameBoard.appendChild(path);
         }
@@ -118,10 +139,13 @@
                 defense.style.top = `${y}px`;
                 defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
                 defense.dataset.type = type;
+                defense.dataset.level = '1';
+                defense.onclick = () => showUpgradeMenu(defense);
                 gameBoard.appendChild(defense);
                 resources -= defenseTypes[type].cost;
                 resourcesValue.textContent = resources;
-                setInterval(() => counterThreats(defense), defenseTypes[type].fireRate);
+                defenses.push(defense);
+                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
             }
         }
 
@@ -129,9 +153,9 @@
             const threat = document.createElement('div');
             threat.className = 'threat';
             threat.style.left = '-30px';
-            threat.style.top = '185px';
+            threat.style.top = '235px';
             threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
-            threat.dataset.health = threatTypes[type].health;
+            threat.dataset.health = threatTypes[type].health * Math.sqrt(wave);
             threat.dataset.type = type;
             gameBoard.appendChild(threat);
             threats.push(threat);
@@ -141,7 +165,7 @@
             threats.forEach((threat, index) => {
                 const currentLeft = parseFloat(threat.style.left);
                 const type = threat.dataset.type;
-                if (currentLeft < 600) {
+                if (currentLeft < 800) {
                     threat.style.left = `${currentLeft + threatTypes[type].speed}px`;
                 } else {
                     gameBoard.removeChild(threat);
@@ -156,36 +180,81 @@
             });
         }
 
-        function counterThreats(defense) {
+        function fireProjectile(defense) {
             const defenseRect = defense.getBoundingClientRect();
             const defenseType = defense.dataset.type;
+            const level = parseInt(defense.dataset.level);
             for (let threat of threats) {
                 const threatRect = threat.getBoundingClientRect();
                 const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
-                if (distance < defenseTypes[defenseType].range) {
-                    const threatHealth = parseInt(threat.dataset.health) - defenseTypes[defenseType].damage;
-                    if (threatHealth <= 0) {
-                        gameBoard.removeChild(threat);
-                        threats = threats.filter(t => t !== threat);
-                        resources += threatTypes[threat.dataset.type].reward;
-                        resourcesValue.textContent = resources;
-                    } else {
-                        threat.dataset.health = threatHealth;
-                    }
+                if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
+                    const projectile = document.createElement('div');
+                    projectile.className = 'projectile';
+                    projectile.style.left = `${defenseRect.left + 20}px`;
+                    projectile.style.top = `${defenseRect.top + 20}px`;
+                    projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
+                    gameBoard.appendChild(projectile);
+                    projectiles.push({ element: projectile, target: threat, damage: defenseTypes[defenseType].damage * level });
                     break;
                 }
             }
+        }
+
+        function moveProjectiles() {
+            projectiles.forEach((projectile, index) => {
+                const projectileRect = projectile.element.getBoundingClientRect();
+                const threatRect = projectile.target.getBoundingClientRect();
+                const dx = threatRect.left - projectileRect.left;
+                const dy = threatRect.top - projectileRect.top;
+                const distance = Math.hypot(dx, dy);
+                if (distance < 5) {
+                    gameBoard.removeChild(projectile.element);
+                    projectiles.splice(index, 1);
+                    const threatHealth = parseInt(projectile.target.dataset.health) - projectile.damage;
+                    if (threatHealth <= 0) {
+                        gameBoard.removeChild(projectile.target);
+                        threats = threats.filter(t => t !== projectile.target);
+                        resources += threatTypes[projectile.target.dataset.type].reward;
+                        resourcesValue.textContent = resources;
+                    } else {
+                        projectile.target.dataset.health = threatHealth;
+                    }
+                } else {
+                    const speed = 5;
+                    const vx = (dx / distance) * speed;
+                    const vy = (dy / distance) * speed;
+                    projectile.element.style.left = `${projectileRect.left + vx}px`;
+                    projectile.element.style.top = `${projectileRect.top + vy}px`;
+                }
+            });
         }
 
         function selectDefense(type) {
             selectedDefense = type;
         }
 
+        function showUpgradeMenu(defense) {
+            selectedTowerForUpgrade = defense;
+            upgradeMenu.style.display = 'block';
+        }
+
+        function upgrade(attribute) {
+            if (selectedTowerForUpgrade && resources >= 100) {
+                const type = selectedTowerForUpgrade.dataset.type;
+                const level = parseInt(selectedTowerForUpgrade.dataset.level);
+                selectedTowerForUpgrade.dataset.level = level + 1;
+                resources -= 100;
+                resourcesValue.textContent = resources;
+                upgradeMenu.style.display = 'none';
+            }
+        }
+
         function startWave() {
             for (let i = 0; i < wave * 5; i++) {
                 setTimeout(() => {
-                    const threatType = Math.random() < 0.5 ? 'virus' : (Math.random() < 0.5 ? 'trojan' : 'ransomware');
-                    createThreat(threatType);
+                    const threatTypes = Object.keys(threatTypes);
+                    const randomType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+                    createThreat(randomType);
                 }, i * 1000);
             }
         }
@@ -205,6 +274,7 @@
 
         setInterval(() => {
             moveThreats();
+            moveProjectiles();
             if (threats.length === 0) {
                 wave++;
                 waveValue.textContent = wave;
