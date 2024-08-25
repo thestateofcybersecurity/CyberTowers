@@ -426,31 +426,37 @@
         function selectDefense(type) {
             selectedDefense = type;
             let preview = document.querySelector('.radius-preview');
+        
             if (!preview) {
                 preview = document.createElement('div');
                 preview.className = 'radius-preview';
                 gameBoard.appendChild(preview);
             }
-            preview.style.width = `${defenseTypes[type].range * 2}px`;
-            preview.style.height = `${defenseTypes[type].range * 2}px`;
-            preview.style.display = 'block';
-
+        
+            // Handle different types of defenses, particularly Honey Pot
+            if (type === 'honeypot') {
+                preview.style.display = 'none';  // Honey Pot doesn't need a range preview
+            } else {
+                preview.style.width = `${defenseTypes[type].range * 2}px`;
+                preview.style.height = `${defenseTypes[type].range * 2}px`;
+                preview.style.display = 'block';
+            }
+        
             const movePreview = (e) => {
                 const rect = gameBoard.getBoundingClientRect();
                 preview.style.left = `${e.clientX - rect.left - defenseTypes[type].range}px`;
                 preview.style.top = `${e.clientY - rect.top - defenseTypes[type].range}px`;
             };
-
+        
             const removePreview = () => {
                 preview.style.display = 'none';
                 gameBoard.removeEventListener('mousemove', movePreview);
             };
-
+        
             gameBoard.addEventListener('mousemove', movePreview);
             gameBoard.addEventListener('mouseleave', removePreview);
             gameBoard.addEventListener('click', removePreview);
         }
-
         function showUpgradeMenu(defense) {
             selectedTowerForUpgrade = defense;
             upgradeMenu.style.display = 'block';
