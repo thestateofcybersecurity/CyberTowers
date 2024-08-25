@@ -158,16 +158,17 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        let score = 100;
-        let resources = 500;
         let wave = 1;
+        let resources = 500;
+        let gameSpeed = 1;
+        let gameLoop;
+        let isPaused = false;
+        let currentLevel = 'cloud';
         let threats = [];
         let defenses = [];
         let projectiles = [];
         let selectedDefense = null;
         let selectedTowerForUpgrade = null;
-        let gameSpeed = 1;
-        let gameLoop;
         let processingPower = 100; // New resource type
         let dataBandwidth = 100; // New resource type
 
@@ -695,43 +696,47 @@
                 if (speedButton) {
                     speedButton.addEventListener('click', changeSpeed);
                 } else {
-                console.error('Speed button not found in the DOM');
+                    console.error('Speed button not found in the DOM');
+                }
+
+                gameBoard.addEventListener('click', (e) => {
+                    if (selectedDefense) {
+                        const rect = gameBoard.getBoundingClientRect();
+                        const x = e.clientX - rect.left - 20;
+                        const y = e.clientY - rect.top - 20;
+                        createDefense(x, y, selectedDefense);
+                        selectedDefense = null;
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case '1':
+                            selectDefense('firewall');
+                            break;
+                        case '2':
+                            selectDefense('antivirus');
+                            break;
+                        case '3':
+                            selectDefense('encryption');
+                            break;
+                        case '4':
+                            selectDefense('ai');
+                            break;
+                    }
+                });
+
+                createPath();
+                startCloudNetworkLevel();  // or startDarkWebLevel();
+                startWave();
             }
 
-            gameBoard.addEventListener('click', (e) => {
-                if (selectedDefense) {
-                    const rect = gameBoard.getBoundingClientRect();
-                    const x = e.clientX - rect.left - 20;
-                    const y = e.clientY - rect.top - 20;
-                    createDefense(x, y, selectedDefense);
-                    selectedDefense = null;
-                }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                switch(e.key) {
-                    case '1':
-                        selectDefense('firewall');
-                        break;
-                    case '2':
-                        selectDefense('antivirus');
-                        break;
-                    case '3':
-                        selectDefense('encryption');
-                        break;
-                    case '4':
-                        selectDefense('ai');
-                        break;
-                }
-            });
-
-            createPath();
-            startCloudNetworkLevel();  // or startDarkWebLevel();
-            startWave();
+            // Initialize the game
             initGame();
 
+            // Start the game loop
             gameLoop = setInterval(updateGame, 50);
-        };
+        });
     </script>
 </body>
 </html>
