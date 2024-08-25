@@ -723,7 +723,7 @@
                         selectDefense('ai');
                         break;
                 }
-            };
+            });
 
             createPath();
             startCloudNetworkLevel();  // or startDarkWebLevel();
@@ -731,7 +731,7 @@
             initGame();
 
             gameLoop = setInterval(updateGame, 50);
-        });
+        };
     </script>
 </body>
 </html>
