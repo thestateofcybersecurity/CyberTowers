@@ -148,7 +148,7 @@
             </div>
 
             <div id="speedControl">
-                <button onclick="changeSpeed()">Speed: <span id="speedValue">1x</span></button>
+                <button id="speedButton" onclick="changeSpeed()">Speed: <span id="speedValue">1x</span></button>
             </div>
 
             <button id="pauseButton" onclick="togglePause()">Pause</button>
@@ -171,6 +171,13 @@
         let selectedTowerForUpgrade = null;
         let processingPower = 100; // New resource type
         let dataBandwidth = 100; // New resource type
+
+        
+        const gameBoard = document.getElementById('gameBoard');
+        const scoreValue = document.getElementById('scoreValue');
+        const resourcesValue = document.getElementById('resourcesValue');
+        const waveValue = document.getElementById('waveValue');
+        const speedButton = document.getElementById('speedButton');
 
         const tutorialSteps = [
             "Welcome to Cybersecurity Defense! Your goal is to protect the system from various cyber threats.",
@@ -582,7 +589,7 @@
             }
 
             function startWave() {
-                const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
+                const numThreats = Math.min(wave * 5, 50);
                 const threatTypesList = Object.keys(threatTypes);
                 
                 for (let i = 0; i < numThreats; i++) {
@@ -590,12 +597,11 @@
                         let randomType;
             
                         if (i % 5 === 0) {
-                            // Every 5th threat is part of a combination attack
-                            randomType = "phishing"; // Start with a phishing attack
+                            randomType = "phishing";
                         } else if (i % 5 === 1) {
-                            randomType = "botnet"; // Follow up with a botnet attack
+                            randomType = "botnet";
                         } else if (i % 5 === 2) {
-                            randomType = "worm"; // Finish with a worm
+                            randomType = "worm";
                         } else {
                             randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
                         }
@@ -606,16 +612,12 @@
             }
 
             function playerUsesFirewalls() {
-                // Check if the player has deployed a significant number of firewalls
                 return defenses.filter(d => d.dataset.type === 'firewall').length > 3;
             }
             
             function playerUsesAntivirus() {
-                // Check if the player has deployed a significant number of antivirus defenses
                 return defenses.filter(d => d.dataset.type === 'antivirus').length > 3;
             }
-
-            let isPaused = false;
 
             function togglePause() {
                 isPaused = !isPaused;
@@ -631,51 +633,39 @@
             function updateGame() {
                 if (!isPaused) {
                     moveThreats();
-                if (threats.length === 0) {
-                    wave++;
-                    waveValue.textContent = wave;
-                    startWave();
-                    resources += 100 + (wave * 10);
-                    resourcesValue.textContent = resources;
+                    if (threats.length === 0) {
+                        wave++;
+                        waveValue.textContent = wave;
+                        startWave();
+                        resources += 100 + (wave * 10);
+                        resourcesValue.textContent = resources;
+                    }
                 }
             }
 
-            let currentLevel = 'cloud';
-            
             function selectLevel(level) {
                 currentLevel = level;
                 resetGame();
                 if (level === 'cloud') {
-                    // Set up cloud level specifics
                     document.body.style.backgroundColor = '#E6F3FF';
                 } else if (level === 'darkweb') {
-                    // Set up dark web level specifics
                     document.body.style.backgroundColor = '#1A1A1A';
                 }
             }
             
             function resetGame() {
-                // Clear the game board, reset scores, etc.
                 wave = 1;
-                score = 100;
                 resources = 500;
                 threats = [];
                 defenses = [];
-                // ... other reset logic ...
                 startWave();
             }
                 
             function updateResources() {
                 resourcesValue.textContent = resources;
-                // Update UI to display new resources
             }
 
             function changeSpeed() {
-               const speedButton = document.getElementById('speedButton');
-                if (speedButton) {
-                    speedButton.classList.add('upgraded');
-                    setTimeout(() => speedButton.classList.remove('upgraded'), 500);
-                }
                 if (gameSpeed === 1) {
                     gameSpeed = 2;
                     speedButton.textContent = 'Speed: 2x';
@@ -692,7 +682,6 @@
             }
 
             function initGame() {
-                const speedButton = document.getElementById('speedButton');
                 if (speedButton) {
                     speedButton.addEventListener('click', changeSpeed);
                 } else {
@@ -727,7 +716,6 @@
                 });
 
                 createPath();
-                startCloudNetworkLevel();  // or startDarkWebLevel();
                 startWave();
             }
 
