@@ -124,45 +124,36 @@
             ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' }
         };
 
-        const threatTypes = {
-            virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: './api/virus.jpg' },
-            trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: './api/trojan.jpg' },
-            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: './api/ransomware.jpg' },
-            worm: { health: 30, speed: 3, damage: 15, reward: 40, icon: './api/worm.jpg' },
-            botnet: { health: 200, speed: 0.3, damage: 30, reward: 100, icon: './api/botnet.jpg' }
-        };
+    function createDefense(x, y, type) {
+            if (resources >= defenseTypes[type].cost) {
+                const defense = document.createElement('div');
+                defense.className = 'defense';
+                defense.style.left = `${x}px`;
+                defense.style.top = `${y}px`;
+                defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
+                defense.dataset.type = type;
+                defense.dataset.level = '1';
+                defense.onclick = () => showUpgradeMenu(defense);
+                gameBoard.appendChild(defense);
 
-        const path = [
-            {x: 0, y: 100},
-            {x: 600, y: 100},
-            {x: 600, y: 400},
-            {x: 200, y: 400},
-            {x: 200, y: 200},
-            {x: 800, y: 200}
-        ];
+                const radius = document.createElement('div');
+                radius.className = 'radius';
+                radius.style.left = `${x - defenseTypes[type].range + 20}px`;
+                radius.style.top = `${y - defenseTypes[type].range + 20}px`;
+                radius.style.width = `${defenseTypes[type].range * 2}px`;
+                radius.style.height = `${defenseTypes[type].range * 2}px`;
+                radius.style.position = 'absolute';
+                radius.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+                radius.style.borderRadius = '50%';
+                radius.style.pointerEvents = 'none';
+                radius.style.zIndex = '1';
+                radius.style.display = 'none';
+                gameBoard.appendChild(radius);
 
-        function createPath() {
-            for (let i = 0; i < path.length - 1; i++) {
-                const start = path[i];
-                const end = path[i + 1];
-                const pathSegment = document.createElement('div');
-                pathSegment.className = 'path';
-                
-                if (start.x === end.x) {
-                    // Vertical segment
-                    pathSegment.style.left = `${start.x}px`;
-                    pathSegment.style.top = `${Math.min(start.y, end.y)}px`;
-                    pathSegment.style.width = '40px';
-                    pathSegment.style.height = `${Math.abs(end.y - start.y)}px`;
-                } else {
-                    // Horizontal segment
-                    pathSegment.style.left = `${Math.min(start.x, end.x)}px`;
-                    pathSegment.style.top = `${start.y}px`;
-                    pathSegment.style.width = `${Math.abs(end.x - start.x)}px`;
-                    pathSegment.style.height = '40px';
-                }
-                
-                gameBoard.appendChild(pathSegment);
+                resources -= defenseTypes[type].cost;
+                resourcesValue.textContent = resources;
+                defenses.push({defense, radius});
+                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
             }
         }
 
@@ -236,6 +227,35 @@
             }
         }
 
+        function moveProjectiles() {
+            projectiles.forEach((projectile, index) => {
+                const projectileRect = projectile.element.getBoundingClientRect();
+                const threatRect = projectile.target.getBoundingClientRect();
+                const dx = threatRect.left - projectileRect.left;
+                const dy = threatRect.top - projectileRect.top;
+                const distance = Math.hypot(dx, dy);
+                if (distance < 5) {
+                    gameBoard.removeChild(projectile.element);
+                    projectiles.splice(index, 1);
+                    const threatHealth = parseInt(projectile.target.dataset.health) - projectile.damage;
+                    if (threatHealth <= 0) {
+                        gameBoard.removeChild(projectile.target);
+                        threats = threats.filter(t => t !== projectile.target);
+                        resources += threatTypes[projectile.target.dataset.type].reward;
+                        resourcesValue.textContent = resources;
+                    } else {
+                        projectile.target.dataset.health = threatHealth;
+                    }
+                } else {
+                    const speed = 5;
+                    const vx = (dx / distance) * speed;
+                    const vy = (dy / distance) * speed;
+                    projectile.element.style.left = `${projectileRect.left + vx}px`;
+                    projectile.element.style.top = `${projectileRect.top + vy}px`;
+                }
+            });
+        }
+
         function selectDefense(type) {
             selectedDefense = type;
             let preview = document.querySelector('.radius-preview');
@@ -246,6 +266,7 @@
             }
             preview.style.width = `${defenseTypes[type].range * 2}px`;
             preview.style.height = `${defenseTypes[type].range * 2}px`;
+            preview.style.display = 'block';
 
             const movePreview = (e) => {
                 const rect = gameBoard.getBoundingClientRect();
@@ -316,7 +337,7 @@
             }
         }
 
-        gameBoard.addEventListener('click', (e) => {
+       gameBoard.addEventListener('click', (e) => {
             if (selectedDefense) {
                 const rect = gameBoard.getBoundingClientRect();
                 const x = e.clientX - rect.left - 20;
