@@ -116,6 +116,29 @@
         let projectiles = [];
         let selectedDefense = null;
         let selectedTowerForUpgrade = null;
+        let gameSpeed = 1;
+        let gameLoop;
+
+        const speedButton = document.getElementById('speedButton');
+
+        function toggleSpeed() {
+            if (gameSpeed === 1) {
+                gameSpeed = 2;
+                speedButton.textContent = 'Speed: 2x';
+            } else if (gameSpeed === 2) {
+                gameSpeed = 3;
+                speedButton.textContent = 'Speed: 3x';
+            } else {
+                gameSpeed = 1;
+                speedButton.textContent = 'Speed: 1x';
+            }
+            
+            // Restart the game loop with the new speed
+            clearInterval(gameLoop);
+            gameLoop = setInterval(updateGame, 50 / gameSpeed);
+        }
+
+        speedButton.addEventListener('click', toggleSpeed);
 
         const defenseTypes = {
             firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
@@ -225,7 +248,7 @@
                 resources -= defenseTypes[type].cost;
                 resourcesValue.textContent = resources;
                 defenses.push(defense);
-                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
+                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate / gameSpeed);
             }
         }
 
@@ -266,13 +289,13 @@
                 const dy = targetPoint.y - currentY;
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 
-                if (distance < threatTypes[type].speed) {
+                if (distance < threatTypes[type].speed * gameSpeed) {
                     threat.dataset.pathIndex = pathIndex + 1;
                     threat.style.left = `${targetPoint.x}px`;
                     threat.style.top = `${targetPoint.y}px`;
                 } else {
-                    const vx = (dx / distance) * threatTypes[type].speed;
-                    const vy = (dy / distance) * threatTypes[type].speed;
+                    const vx = (dx / distance) * threatTypes[type].speed * gameSpeed;
+                    const vy = (dy / distance) * threatTypes[type].speed * gameSpeed;
                     threat.style.left = `${currentX + vx}px`;
                     threat.style.top = `${currentY + vy}px`;
                 }
@@ -385,7 +408,7 @@
                     }
                     const randomType = threatTypesList[randomIndex];
                     createThreat(randomType);
-                }, i * (2000 / Math.sqrt(wave))); // Spawn threats faster in later waves
+                 }, i * (2000 / Math.sqrt(wave)) / gameSpeed); // Adjust spawn rate based on game speed
             }
         }
 
@@ -415,7 +438,7 @@
         startWave();
 
         // Main game loop
-        setInterval(updateGame, 50);
+        gameLoop = setInterval(updateGame, 50);
 
         // Add keyboard shortcuts
         document.addEventListener('keydown', (e) => {
