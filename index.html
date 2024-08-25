@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Defense</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #0F0;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+        #gameBoard {
+            width: 600px;
+            height: 400px;
+            border: 2px solid #0F0;
+            position: relative;
+            background-color: #001;
+            overflow: hidden;
+            background-image: url('/api/background');
+            background-size: cover;
+        }
+        .defense {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            background-size: cover;
+        }
+        .threat {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            background-size: cover;
+        }
+        #score, #resources, #wave {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        #defenseSelection {
+            margin-top: 10px;
+        }
+        .path {
+            position: absolute;
+            background-color: rgba(0, 255, 0, 0.2);
+            height: 40px;
+        }
+        button {
+            background-color: #003;
+            color: #0F0;
+            border: 1px solid #0F0;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0F0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="score">System Integrity: <span id="scoreValue">100</span>%</div>
+        <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
+        <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
+        <div id="gameBoard"></div>
+        <div id="defenseSelection">
+            <button onclick="selectDefense('firewall')">Firewall (100 MB)</button>
+            <button onclick="selectDefense('antivirus')">Antivirus (200 MB)</button>
+            <button onclick="selectDefense('encryption')">Encryption (300 MB)</button>
+        </div>
+    </div>
+
+    <script>
+        const gameBoard = document.getElementById('gameBoard');
+        const scoreValue = document.getElementById('scoreValue');
+        const resourcesValue = document.getElementById('resourcesValue');
+        const waveValue = document.getElementById('waveValue');
+        let score = 100;
+        let resources = 500;
+        let wave = 1;
+        let threats = [];
+        let selectedDefense = null;
+
+        const defenseTypes = {
+            firewall: { color: 'blue', cost: 100, damage: 10, range: 100, fireRate: 1000, icon: '/api/firewall' },
+            antivirus: { color: 'green', cost: 200, damage: 20, range: 150, fireRate: 1500, icon: '/api/antivirus' },
+            encryption: { color: 'purple', cost: 300, damage: 30, range: 200, fireRate: 2000, icon: '/api/encrytption' }
+        };
+
+        const threatTypes = {
+            virus: { color: 'red', health: 50, speed: 2, damage: 5, reward: 20, icon: '/api/virus' },
+            trojan: { color: 'yellow', health: 80, speed: 1, damage: 10, reward: 30, icon: '/api/trojan' },
+            ransomware: { color: 'orange', health: 120, speed: 0.5, damage: 20, reward: 50, icon: '/api/ransomware' }
+        };
+
+        function createPath() {
+            const path = document.createElement('div');
+            path.className = 'path';
+            path.style.top = '180px';
+            path.style.width = '100%';
+            gameBoard.appendChild(path);
+        }
+
+        function createDefense(x, y, type) {
+            if (resources >= defenseTypes[type].cost) {
+                const defense = document.createElement('div');
+                defense.className = 'defense';
+                defense.style.left = `${x}px`;
+                defense.style.top = `${y}px`;
+                defense.style.backgroundColor = defenseTypes[type].color;
+                defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
+                defense.dataset.type = type;
+                gameBoard.appendChild(defense);
+                resources -= defenseTypes[type].cost;
+                resourcesValue.textContent = resources;
+                setInterval(() => counterThreats(defense), defenseTypes[type].fireRate);
+            }
+        }
+
+        function createThreat(type) {
+            const threat = document.createElement('div');
+            threat.className = 'threat';
+            threat.style.left = '-30px';
+            threat.style.top = '185px';
+            threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
+            threat.dataset.health = threatTypes[type].health;
+            threat.dataset.type = type;
+            gameBoard.appendChild(threat);
+            threats.push(threat);
+        }
+
+        function moveThreats() {
+            threats.forEach((threat, index) => {
+                const currentLeft = parseFloat(threat.style.left);
+                const type = threat.dataset.type;
+                if (currentLeft < 600) {
+                    threat.style.left = `${currentLeft + threatTypes[type].speed}px`;
+                } else {
+                    gameBoard.removeChild(threat);
+                    threats.splice(index, 1);
+                    score -= threatTypes[type].damage;
+                    scoreValue.textContent = Math.max(0, score);
+                    if (score <= 0) {
+                        alert('System Compromised! Game Over!');
+                        location.reload();
+                    }
+                }
+            });
+        }
+
+        function counterThreats(defense) {
+            const defenseRect = defense.getBoundingClientRect();
+            const defenseType = defense.dataset.type;
+            for (let threat of threats) {
+                const threatRect = threat.getBoundingClientRect();
+                const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
+                if (distance < defenseTypes[defenseType].range) {
+                    const threatHealth = parseInt(threat.dataset.health) - defenseTypes[defenseType].damage;
+                    if (threatHealth <= 0) {
+                        gameBoard.removeChild(threat);
+                        threats = threats.filter(t => t !== threat);
+                        resources += threatTypes[threat.dataset.type].reward;
+                        resourcesValue.textContent = resources;
+                    } else {
+                        threat.dataset.health = threatHealth;
+                    }
+                    break;
+                }
+            }
+        }
+
+        function selectDefense(type) {
+            selectedDefense = type;
+        }
+
+        function startWave() {
+            for (let i = 0; i < wave * 5; i++) {
+                setTimeout(() => {
+                    const threatType = Math.random() < 0.5 ? 'virus' : (Math.random() < 0.5 ? 'trojan' : 'ransomware');
+                    createThreat(threatType);
+                }, i * 1000);
+            }
+        }
+
+        gameBoard.addEventListener('click', (e) => {
+            if (selectedDefense) {
+                const rect = gameBoard.getBoundingClientRect();
+                const x = e.clientX - rect.left - 20;
+                const y = e.clientY - rect.top - 20;
+                createDefense(x, y, selectedDefense);
+                selectedDefense = null;
+            }
+        });
+
+        createPath();
+        startWave();
+
+        setInterval(() => {
+            moveThreats();
+            if (threats.length === 0) {
+                wave++;
+                waveValue.textContent = wave;
+                startWave();
+            }
+        }, 50);
+    </script>
+</body>
+</html>
