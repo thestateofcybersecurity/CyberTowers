@@ -103,34 +103,43 @@
 </head>
 <body>
     <div id="gameContainer">
-        <div id="score">System Integrity: <span id="scoreValue">100</span>%</div>
-        <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
-        <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
+        <div id="gameInfo">
+            <div id="score">System Integrity: <span id="scoreValue">100</span>%</div>
+            <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
+            <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
+        </div>
+
         <div id="gameBoard"></div>
-        <div id="levelSelection">
-            <button onclick="startCloudNetworkLevel()">Cloud Network Level</button>
-            <button onclick="startDarkWebLevel()">Dark Web Level</button>
-        </div>
-        <div id="defenseSelection">
-            <button onclick="selectDefense('firewall')">Firewall (100 MB)</button>
-            <button onclick="selectDefense('antivirus')">Antivirus (200 MB)</button>
-            <button onclick="selectDefense('encryption')">Encryption (300 MB)</button>
-            <button onclick="selectDefense('ai')">AI Defense (400 MB)</button>
-            <button onclick="selectDefense('ids')">IDS (500 MB)</button>
-            <button onclick="selectDefense('soc')">SOC (600 MB)</button>
-            <button onclick="selectDefense('honeypot')">Honey Pot (150 MB)</button>
-        </div>
-        <div id="upgradeMenu" style="display: none;">
-            <button onclick="upgrade('damage')">Upgrade Damage (100 MB)</button>
-            <button onclick="upgrade('range')">Upgrade Range (100 MB)</button>
-            <button onclick="upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
-        </div>
-        <div id="speedControl">
-            <button id="speedButton">Speed: 1x</button>
+
+        <div id="controls">
+            <div id="levelSelection">
+                <button onclick="selectLevel('cloud')">Cloud Network Level</button>
+                <button onclick="selectLevel('darkweb')">Dark Web Level</button>
+            </div>
+
+            <div id="defenseSelection">
+                <button onclick="selectDefense('firewall')">Firewall (100 MB)</button>
+                <button onclick="selectDefense('antivirus')">Antivirus (200 MB)</button>
+                <button onclick="selectDefense('encryption')">Encryption (300 MB)</button>
+                <button onclick="selectDefense('ai')">AI Defense (400 MB)</button>
+                <button onclick="selectDefense('ids')">IDS (500 MB)</button>
+                <button onclick="selectDefense('soc')">SOC (600 MB)</button>
+                <button onclick="selectDefense('honeypot')">Honey Pot (150 MB)</button>
+            </div>
+
+            <div id="upgradeMenu" style="display: none;">
+                <button onclick="upgrade('damage')">Upgrade Damage (100 MB)</button>
+                <button onclick="upgrade('range')">Upgrade Range (100 MB)</button>
+                <button onclick="upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
+            </div>
+
+            <div id="speedControl">
+                <button onclick="changeSpeed()">Speed: <span id="speedValue">1x</span></button>
+            </div>
+
+            <button id="pauseButton" onclick="togglePause()">Pause</button>
         </div>
     </div>
-</body>
-</html>
     
 <script>
     document.addEventListener('DOMContentLoaded', function() {
