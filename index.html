@@ -712,19 +712,48 @@
             } else {
                 console.error('Speed button not found in the DOM');
             }
-        
+    
             const gameBoardElement = document.getElementById('gameBoard');
             if (gameBoardElement) {
                 gameBoardElement.addEventListener('click', handleGameBoardClick);
             } else {
                 console.error('Game board not found in the DOM');
             }
-        
+    
             document.addEventListener('keydown', handleKeyPress);
-        
+    
             createPath();
-            startCloudNetworkLevel();  // or startDarkWebLevel();
+            selectLevel('cloud'); // Start with cloud level by default
+        }
+    
+        function selectLevel(level) {
+            currentLevel = level;
+            if (level === 'cloud') {
+                path = cloudNetworkPath;
+                document.body.style.backgroundColor = '#E6F3FF';
+            } else if (level === 'darkweb') {
+                path = darkWebPath;
+                document.body.style.backgroundColor = '#1A1A1A';
+            }
+            createPath();
             startWave();
+        }
+    
+        function createThreat(type) {
+            if (path.length === 0) {
+                console.error('Path is not defined. Cannot create threat.');
+                return;
+            }
+            const threat = document.createElement('div');
+            threat.className = 'threat';
+            threat.style.left = `${path[0].x}px`;
+            threat.style.top = `${path[0].y}px`;
+            threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
+            threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
+            threat.dataset.type = type;
+            threat.dataset.pathIndex = 0;
+            gameBoard.appendChild(threat);
+            threats.push(threat);
         }
         
         function handleGameBoardClick(e) {
@@ -760,6 +789,7 @@
 
             // Initialize the game
             initGame();
+        });
 
             // Start the game loop
             gameLoop = setInterval(updateGame, 50);
