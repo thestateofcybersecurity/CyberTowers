@@ -34,19 +34,28 @@
             border-radius: 50%;
             background-size: cover;
             cursor: pointer;
+            z-index: 10;
         }
         .threat {
             width: 30px;
             height: 30px;
             position: absolute;
             background-size: cover;
+            z-index: 5;
         }
         .projectile {
             width: 10px;
             height: 10px;
             position: absolute;
             border-radius: 50%;
-            background-color: #0F0;
+            z-index: 15;
+        }
+        .radius {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
         }
         #score, #resources, #wave {
             font-size: 18px;
@@ -57,8 +66,8 @@
         }
         .path {
             position: absolute;
-            background-color: rgba(0, 255, 0, 0.2);
-            height: 40px;
+            background-color: rgba(0, 255, 0, 0.4);
+            z-index: 1;
         }
         button {
             background-color: #003;
@@ -87,9 +96,9 @@
             <button onclick="selectDefense('ai')">AI Defense (400 MB)</button>
         </div>
         <div id="upgradeMenu" style="display: none;">
-            <button onclick="upgrade('damage')">Upgrade Damage</button>
-            <button onclick="upgrade('range')">Upgrade Range</button>
-            <button onclick="upgrade('fireRate')">Upgrade Fire Rate</button>
+            <button onclick="upgrade('damage')">Upgrade Damage (100 MB)</button>
+            <button onclick="upgrade('range')">Upgrade Range (100 MB)</button>
+            <button onclick="upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
         </div>
     </div>
 
@@ -124,11 +133,23 @@
         };
 
         function createPath() {
-            const path = document.createElement('div');
-            path.className = 'path';
-            path.style.top = '230px';
-            path.style.width = '100%';
-            gameBoard.appendChild(path);
+            const pathPoints = [
+                {x: 0, y: 100, width: 600, height: 40},
+                {x: 560, y: 100, width: 40, height: 300},
+                {x: 200, y: 360, width: 400, height: 40},
+                {x: 200, y: 200, width: 40, height: 200},
+                {x: 200, y: 200, width: 600, height: 40}
+            ];
+            
+            pathPoints.forEach(point => {
+                const pathSegment = document.createElement('div');
+                pathSegment.className = 'path';
+                pathSegment.style.left = `${point.x}px`;
+                pathSegment.style.top = `${point.y}px`;
+                pathSegment.style.width = `${point.width}px`;
+                pathSegment.style.height = `${point.height}px`;
+                gameBoard.appendChild(pathSegment);
+            });
         }
 
         function createDefense(x, y, type) {
@@ -142,9 +163,18 @@
                 defense.dataset.level = '1';
                 defense.onclick = () => showUpgradeMenu(defense);
                 gameBoard.appendChild(defense);
+
+                const radius = document.createElement('div');
+                radius.className = 'radius';
+                radius.style.left = `${x - defenseTypes[type].range + 20}px`;
+                radius.style.top = `${y - defenseTypes[type].range + 20}px`;
+                radius.style.width = `${defenseTypes[type].range * 2}px`;
+                radius.style.height = `${defenseTypes[type].range * 2}px`;
+                gameBoard.appendChild(radius);
+
                 resources -= defenseTypes[type].cost;
                 resourcesValue.textContent = resources;
-                defenses.push(defense);
+                defenses.push({defense, radius});
                 setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
             }
         }
@@ -153,29 +183,51 @@
             const threat = document.createElement('div');
             threat.className = 'threat';
             threat.style.left = '-30px';
-            threat.style.top = '235px';
+            threat.style.top = '105px';
             threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
-            threat.dataset.health = threatTypes[type].health * Math.sqrt(wave);
+            threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
             threat.dataset.type = type;
+            threat.dataset.pathIndex = 0;
             gameBoard.appendChild(threat);
             threats.push(threat);
         }
 
         function moveThreats() {
+            const path = [
+                {x: 600, y: 105},
+                {x: 580, y: 380},
+                {x: 220, y: 380},
+                {x: 220, y: 220},
+                {x: 800, y: 220}
+            ];
+            
             threats.forEach((threat, index) => {
-                const currentLeft = parseFloat(threat.style.left);
+                const pathIndex = parseInt(threat.dataset.pathIndex);
+                const targetPoint = path[pathIndex];
                 const type = threat.dataset.type;
-                if (currentLeft < 800) {
-                    threat.style.left = `${currentLeft + threatTypes[type].speed}px`;
-                } else {
-                    gameBoard.removeChild(threat);
-                    threats.splice(index, 1);
-                    score -= threatTypes[type].damage;
-                    scoreValue.textContent = Math.max(0, score);
-                    if (score <= 0) {
-                        alert('System Compromised! Game Over!');
-                        location.reload();
+                
+                const dx = targetPoint.x - parseInt(threat.style.left);
+                const dy = targetPoint.y - parseInt(threat.style.top);
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < threatTypes[type].speed) {
+                    if (pathIndex < path.length - 1) {
+                        threat.dataset.pathIndex = pathIndex + 1;
+                    } else {
+                        gameBoard.removeChild(threat);
+                        threats.splice(index, 1);
+                        score -= threatTypes[type].damage;
+                        scoreValue.textContent = Math.max(0, score);
+                        if (score <= 0) {
+                            alert('System Compromised! Game Over!');
+                            location.reload();
+                        }
                     }
+                } else {
+                    const vx = (dx / distance) * threatTypes[type].speed;
+                    const vy = (dy / distance) * threatTypes[type].speed;
+                    threat.style.left = `${parseInt(threat.style.left) + vx}px`;
+                    threat.style.top = `${parseInt(threat.style.top) + vy}px`;
                 }
             });
         }
@@ -231,11 +283,39 @@
 
         function selectDefense(type) {
             selectedDefense = type;
+            const preview = document.createElement('div');
+            preview.className = 'radius';
+            preview.style.width = `${defenseTypes[type].range * 2}px`;
+            preview.style.height = `${defenseTypes[type].range * 2}px`;
+            preview.style.pointerEvents = 'none';
+            document.body.appendChild(preview);
+
+            const movePreview = (e) => {
+                const rect = gameBoard.getBoundingClientRect();
+                preview.style.left = `${e.clientX - rect.left - defenseTypes[type].range}px`;
+                preview.style.top = `${e.clientY - rect.top - defenseTypes[type].range}px`;
+            };
+
+            const removePreview = () => {
+                document.body.removeChild(preview);
+                gameBoard.removeEventListener('mousemove', movePreview);
+                gameBoard.removeEventListener('mouseleave', removePreview);
+                gameBoard.removeEventListener('click', removePreview);
+            };
+
+            gameBoard.addEventListener('mousemove', movePreview);
+            gameBoard.addEventListener('mouseleave', removePreview);
+            gameBoard.addEventListener('click', removePreview);
         }
 
         function showUpgradeMenu(defense) {
             selectedTowerForUpgrade = defense;
             upgradeMenu.style.display = 'block';
+            const defenseRect = defense.getBoundingClientRect();
+            const radius = document.querySelector('.radius');
+            radius.style.left = `${defenseRect.left - parseInt(radius.style.width)/2 + 20}px`;
+            radius.style.top = `${defenseRect.top - parseInt(radius.style.height)/2 + 20}px`;
+            radius.style.display = 'block';
         }
 
         function upgrade(attribute) {
@@ -245,17 +325,39 @@
                 selectedTowerForUpgrade.dataset.level = level + 1;
                 resources -= 100;
                 resourcesValue.textContent = resources;
+
+                if (attribute === 'range') {
+                    const newRange = defenseTypes[type].range * Math.sqrt(level + 1);
+                    const radius = document.querySelector('.radius');
+                    radius.style.width = `${newRange * 2}px`;
+                    radius.style.height = `${newRange * 2}px`;
+                    const defenseRect = selectedTowerForUpgrade.getBoundingClientRect();
+                    radius.style.left = `${defenseRect.left - newRange + 20}px`;
+                    radius.style.top = `${defenseRect.top - newRange + 20}px`;
+                }
+
                 upgradeMenu.style.display = 'none';
+                document.querySelector('.radius').style.display = 'none';
             }
         }
 
         function startWave() {
-            for (let i = 0; i < wave * 5; i++) {
+            const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
+            const threatTypesList = Object.keys(threatTypes);
+            for (let i = 0; i < numThreats; i++) {
                 setTimeout(() => {
-                    const threatTypesList = Object.keys(threatTypes);
-                    const randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
+                    // Increase the chance of stronger threats as waves progress
+                    let randomIndex;
+                    if (wave < 5) {
+                        randomIndex = Math.floor(Math.random() * 3); // Only first 3 threat types
+                    } else if (wave < 10) {
+                        randomIndex = Math.floor(Math.random() * 4); // First 4 threat types
+                    } else {
+                        randomIndex = Math.floor(Math.random() * threatTypesList.length);
+                    }
+                    const randomType = threatTypesList[randomIndex];
                     createThreat(randomType);
-                }, i * 1000);
+                }, i * (2000 / Math.sqrt(wave))); // Spawn threats faster in later waves
             }
         }
 
@@ -269,18 +371,42 @@
             }
         });
 
-        createPath();
-        startWave();
-
-        setInterval(() => {
+        function updateGame() {
             moveThreats();
             moveProjectiles();
             if (threats.length === 0) {
                 wave++;
                 waveValue.textContent = wave;
                 startWave();
+                // Increase resources between waves
+                resources += 100 + (wave * 10);
+                resourcesValue.textContent = resources;
             }
-        }, 50);
+        }
+
+        createPath();
+        startWave();
+
+        // Main game loop
+        setInterval(updateGame, 50);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case '1':
+                    selectDefense('firewall');
+                    break;
+                case '2':
+                    selectDefense('antivirus');
+                    break;
+                case '3':
+                    selectDefense('encryption');
+                    break;
+                case '4':
+                    selectDefense('ai');
+                    break;
+            }
+        });
     </script>
 </body>
 </html>
