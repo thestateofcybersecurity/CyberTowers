@@ -156,6 +156,8 @@
     </div>
     
 <script>
+    window.game = {};
+    
     document.addEventListener('DOMContentLoaded', function() {
 
         let wave = 1;
@@ -209,6 +211,52 @@
         }
         
         // Call startTutorial() when the game starts or when a "Help" button is clicked
+        
+        // Game functions
+        window.game.selectLevel = function(level) {
+            currentLevel = level;
+            if (level === 'cloud') {
+                path = cloudNetworkPath;
+                document.body.style.backgroundColor = '#E6F3FF';
+            } else if (level === 'darkweb') {
+                path = darkWebPath;
+                document.body.style.backgroundColor = '#1A1A1A';
+            }
+            createPath();
+            startWave();
+        };
+
+        window.game.selectDefense = function(type) {
+            selectedDefense = type;
+            // ... (rest of selectDefense logic)
+        };
+
+        window.game.changeSpeed = function() {
+            if (gameSpeed === 1) {
+                gameSpeed = 2;
+                speedButton.textContent = 'Speed: 2x';
+            } else if (gameSpeed === 2) {
+                gameSpeed = 3;
+                speedButton.textContent = 'Speed: 3x';
+            } else {
+                gameSpeed = 1;
+                speedButton.textContent = 'Speed: 1x';
+            }
+            
+            clearInterval(gameLoop);
+            gameLoop = setInterval(updateGame, 50 / gameSpeed);
+        };
+
+        window.game.togglePause = function() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                clearInterval(gameLoop);
+                document.getElementById('pauseButton').textContent = 'Resume';
+                } else {
+                    gameLoop = setInterval(updateGame, 50 / gameSpeed);
+                    document.getElementById('pauseButton').textContent = 'Pause';
+                }
+            };
         
         const defenseTypes = {
             firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
