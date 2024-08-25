@@ -542,6 +542,7 @@
             gameBoard.addEventListener('mouseleave', removePreview);
             gameBoard.addEventListener('click', removePreview);
         }
+        
         function showUpgradeMenu(defense) {
             selectedTowerForUpgrade = defense;
             upgradeMenu.style.display = 'block';
@@ -578,6 +579,7 @@
                 document.querySelector('.radius').style.display = 'none';
 
                 const defense = selectedTowerForUpgrade;
+                if (defense && defense.classList) {
                     defense.classList.add('upgraded');
                     setTimeout(() => defense.classList.remove('upgraded'), 1500);
                 }
@@ -672,7 +674,12 @@
                 // Update UI to display new resources
             }
 
-            function toggleSpeed() {
+            function changeSpeed() {
+               const speedButton = document.getElementById('speedButton');
+                if (speedButton) {
+                    speedButton.classList.add('upgraded');
+                    setTimeout(() => speedButton.classList.remove('upgraded'), 500);
+                }
                 if (gameSpeed === 1) {
                     gameSpeed = 2;
                     speedButton.textContent = 'Speed: 2x';
@@ -688,9 +695,11 @@
                 gameLoop = setInterval(updateGame, 50 / gameSpeed);
             }
 
-            if (speedButton) {
-                speedButton.addEventListener('click', toggleSpeed);
-            } else {
+            function initGame() {
+                const speedButton = document.getElementById('speedButton');
+                if (speedButton) {
+                    speedButton.addEventListener('click', changeSpeed);
+                } else {
                 console.error('Speed button not found in the DOM');
             }
 
@@ -724,6 +733,7 @@
             createPath();
             startCloudNetworkLevel();  // or startDarkWebLevel();
             startWave();
+            initGame();
 
             gameLoop = setInterval(updateGame, 50);
         };
