@@ -177,29 +177,33 @@
                 if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
                     const projectile = document.createElement('div');
                     projectile.className = 'projectile';
-                    projectile.style.left = `${defenseRect.left + 15}px`;
-                    projectile.style.top = `${defenseRect.top + 15}px`;
+                    projectile.style.left = `${defenseRect.left + 20}px`;
+                    projectile.style.top = `${defenseRect.top + 20}px`;
                     projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
                     gameBoard.appendChild(projectile);
                     
                     // Animate projectile
-                    setTimeout(() => {
-                        projectile.style.left = `${threatRect.left + 10}px`;
-                        projectile.style.top = `${threatRect.top + 10}px`;
-                    }, 0);
+                    requestAnimationFrame(() => {
+                        projectile.style.left = `${threatRect.left + 15}px`;
+                        projectile.style.top = `${threatRect.top + 15}px`;
+                    });
 
-                    setTimeout(() => {
-                        gameBoard.removeChild(projectile);
+                    projectile.addEventListener('transitionend', () => {
+                        if (projectile.parentNode === gameBoard) {
+                            gameBoard.removeChild(projectile);
+                        }
                         const threatHealth = parseInt(threat.dataset.health) - defenseTypes[defenseType].damage * level;
                         if (threatHealth <= 0) {
-                            gameBoard.removeChild(threat);
+                            if (threat.parentNode === gameBoard) {
+                                gameBoard.removeChild(threat);
+                            }
                             threats = threats.filter(t => t !== threat);
                             resources += threatTypes[threat.dataset.type].reward;
                             resourcesValue.textContent = resources;
                         } else {
                             threat.dataset.health = threatHealth;
                         }
-                    }, 500);
+                    });
 
                     break;
                 }
@@ -218,23 +222,9 @@
                 defense.onclick = () => showUpgradeMenu(defense);
                 gameBoard.appendChild(defense);
 
-                const radius = document.createElement('div');
-                radius.className = 'radius';
-                radius.style.left = `${x - defenseTypes[type].range + 20}px`;
-                radius.style.top = `${y - defenseTypes[type].range + 20}px`;
-                radius.style.width = `${defenseTypes[type].range * 2}px`;
-                radius.style.height = `${defenseTypes[type].range * 2}px`;
-                radius.style.position = 'absolute';
-                radius.style.border = '2px solid rgba(255, 255, 255, 0.3)';
-                radius.style.borderRadius = '50%';
-                radius.style.pointerEvents = 'none';
-                radius.style.zIndex = '1';
-                radius.style.display = 'none';
-                gameBoard.appendChild(radius);
-
                 resources -= defenseTypes[type].cost;
                 resourcesValue.textContent = resources;
-                defenses.push({defense, radius});
+                defenses.push(defense);
                 setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
             }
         }
@@ -408,7 +398,7 @@
                 selectedDefense = null;
             }
         });
-
+        
         function updateGame() {
             moveThreats();
             if (threats.length === 0) {
