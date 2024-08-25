@@ -142,29 +142,6 @@
         let gameSpeed = 1;
         let gameLoop;
 
-        function toggleSpeed() {
-            if (gameSpeed === 1) {
-                gameSpeed = 2;
-                speedButton.textContent = 'Speed: 2x';
-            } else if (gameSpeed === 2) {
-                gameSpeed = 3;
-                speedButton.textContent = 'Speed: 3x';
-            } else {
-                gameSpeed = 1;
-                speedButton.textContent = 'Speed: 1x';
-            }
-            
-            // Restart the game loop with the new speed
-            clearInterval(gameLoop);
-            gameLoop = setInterval(updateGame, 50 / gameSpeed);
-        }
-
-        if (speedButton) {
-            speedButton.addEventListener('click', toggleSpeed);
-        } else {
-            console.error('Speed button not found in the DOM');
-        }
-
         const defenseTypes = {
             firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
             antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
@@ -437,50 +414,71 @@
             }
         }
 
-       gameBoard.addEventListener('click', (e) => {
-            if (selectedDefense) {
-                const rect = gameBoard.getBoundingClientRect();
-                const x = e.clientX - rect.left - 20;
-                const y = e.clientY - rect.top - 20;
-                createDefense(x, y, selectedDefense);
-                selectedDefense = null;
-            }
-        });
-        
-        function updateGame() {
-            moveThreats();
-            if (threats.length === 0) {
-                wave++;
-                waveValue.textContent = wave;
-                startWave();
-                // Increase resources between waves
-                resources += 100 + (wave * 10);
-                resourcesValue.textContent = resources;
-            }
-        }
 
-        createPath();
-        startWave();
-
-        // Main game loop
-        gameLoop = setInterval(updateGame, 50);
-
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case '1':
-                    selectDefense('firewall');
-                    break;
-                case '2':
-                    selectDefense('antivirus');
-                    break;
-                case '3':
-                    selectDefense('encryption');
-                    break;
-                case '4':
-                    selectDefense('ai');
-                    break;
+            function updateGame() {
+                moveThreats();
+                if (threats.length === 0) {
+                    wave++;
+                    waveValue.textContent = wave;
+                    startWave();
+                    resources += 100 + (wave * 10);
+                    resourcesValue.textContent = resources;
+                }
             }
+
+            function toggleSpeed() {
+                if (gameSpeed === 1) {
+                    gameSpeed = 2;
+                    speedButton.textContent = 'Speed: 2x';
+                } else if (gameSpeed === 2) {
+                    gameSpeed = 3;
+                    speedButton.textContent = 'Speed: 3x';
+                } else {
+                    gameSpeed = 1;
+                    speedButton.textContent = 'Speed: 1x';
+                }
+                
+                clearInterval(gameLoop);
+                gameLoop = setInterval(updateGame, 50 / gameSpeed);
+            }
+
+            if (speedButton) {
+                speedButton.addEventListener('click', toggleSpeed);
+            } else {
+                console.error('Speed button not found in the DOM');
+            }
+
+            gameBoard.addEventListener('click', (e) => {
+                if (selectedDefense) {
+                    const rect = gameBoard.getBoundingClientRect();
+                    const x = e.clientX - rect.left - 20;
+                    const y = e.clientY - rect.top - 20;
+                    createDefense(x, y, selectedDefense);
+                    selectedDefense = null;
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case '1':
+                        selectDefense('firewall');
+                        break;
+                    case '2':
+                        selectDefense('antivirus');
+                        break;
+                    case '3':
+                        selectDefense('encryption');
+                        break;
+                    case '4':
+                        selectDefense('ai');
+                        break;
+                }
+            });
+
+            createPath();
+            startWave();
+
+            gameLoop = setInterval(updateGame, 50);
         });
     </script>
 </body>
