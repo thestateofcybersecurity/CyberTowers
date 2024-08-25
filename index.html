@@ -50,12 +50,12 @@
             border-radius: 50%;
             z-index: 15;
         }
-        .radius {
+        .radius-preview {
             position: absolute;
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             pointer-events: none;
-            z-index: 1;
+            z-index: 20;
         }
         #score, #resources, #wave {
             font-size: 18px;
@@ -132,58 +132,45 @@
             botnet: { health: 200, speed: 0.3, damage: 30, reward: 100, icon: './api/botnet.jpg' }
         };
 
+        const path = [
+            {x: 0, y: 100},
+            {x: 600, y: 100},
+            {x: 600, y: 400},
+            {x: 200, y: 400},
+            {x: 200, y: 200},
+            {x: 800, y: 200}
+        ];
+
         function createPath() {
-            const pathPoints = [
-                {x: 0, y: 100, width: 600, height: 40},
-                {x: 560, y: 100, width: 40, height: 300},
-                {x: 200, y: 360, width: 400, height: 40},
-                {x: 200, y: 200, width: 40, height: 200},
-                {x: 200, y: 200, width: 600, height: 40}
-            ];
-            
-            pathPoints.forEach(point => {
+            for (let i = 0; i < path.length - 1; i++) {
+                const start = path[i];
+                const end = path[i + 1];
                 const pathSegment = document.createElement('div');
                 pathSegment.className = 'path';
-                pathSegment.style.left = `${point.x}px`;
-                pathSegment.style.top = `${point.y}px`;
-                pathSegment.style.width = `${point.width}px`;
-                pathSegment.style.height = `${point.height}px`;
+                
+                if (start.x === end.x) {
+                    // Vertical segment
+                    pathSegment.style.left = `${start.x}px`;
+                    pathSegment.style.top = `${Math.min(start.y, end.y)}px`;
+                    pathSegment.style.width = '40px';
+                    pathSegment.style.height = `${Math.abs(end.y - start.y)}px`;
+                } else {
+                    // Horizontal segment
+                    pathSegment.style.left = `${Math.min(start.x, end.x)}px`;
+                    pathSegment.style.top = `${start.y}px`;
+                    pathSegment.style.width = `${Math.abs(end.x - start.x)}px`;
+                    pathSegment.style.height = '40px';
+                }
+                
                 gameBoard.appendChild(pathSegment);
-            });
-        }
-
-        function createDefense(x, y, type) {
-            if (resources >= defenseTypes[type].cost) {
-                const defense = document.createElement('div');
-                defense.className = 'defense';
-                defense.style.left = `${x}px`;
-                defense.style.top = `${y}px`;
-                defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
-                defense.dataset.type = type;
-                defense.dataset.level = '1';
-                defense.onclick = () => showUpgradeMenu(defense);
-                gameBoard.appendChild(defense);
-
-                const radius = document.createElement('div');
-                radius.className = 'radius';
-                radius.style.left = `${x - defenseTypes[type].range + 20}px`;
-                radius.style.top = `${y - defenseTypes[type].range + 20}px`;
-                radius.style.width = `${defenseTypes[type].range * 2}px`;
-                radius.style.height = `${defenseTypes[type].range * 2}px`;
-                gameBoard.appendChild(radius);
-
-                resources -= defenseTypes[type].cost;
-                resourcesValue.textContent = resources;
-                defenses.push({defense, radius});
-                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
             }
         }
 
         function createThreat(type) {
             const threat = document.createElement('div');
             threat.className = 'threat';
-            threat.style.left = '-30px';
-            threat.style.top = '105px';
+            threat.style.left = `${path[0].x}px`;
+            threat.style.top = `${path[0].y}px`;
             threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
             threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
             threat.dataset.type = type;
@@ -193,41 +180,38 @@
         }
 
         function moveThreats() {
-            const path = [
-                {x: 600, y: 105},
-                {x: 580, y: 380},
-                {x: 220, y: 380},
-                {x: 220, y: 220},
-                {x: 800, y: 220}
-            ];
-            
             threats.forEach((threat, index) => {
                 const pathIndex = parseInt(threat.dataset.pathIndex);
-                const targetPoint = path[pathIndex];
+                const targetPoint = path[pathIndex + 1];
                 const type = threat.dataset.type;
                 
-                const dx = targetPoint.x - parseInt(threat.style.left);
-                const dy = targetPoint.y - parseInt(threat.style.top);
+                if (!targetPoint) {
+                    gameBoard.removeChild(threat);
+                    threats.splice(index, 1);
+                    score -= threatTypes[type].damage;
+                    scoreValue.textContent = Math.max(0, score);
+                    if (score <= 0) {
+                        alert('System Compromised! Game Over!');
+                        location.reload();
+                    }
+                    return;
+                }
+                
+                const currentX = parseInt(threat.style.left);
+                const currentY = parseInt(threat.style.top);
+                const dx = targetPoint.x - currentX;
+                const dy = targetPoint.y - currentY;
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 
                 if (distance < threatTypes[type].speed) {
-                    if (pathIndex < path.length - 1) {
-                        threat.dataset.pathIndex = pathIndex + 1;
-                    } else {
-                        gameBoard.removeChild(threat);
-                        threats.splice(index, 1);
-                        score -= threatTypes[type].damage;
-                        scoreValue.textContent = Math.max(0, score);
-                        if (score <= 0) {
-                            alert('System Compromised! Game Over!');
-                            location.reload();
-                        }
-                    }
+                    threat.dataset.pathIndex = pathIndex + 1;
+                    threat.style.left = `${targetPoint.x}px`;
+                    threat.style.top = `${targetPoint.y}px`;
                 } else {
                     const vx = (dx / distance) * threatTypes[type].speed;
                     const vy = (dy / distance) * threatTypes[type].speed;
-                    threat.style.left = `${parseInt(threat.style.left) + vx}px`;
-                    threat.style.top = `${parseInt(threat.style.top) + vy}px`;
+                    threat.style.left = `${currentX + vx}px`;
+                    threat.style.top = `${currentY + vy}px`;
                 }
             });
         }
@@ -242,8 +226,8 @@
                 if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
                     const projectile = document.createElement('div');
                     projectile.className = 'projectile';
-                    projectile.style.left = `${defenseRect.left + 20}px`;
-                    projectile.style.top = `${defenseRect.top + 20}px`;
+                    projectile.style.left = `${defenseRect.left + 15}px`;
+                    projectile.style.top = `${defenseRect.top + 15}px`;
                     projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
                     gameBoard.appendChild(projectile);
                     projectiles.push({ element: projectile, target: threat, damage: defenseTypes[defenseType].damage * level });
@@ -252,43 +236,16 @@
             }
         }
 
-        function moveProjectiles() {
-            projectiles.forEach((projectile, index) => {
-                const projectileRect = projectile.element.getBoundingClientRect();
-                const threatRect = projectile.target.getBoundingClientRect();
-                const dx = threatRect.left - projectileRect.left;
-                const dy = threatRect.top - projectileRect.top;
-                const distance = Math.hypot(dx, dy);
-                if (distance < 5) {
-                    gameBoard.removeChild(projectile.element);
-                    projectiles.splice(index, 1);
-                    const threatHealth = parseInt(projectile.target.dataset.health) - projectile.damage;
-                    if (threatHealth <= 0) {
-                        gameBoard.removeChild(projectile.target);
-                        threats = threats.filter(t => t !== projectile.target);
-                        resources += threatTypes[projectile.target.dataset.type].reward;
-                        resourcesValue.textContent = resources;
-                    } else {
-                        projectile.target.dataset.health = threatHealth;
-                    }
-                } else {
-                    const speed = 5;
-                    const vx = (dx / distance) * speed;
-                    const vy = (dy / distance) * speed;
-                    projectile.element.style.left = `${projectileRect.left + vx}px`;
-                    projectile.element.style.top = `${projectileRect.top + vy}px`;
-                }
-            });
-        }
-
         function selectDefense(type) {
             selectedDefense = type;
-            const preview = document.createElement('div');
-            preview.className = 'radius';
+            let preview = document.querySelector('.radius-preview');
+            if (!preview) {
+                preview = document.createElement('div');
+                preview.className = 'radius-preview';
+                gameBoard.appendChild(preview);
+            }
             preview.style.width = `${defenseTypes[type].range * 2}px`;
             preview.style.height = `${defenseTypes[type].range * 2}px`;
-            preview.style.pointerEvents = 'none';
-            document.body.appendChild(preview);
 
             const movePreview = (e) => {
                 const rect = gameBoard.getBoundingClientRect();
@@ -297,10 +254,8 @@
             };
 
             const removePreview = () => {
-                document.body.removeChild(preview);
+                preview.style.display = 'none';
                 gameBoard.removeEventListener('mousemove', movePreview);
-                gameBoard.removeEventListener('mouseleave', removePreview);
-                gameBoard.removeEventListener('click', removePreview);
             };
 
             gameBoard.addEventListener('mousemove', movePreview);
