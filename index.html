@@ -132,56 +132,38 @@
             botnet: { health: 200, speed: 0.3, damage: 30, reward: 100, icon: './api/botnet.jpg' }
         };
 
+        // Make path a global variable
+        const path = [
+            {x: 0, y: 100},
+            {x: 600, y: 100},
+            {x: 600, y: 400},
+            {x: 200, y: 400},
+            {x: 200, y: 200},
+            {x: 800, y: 200}
+        ];
+
         function createPath() {
-            const pathPoints = [
-                {x: 0, y: 100, width: 600, height: 40},
-                {x: 560, y: 100, width: 40, height: 300},
-                {x: 200, y: 360, width: 400, height: 40},
-                {x: 200, y: 200, width: 40, height: 200},
-                {x: 200, y: 200, width: 600, height: 40}
-            ];
-            
-            pathPoints.forEach(point => {
+            for (let i = 0; i < path.length - 1; i++) {
+                const start = path[i];
+                const end = path[i + 1];
                 const pathSegment = document.createElement('div');
                 pathSegment.className = 'path';
-                pathSegment.style.left = `${point.x}px`;
-                pathSegment.style.top = `${point.y}px`;
-                pathSegment.style.width = `${point.width}px`;
-                pathSegment.style.height = `${point.height}px`;
+                
+                if (start.x === end.x) {
+                    // Vertical segment
+                    pathSegment.style.left = `${start.x}px`;
+                    pathSegment.style.top = `${Math.min(start.y, end.y)}px`;
+                    pathSegment.style.width = '40px';
+                    pathSegment.style.height = `${Math.abs(end.y - start.y)}px`;
+                } else {
+                    // Horizontal segment
+                    pathSegment.style.left = `${Math.min(start.x, end.x)}px`;
+                    pathSegment.style.top = `${start.y}px`;
+                    pathSegment.style.width = `${Math.abs(end.x - start.x)}px`;
+                    pathSegment.style.height = '40px';
+                }
+                
                 gameBoard.appendChild(pathSegment);
-            });
-        }
-        
-        function createDefense(x, y, type) {
-            if (resources >= defenseTypes[type].cost) {
-                const defense = document.createElement('div');
-                defense.className = 'defense';
-                defense.style.left = `${x}px`;
-                defense.style.top = `${y}px`;
-                defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
-                defense.dataset.type = type;
-                defense.dataset.level = '1';
-                defense.onclick = () => showUpgradeMenu(defense);
-                gameBoard.appendChild(defense);
-
-                const radius = document.createElement('div');
-                radius.className = 'radius';
-                radius.style.left = `${x - defenseTypes[type].range + 20}px`;
-                radius.style.top = `${y - defenseTypes[type].range + 20}px`;
-                radius.style.width = `${defenseTypes[type].range * 2}px`;
-                radius.style.height = `${defenseTypes[type].range * 2}px`;
-                radius.style.position = 'absolute';
-                radius.style.border = '2px solid rgba(255, 255, 255, 0.3)';
-                radius.style.borderRadius = '50%';
-                radius.style.pointerEvents = 'none';
-                radius.style.zIndex = '1';
-                radius.style.display = 'none';
-                gameBoard.appendChild(radius);
-
-                resources -= defenseTypes[type].cost;
-                resourcesValue.textContent = resources;
-                defenses.push({defense, radius});
-                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate);
             }
         }
 
