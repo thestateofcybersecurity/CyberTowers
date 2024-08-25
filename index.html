@@ -351,19 +351,8 @@
             const defenseRect = defense.getBoundingClientRect();
             const defenseType = defense.dataset.type;
             const level = parseInt(defense.dataset.level);
-
-             if (defenseTypes[defenseType].detectsInvisibility) {
-                    // Reveal invisible threats within range
-            }
         
-            if (defenseTypes[defenseType].deploysPatches) {
-                // Repair or enhance nearby defenses temporarily
-            }
-        
-            if (defenseTypes[defenseType].attractsThreats) {
-                // Divert threats from their original path to target the honey pot
-            }
-                for (let threat of threats) {
+            for (let threat of threats) {
                 const threatRect = threat.getBoundingClientRect();
                 const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
                 if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
@@ -374,31 +363,38 @@
                     projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
                     gameBoard.appendChild(projectile);
                     
-                    // Animate projectile
+                    const endX = threatRect.left + 15;
+                    const endY = threatRect.top + 15;
+                    
+                    projectile.style.transition = `all ${distance / 200}s linear`;
                     requestAnimationFrame(() => {
-                        projectile.style.left = `${threatRect.left + 15}px`;
-                        projectile.style.top = `${threatRect.top + 15}px`;
+                        projectile.style.left = `${endX}px`;
+                        projectile.style.top = `${endY}px`;
                     });
-
+        
                     projectile.addEventListener('transitionend', () => {
                         if (projectile.parentNode === gameBoard) {
                             gameBoard.removeChild(projectile);
                         }
-                        const threatHealth = parseInt(threat.dataset.health) - defenseTypes[defenseType].damage * level;
-                        if (threatHealth <= 0) {
-                            if (threat.parentNode === gameBoard) {
-                                gameBoard.removeChild(threat);
-                            }
-                            threats = threats.filter(t => t !== threat);
-                            resources += threatTypes[threat.dataset.type].reward;
-                            resourcesValue.textContent = resources;
-                        } else {
-                            threat.dataset.health = threatHealth;
-                        }
+                        applyDamage(threat, defenseType, level);
                     });
-
+        
                     break;
                 }
+            }
+        }
+
+        function applyDamage(threat, defenseType, level) {
+            const threatHealth = parseInt(threat.dataset.health) - defenseTypes[defenseType].damage * level;
+            if (threatHealth <= 0) {
+                if (threat.parentNode === gameBoard) {
+                    gameBoard.removeChild(threat);
+                }
+                threats = threats.filter(t => t !== threat);
+                resources += threatTypes[threat.dataset.type].reward;
+                resourcesValue.textContent = resources;
+            } else {
+                threat.dataset.health = threatHealth.toString();
             }
         }
 
@@ -443,12 +439,18 @@
                 const type = threat.dataset.type;
                 
                 if (threatTypes[type].invisible) {
-                    // Handle invisibility (e.g., only AI defenses can detect)
+                    threat.style.opacity = '0.5';
+                    // Only AI defenses can detect invisible threats
+                    defenses.forEach(defense => {
+                        if (defense.dataset.type === 'ai' && isInRange(defense, threat)) {
+                            threat.style.opacity = '1';
+                        }
+                    });
                 }
         
                 if (threatTypes[type].evolves) {
-                    // Handle evolution over time or distance
-                    threat.dataset.health = parseInt(threat.dataset.health) + (wave * 5);
+                    const evolutionRate = 1 + (wave * 0.05);
+                    threat.dataset.health = (parseInt(threat.dataset.health) * evolutionRate).toString();
                 }
                 
                 if (!targetPoint) {
@@ -462,7 +464,7 @@
                     }
                     return;
                 }
-                
+                        
                 const currentX = parseInt(threat.style.left);
                 const currentY = parseInt(threat.style.top);
                 const dx = targetPoint.x - currentX;
@@ -479,7 +481,14 @@
                     threat.style.left = `${currentX + vx}px`;
                     threat.style.top = `${currentY + vy}px`;
                 }
-            };
+            });
+        }
+
+        function isInRange(defense, threat) {
+            const defenseRect = defense.getBoundingClientRect();
+            const threatRect = threat.getBoundingClientRect();
+            const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
+            return distance < defenseTypes[defense.dataset.type].range * Math.sqrt(parseInt(defense.dataset.level));
         }
 
         function moveProjectiles() {
@@ -558,165 +567,195 @@
 
         function upgrade(attribute) {
             if (selectedTowerForUpgrade && resources >= 100) {
+                const type = selectedTowerForUpgrade.dataset.type;
                 const level = parseInt(selectedTowerForUpgrade.dataset.level);
                 selectedTowerForUpgrade.dataset.level = level + 1;
                 resources -= 100;
                 resourcesValue.textContent = resources;
                 
-                if (attribute === 'damage') {
-                    defenseTypes[type].damage += 10 * level;
-                    const newRange = defenseTypes[type].range * Math.sqrt(level + 1);
-                    const radius = document.querySelector('.radius');
-                    radius.style.width = `${newRange * 2}px`;
-                    radius.style.height = `${newRange * 2}px`;
-                    const defenseRect = selectedTowerForUpgrade.getBoundingClientRect();
-                    radius.style.left = `${defenseRect.left - newRange + 20}px`;
-                    radius.style.top = `${defenseRect.top - newRange + 20}px`;
-                } else if (attribute === 'range') {
-                    defenseTypes[type].range += 20 * level;
-                } else if (attribute === 'fireRate') {
-                    defenseTypes[type].fireRate -= 100 * level;
+                switch(attribute) {
+                    case 'damage':
+                        defenseTypes[type].damage += 10 * level;
+                        break;
+                    case 'range':
+                        defenseTypes[type].range += 20 * level;
+                        updateRangeVisual(selectedTowerForUpgrade);
+                        break;
+                    case 'fireRate':
+                        defenseTypes[type].fireRate = Math.max(100, defenseTypes[type].fireRate - 100 * level);
+                        break;
+                    default:
+                        console.warn('Unknown upgrade attribute:', attribute);
+                        return;
                 }
-
+        
                 upgradeMenu.style.display = 'none';
                 document.querySelector('.radius').style.display = 'none';
-
-                const defense = selectedTowerForUpgrade;
-                if (defense && defense.classList) {
-                    defense.classList.add('upgraded');
-                    setTimeout(() => defense.classList.remove('upgraded'), 1500);
-                }
+        
+                selectedTowerForUpgrade.classList.add('upgraded');
+                setTimeout(() => selectedTowerForUpgrade.classList.remove('upgraded'), 1500);
             }
+        }
+        
+        function updateRangeVisual(defense) {
+            const type = defense.dataset.type;
+            const level = parseInt(defense.dataset.level);
+            const newRange = defenseTypes[type].range * Math.sqrt(level);
+            const radius = document.querySelector('.radius');
+            if (radius) {
+                radius.style.width = `${newRange * 2}px`;
+                radius.style.height = `${newRange * 2}px`;
+                const defenseRect = defense.getBoundingClientRect();
+                radius.style.left = `${defenseRect.left - newRange + 20}px`;
+                radius.style.top = `${defenseRect.top - newRange + 20}px`;
+            }
+        }
 
-            function startWave() {
-                const numThreats = Math.min(wave * 5, 50);
-                const threatTypesList = Object.keys(threatTypes);
-                
-                for (let i = 0; i < numThreats; i++) {
-                    setTimeout(() => {
-                        let randomType;
+        function startWave() {
+            const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
+            const threatTypesList = Object.keys(threatTypes);
             
-                        if (i % 5 === 0) {
-                            randomType = "phishing";
-                        } else if (i % 5 === 1) {
-                            randomType = "botnet";
-                        } else if (i % 5 === 2) {
-                            randomType = "worm";
-                        } else {
-                            randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
-                        }
-                        
-                        createThreat(randomType);
-                    }, i * (2000 / Math.sqrt(wave)) / gameSpeed);
+            for (let i = 0; i < numThreats; i++) {
+                setTimeout(() => {
+                    let randomType;
+        
+                    if (i % 5 === 0) {
+                        // Every 5th threat is part of a combination attack
+                        randomType = "phishing"; // Start with a phishing attack
+                    } else if (i % 5 === 1) {
+                        randomType = "botnet"; // Follow up with a botnet attack
+                    } else if (i % 5 === 2) {
+                        randomType = "worm"; // Finish with a worm
+                    } else {
+                        randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
+                    }
+                    
+                    createThreat(randomType);
+                }, i * (2000 / Math.sqrt(wave)) / gameSpeed);
+            }
+        }
+
+        function playerUsesFirewalls() {
+            return defenses.filter(d => d.dataset.type === 'firewall').length > 3;
+        }
+        
+        function playerUsesAntivirus() {
+            return defenses.filter(d => d.dataset.type === 'antivirus').length > 3;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                clearInterval(gameLoop);
+                document.getElementById('pauseButton').textContent = 'Resume';
+            } else {
+                gameLoop = setInterval(updateGame, 50 / gameSpeed);
+                document.getElementById('pauseButton').textContent = 'Pause';
+            }
+        }
+    
+        function updateGame() {
+            if (!isPaused) {
+                moveThreats();
+                if (threats.length === 0) {
+                    wave++;
+                    waveValue.textContent = wave;
+                    startWave();
+                    resources += 100 + (wave * 10);
+                    resourcesValue.textContent = resources;
                 }
             }
+        }
 
-            function playerUsesFirewalls() {
-                return defenses.filter(d => d.dataset.type === 'firewall').length > 3;
+        function selectLevel(level) {
+            currentLevel = level;
+            resetGame();
+            if (level === 'cloud') {
+                document.body.style.backgroundColor = '#E6F3FF';
+            } else if (level === 'darkweb') {
+                document.body.style.backgroundColor = '#1A1A1A';
+            }
+        }
+        
+        function resetGame() {
+            wave = 1;
+            resources = 500;
+            threats = [];
+            defenses = [];
+            startWave();
+        }
+            
+        function updateResources() {
+            resourcesValue.textContent = resources;
+        }
+
+        function changeSpeed() {
+            if (gameSpeed === 1) {
+                gameSpeed = 2;
+                speedButton.textContent = 'Speed: 2x';
+            } else if (gameSpeed === 2) {
+                gameSpeed = 3;
+                speedButton.textContent = 'Speed: 3x';
+            } else {
+                gameSpeed = 1;
+                speedButton.textContent = 'Speed: 1x';
             }
             
-            function playerUsesAntivirus() {
-                return defenses.filter(d => d.dataset.type === 'antivirus').length > 3;
-            }
+            clearInterval(gameLoop);
+            gameLoop = setInterval(updateGame, 50 / gameSpeed);
+        }
 
-            function togglePause() {
-                isPaused = !isPaused;
-                if (isPaused) {
-                    clearInterval(gameLoop);
-                    document.getElementById('pauseButton').textContent = 'Resume';
-                } else {
-                    gameLoop = setInterval(updateGame, 50 / gameSpeed);
-                    document.getElementById('pauseButton').textContent = 'Pause';
-                }
+        function initGame() {
+            const speedButton = document.getElementById('speedButton');
+            if (speedButton) {
+                speedButton.addEventListener('click', changeSpeed);
+            } else {
+                console.error('Speed button not found in the DOM');
             }
         
-            function updateGame() {
-                if (!isPaused) {
-                    moveThreats();
-                    if (threats.length === 0) {
-                        wave++;
-                        waveValue.textContent = wave;
-                        startWave();
-                        resources += 100 + (wave * 10);
-                        resourcesValue.textContent = resources;
-                    }
-                }
+            const gameBoardElement = document.getElementById('gameBoard');
+            if (gameBoardElement) {
+                gameBoardElement.addEventListener('click', handleGameBoardClick);
+            } else {
+                console.error('Game board not found in the DOM');
             }
-
-            function selectLevel(level) {
-                currentLevel = level;
-                resetGame();
-                if (level === 'cloud') {
-                    document.body.style.backgroundColor = '#E6F3FF';
-                } else if (level === 'darkweb') {
-                    document.body.style.backgroundColor = '#1A1A1A';
-                }
+        
+            document.addEventListener('keydown', handleKeyPress);
+        
+            createPath();
+            startCloudNetworkLevel();  // or startDarkWebLevel();
+            startWave();
+        }
+        
+        function handleGameBoardClick(e) {
+            if (selectedDefense) {
+                const rect = e.target.getBoundingClientRect();
+                const x = e.clientX - rect.left - 20;
+                const y = e.clientY - rect.top - 20;
+                createDefense(x, y, selectedDefense);
+                selectedDefense = null;
             }
-            
-            function resetGame() {
-                wave = 1;
-                resources = 500;
-                threats = [];
-                defenses = [];
-                startWave();
+        }
+        
+        function handleKeyPress(e) {
+            switch(e.key) {
+                case '1':
+                    selectDefense('firewall');
+                    break;
+                case '2':
+                    selectDefense('antivirus');
+                    break;
+                case '3':
+                    selectDefense('encryption');
+                    break;
+                case '4':
+                    selectDefense('ai');
+                    break;
             }
-                
-            function updateResources() {
-                resourcesValue.textContent = resources;
-            }
+        }
 
-            function changeSpeed() {
-                if (gameSpeed === 1) {
-                    gameSpeed = 2;
-                    speedButton.textContent = 'Speed: 2x';
-                } else if (gameSpeed === 2) {
-                    gameSpeed = 3;
-                    speedButton.textContent = 'Speed: 3x';
-                } else {
-                    gameSpeed = 1;
-                    speedButton.textContent = 'Speed: 1x';
-                }
-                
-                clearInterval(gameLoop);
-                gameLoop = setInterval(updateGame, 50 / gameSpeed);
-            }
-
-            function initGame() {
-                if (speedButton) {
-                    speedButton.addEventListener('click', changeSpeed);
-                } else {
-                    console.error('Speed button not found in the DOM');
-                }
-
-                gameBoard.addEventListener('click', (e) => {
-                    if (selectedDefense) {
-                        const rect = gameBoard.getBoundingClientRect();
-                        const x = e.clientX - rect.left - 20;
-                        const y = e.clientY - rect.top - 20;
-                        createDefense(x, y, selectedDefense);
-                        selectedDefense = null;
-                    }
-                });
-
-                document.addEventListener('keydown', (e) => {
-                    switch(e.key) {
-                        case '1':
-                            selectDefense('firewall');
-                            break;
-                        case '2':
-                            selectDefense('antivirus');
-                            break;
-                        case '3':
-                            selectDefense('encryption');
-                            break;
-                        case '4':
-                            selectDefense('ai');
-                            break;
-                    }
-                });
-
-                createPath();
-                startWave();
+            createPath();
+            startWave();
             }
 
             // Initialize the game
