@@ -175,9 +175,17 @@
             apt: { health: 150, speed: 1.5, damage: 25, reward: 75, icon: './api/apt.jpg', evolves: true }
         };
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const gameBoard = document.getElementById('gameBoard');
         let path = [];
+
+        // Make path a global variable
+        const path = [
+            {x: 0, y: 100},
+            {x: 600, y: 100},
+            {x: 600, y: 400},
+            {x: 200, y: 400},
+            {x: 200, y: 200},
+            {x: 800, y: 200}
+        ];
 
         // Cloud Network Path
         const cloudNetworkPath = [
