@@ -124,6 +124,14 @@
             ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' }
         };
 
+        const threatTypes = {
+            virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: './api/virus.jpg' },
+            trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: './api/trojan.jpg' },
+            ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: './api/ransomware.jpg' },
+            worm: { health: 30, speed: 3, damage: 15, reward: 40, icon: './api/worm.jpg' },
+            botnet: { health: 200, speed: 0.3, damage: 30, reward: 100, icon: './api/botnet.jpg' }
+        };
+
         function createPath() {
             const pathPoints = [
                 {x: 0, y: 100, width: 600, height: 40},
