@@ -157,11 +157,6 @@
     
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const gameBoard = document.getElementById('gameBoard');
-        const scoreValue = document.getElementById('scoreValue');
-        const resourcesValue = document.getElementById('resourcesValue');
-        const waveValue = document.getElementById('waveValue');
-        const upgradeMenu = document.getElementById('upgradeMenu');
 
         let score = 100;
         let resources = 500;
@@ -736,7 +731,7 @@
             initGame();
 
             gameLoop = setInterval(updateGame, 50);
-        };
+        });
     </script>
 </body>
 </html>
