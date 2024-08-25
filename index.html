@@ -124,7 +124,27 @@
             ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' }
         };
 
-    function createDefense(x, y, type) {
+        function createPath() {
+            const pathPoints = [
+                {x: 0, y: 100, width: 600, height: 40},
+                {x: 560, y: 100, width: 40, height: 300},
+                {x: 200, y: 360, width: 400, height: 40},
+                {x: 200, y: 200, width: 40, height: 200},
+                {x: 200, y: 200, width: 600, height: 40}
+            ];
+            
+            pathPoints.forEach(point => {
+                const pathSegment = document.createElement('div');
+                pathSegment.className = 'path';
+                pathSegment.style.left = `${point.x}px`;
+                pathSegment.style.top = `${point.y}px`;
+                pathSegment.style.width = `${point.width}px`;
+                pathSegment.style.height = `${point.height}px`;
+                gameBoard.appendChild(pathSegment);
+            });
+        }
+        
+        function createDefense(x, y, type) {
             if (resources >= defenseTypes[type].cost) {
                 const defense = document.createElement('div');
                 defense.className = 'defense';
