@@ -297,53 +297,42 @@
         }
 
         function moveThreats() {
-            threats.forEach((threat, index) => {
+            threats = threats.filter((threat, index) => {
                 const pathIndex = parseInt(threat.dataset.pathIndex);
                 const targetPoint = path[pathIndex + 1];
-                const type = threat.dataset.type;
-                
-                if (threatTypes[type].invisible) {
-                    threat.style.opacity = '0.5';
-                    defenses.forEach(defense => {
-                        if (defense.dataset.type === 'ai' && isInRange(defense, threat)) {
-                            threat.style.opacity = '1';
-                        }
-                    });
-                }
-
-                if (threatTypes[type].evolves) {
-                    const evolutionRate = 1 + (wave * 0.05);
-                    threat.dataset.health = (parseInt(threat.dataset.health) * evolutionRate).toString();
-                }
                 
                 if (!targetPoint) {
-                    gameBoard.removeChild(threat);
-                    threats.splice(index, 1);
-                    score -= threatTypes[type].damage;
+                    // Threat has reached the end of the path
+                    if (threat.parentNode === gameBoard) {
+                        gameBoard.removeChild(threat);
+                    }
+                    score -= threatTypes[threat.dataset.type].damage;
                     updateScore();
                     if (score <= 0) {
                         alert('System Compromised! Game Over!');
                         resetGame();
                     }
-                    return;
+                    return false; // Remove this threat from the array
                 }
-                
+        
                 const currentX = parseInt(threat.style.left);
                 const currentY = parseInt(threat.style.top);
                 const dx = targetPoint.x - currentX;
                 const dy = targetPoint.y - currentY;
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 
-                if (distance < threatTypes[type].speed * gameSpeed) {
+                if (distance < threatTypes[threat.dataset.type].speed * gameSpeed) {
                     threat.dataset.pathIndex = (pathIndex + 1).toString();
                     threat.style.left = `${targetPoint.x}px`;
                     threat.style.top = `${targetPoint.y}px`;
                 } else {
-                    const vx = (dx / distance) * threatTypes[type].speed * gameSpeed;
-                    const vy = (dy / distance) * threatTypes[type].speed * gameSpeed;
+                    const vx = (dx / distance) * threatTypes[threat.dataset.type].speed * gameSpeed;
+                    const vy = (dy / distance) * threatTypes[threat.dataset.type].speed * gameSpeed;
                     threat.style.left = `${currentX + vx}px`;
                     threat.style.top = `${currentY + vy}px`;
                 }
+        
+                return true; // Keep this threat in the array
             });
         }
 
