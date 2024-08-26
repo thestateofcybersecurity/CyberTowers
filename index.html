@@ -354,6 +354,7 @@
             return distance < defenseTypes[defense.dataset.type].range * Math.sqrt(parseInt(defense.dataset.level));
         }
 
+        let currentWave = 1;
         let waveInProgress = false;
         let waveInterval;
         const WAVE_COOLDOWN = 10000; // 10 seconds between waves
