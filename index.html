@@ -499,6 +499,25 @@
             init: function() {
                 this.selectLevel('cloud');
                 gameLoop = setInterval(updateGame, 50);
+                
+                // Add event listeners for game controls
+                document.getElementById('gameBoard').addEventListener('click', (e) => {
+                    if (selectedDefense) {
+                        const rect = gameBoard.getBoundingClientRect();
+                        const x = e.clientX - rect.left - 20;
+                        const y = e.clientY - rect.top - 20;
+                        createDefense(x, y, selectedDefense);
+                        selectedDefense = null;
+                        document.querySelector('.radius-preview')?.remove();
+                    }
+                });
+
+                // Bind methods to ensure correct 'this' context
+                this.selectLevel = this.selectLevel.bind(this);
+                this.selectDefense = this.selectDefense.bind(this);
+                this.changeSpeed = this.changeSpeed.bind(this);
+                this.togglePause = this.togglePause.bind(this);
+                this.upgrade = this.upgrade.bind(this);
             }
         };
 
