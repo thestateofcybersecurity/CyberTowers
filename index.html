@@ -10,19 +10,23 @@
     <div id="gameContainer">
         <div id="gameInfo">
             <div id="score">System Integrity: <span id="scoreValue">100</span>%</div>
-            <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
+            <div id="resources">Resources: <span id="resourcesValue">300</span> MB</div>
             <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
+            <div id="playerInfo">
+                <div>Player Level: <span id="playerLevel">1</span></div>
+                <div>Experience: <span id="playerExperience">0</span></div>
+            </div>
         </div>
         <canvas id="gameBoard"></canvas>
         <div id="controls">
             <div id="defenseSelection">
-                <button onclick="placeTower('Firewall')">Firewall (100 MB)</button>
-                <button onclick="placeTower('Antivirus')">Antivirus (200 MB)</button>
-                <button onclick="placeTower('Encryption')">Encryption (300 MB)</button>
-                <button onclick="placeTower('AI')">AI Defense (400 MB)</button>
-                <button onclick="placeTower('IDS')">IDS (500 MB)</button>
-                <button onclick="placeTower('SOC')">SOC (600 MB)</button>
-                <button onclick="placeTower('Honeypot')">Honey Pot (150 MB)</button>
+                <button id="firewallButton" onclick="placeTower('Firewall')">Firewall (100 MB)</button>
+                <button id="antivirusButton" onclick="placeTower('Antivirus')">Antivirus (200 MB)</button>
+                <button id="encryptionButton" onclick="placeTower('Encryption')">Encryption (300 MB)</button>
+                <button id="idsButton" onclick="placeTower('IDS')">IDS (350 MB)</button>
+                <button id="aiButton" onclick="placeTower('AI')">AI Defense (450 MB)</button>
+                <button id="socButton" onclick="placeTower('SOC')">SOC (550 MB)</button>
+                <button id="honeypotButton" onclick="placeTower('Honeypot')">Honey Pot (150 MB)</button>
             </div>
             <button onclick="togglePause()">Pause</button>
         </div>
