@@ -137,6 +137,7 @@
         let selectedDefense = null;
         let selectedTowerForUpgrade = null;
         let path = [];
+        let isWaveInProgress = false;
 
         const gameBoard = document.getElementById('gameBoard');
         const scoreValue = document.getElementById('scoreValue');
@@ -352,11 +353,6 @@
             const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
             return distance < defenseTypes[defense.dataset.type].range * Math.sqrt(parseInt(defense.dataset.level));
         }
-
-        let currentWave = 1;
-        let waveInProgress = false;
-        let waveInterval;
-        const WAVE_COOLDOWN = 10000; // 10 seconds between waves
     
         const waveManager = {
             startWave() {
@@ -418,16 +414,6 @@
             }
         };
     
-        function updateGame() {
-            if (!isPaused) {
-                moveThreats();
-                if (threats.length === 0 && !waveInProgress) {
-                    waveManager.endWave();
-                    waveManager.startWave();
-                }
-            }
-        }
-    
         function moveThreats() {
             threats.forEach((threat, index) => {
                 const targetPoint = path[threat.pathIndex + 1];
@@ -461,41 +447,55 @@
             });
         }
         
-        function startWave() {
-            if (isWaveInProgress) return;
+            function startWave() {
+                if (isWaveInProgress) return;
+                
+                isWaveInProgress = true;
+                const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
+                const threatTypesList = Object.keys(threatTypes);
+                let threatsCreated = 0;
             
-            isWaveInProgress = true;
-            const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
-            const threatTypesList = Object.keys(threatTypes);
-            let threatsCreated = 0;
-        
-            function createNextThreat() {
-                if (threatsCreated >= numThreats) {
-                    isWaveInProgress = false;
-                    return;
+                function createNextThreat() {
+                    if (threatsCreated >= numThreats) {
+                        isWaveInProgress = false;
+                        return;
+                    }
+            
+                    let randomType;
+                    if (threatsCreated % 5 === 0) {
+                        randomType = "phishing";
+                    } else if (threatsCreated % 5 === 1) {
+                        randomType = "botnet";
+                    } else if (threatsCreated % 5 === 2) {
+                        randomType = "worm";
+                    } else {
+                        randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
+                    }
+            
+                    createThreat(randomType);
+                    threatsCreated++;
+            
+                    // Schedule the next threat creation
+                    setTimeout(createNextThreat, 2000 / Math.sqrt(wave) / gameSpeed);
                 }
-        
-                let randomType;
-                if (threatsCreated % 5 === 0) {
-                    randomType = "phishing";
-                } else if (threatsCreated % 5 === 1) {
-                    randomType = "botnet";
-                } else if (threatsCreated % 5 === 2) {
-                    randomType = "worm";
-                } else {
-                    randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
-                }
-        
-                createThreat(randomType);
-                threatsCreated++;
-        
-                // Schedule the next threat creation
-                setTimeout(createNextThreat, 2000 / Math.sqrt(wave) / gameSpeed);
+            
+                // Start creating threats
+                createNextThreat();
             }
         
-            // Start creating threats
-            createNextThreat();
-        }
+            function updateGame() {
+                if (!isPaused) {
+                    moveThreats();
+                    if (threats.length === 0 && !isWaveInProgress) {
+                        wave++;
+                        updateWave();
+                        startWave();
+                        resources += 100 + (wave * 10);
+                        updateResources();
+                    }
+                }
+            }
+
         function createThreat(type) {
             if (path.length === 0) {
                 console.error('Path is not defined. Cannot create threat.');
@@ -511,19 +511,6 @@
             threat.dataset.pathIndex = '0';
             gameBoard.appendChild(threat);
             threats.push(threat);
-        }
-        
-        function updateGame() {
-            if (!isPaused) {
-                moveThreats();
-                if (threats.length === 0 && !isWaveInProgress) {
-                    wave++;
-                    updateWave();
-                    startWave();
-                    resources += 100 + (wave * 10);
-                    updateResources();
-                }
-            }
         }
 
         function showUpgradeMenu(defense) {
