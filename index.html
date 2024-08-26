@@ -297,7 +297,7 @@
         }
 
         function moveThreats() {
-            threats = threats.filter((threat, index) => {
+            threats = threats.filter(threat => {
                 const pathIndex = parseInt(threat.dataset.pathIndex);
                 const targetPoint = path[pathIndex + 1];
                 
@@ -314,7 +314,7 @@
                     }
                     return false; // Remove this threat from the array
                 }
-        
+    
                 const currentX = parseInt(threat.style.left);
                 const currentY = parseInt(threat.style.top);
                 const dx = targetPoint.x - currentX;
@@ -331,7 +331,7 @@
                     threat.style.left = `${currentX + vx}px`;
                     threat.style.top = `${currentY + vy}px`;
                 }
-        
+    
                 return true; // Keep this threat in the array
             });
         }
@@ -407,41 +407,8 @@
                 updateResourcesDisplay();
             }
         };
-    
-        function moveThreats() {
-            threats.forEach((threat, index) => {
-                const targetPoint = path[threat.pathIndex + 1];
-                if (!targetPoint) {
-                    // Threat reached the end
-                    gameBoard.removeChild(threat.element);
-                    threats.splice(index, 1);
-                    score -= threat.damage;
-                    updateScoreDisplay();
-                    if (score <= 0) {
-                        alert('System Compromised! Game Over!');
-                        resetGame();
-                    }
-                    return;
-                }
-    
-                const dx = targetPoint.x - parseInt(threat.element.style.left);
-                const dy = targetPoint.y - parseInt(threat.element.style.top);
-                const distance = Math.sqrt(dx * dx + dy * dy);
-    
-                if (distance < threat.speed) {
-                    threat.pathIndex++;
-                    threat.element.style.left = `${targetPoint.x}px`;
-                    threat.element.style.top = `${targetPoint.y}px`;
-                } else {
-                    const vx = (dx / distance) * threat.speed;
-                    const vy = (dy / distance) * threat.speed;
-                    threat.element.style.left = `${parseInt(threat.element.style.left) + vx}px`;
-                    threat.element.style.top = `${parseInt(threat.element.style.top) + vy}px`;
-                }
-            });
-        }
         
-            function startWave() {
+          function startWave() {
                 if (isWaveInProgress) return;
                 
                 isWaveInProgress = true;
@@ -489,23 +456,6 @@
                     }
                 }
             }
-
-        function createThreat(type) {
-            if (path.length === 0) {
-                console.error('Path is not defined. Cannot create threat.');
-                return;
-            }
-            const threat = document.createElement('div');
-            threat.className = 'threat';
-            threat.style.left = `${path[0].x}px`;
-            threat.style.top = `${path[0].y}px`;
-            threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
-            threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
-            threat.dataset.type = type;
-            threat.dataset.pathIndex = '0';
-            gameBoard.appendChild(threat);
-            threats.push(threat);
-        }
 
         function showUpgradeMenu(defense) {
             selectedTowerForUpgrade = defense;
