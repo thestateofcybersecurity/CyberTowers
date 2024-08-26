@@ -3,35 +3,35 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
+const defenseTypes = {
+    firewall: { cost: 100, damage: 15, range: 120, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
+    antivirus: { cost: 200, damage: 25, range: 150, fireRate: 1200, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
+    encryption: { cost: 300, damage: 35, range: 180, fireRate: 1500, icon: './api/encryption.jpg', projectileColor: '#0000FF' },
+    ai: { cost: 450, damage: 50, range: 200, fireRate: 2000, icon: './api/ai.jpg', projectileColor: '#FFFF00' },
+    ids: { cost: 350, damage: 30, range: 220, fireRate: 1300, icon: './api/ids.jpg', projectileColor: '#800080' },
+    soc: { cost: 550, damage: 45, range: 250, fireRate: 1800, icon: './api/soc.jpg', projectileColor: '#FFA500' },
+    honeypot: { cost: 150, damage: 5, range: 150, fireRate: 800, icon: './api/honeypot.jpg', projectileColor: '#FFD700', special: 'attract' }
+};
+
+const threatTypes = {
+    virus: { health: 50, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
+    trojan: { health: 80, speed: 1, damage: 8, reward: 30, icon: './api/trojan.jpg' },
+    ransomware: { health: 120, speed: 0.7, damage: 15, reward: 50, icon: './api/ransomware.jpg' },
+    worm: { health: 30, speed: 2, damage: 10, reward: 25, icon: './api/worm.jpg' },
+    botnet: { health: 200, speed: 0.5, damage: 20, reward: 80, icon: './api/botnet.jpg' },
+    phishing: { health: 20, speed: 2.5, damage: 3, reward: 15, icon: './api/phishing.jpg' },
+    rootkit: { health: 100, speed: 0.8, damage: 12, reward: 40, icon: './api/rootkit.jpg', invisible: true },
+    apt: { health: 150, speed: 1.2, damage: 18, reward: 60, icon: './api/apt.jpg', evolves: true }
+};
+
 let systemIntegrity = 100;
-let resources = 500;
+let resources = 300; // Reduced starting resources
 let wave = 1;
 let enemies = [];
 let towers = [];
 let projectiles = [];
 let isGamePaused = false;
 let lastSpawnTime = 0;
-
-const defenseTypes = {
-    firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
-    antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
-    encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: './api/encryption.jpg', projectileColor: '#0000FF' },
-    ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' },
-    ids: { cost: 500, damage: 25, range: 180, fireRate: 1800, icon: './api/ids.jpg', projectileColor: '#800080' },
-    soc: { cost: 600, damage: 35, range: 220, fireRate: 2200, icon: './api/soc.jpg', projectileColor: '#FFA500' },
-    honeypot: { cost: 150, damage: 0, range: 150, fireRate: 1000, icon: './api/honeypot.jpg', projectileColor: '#FFD700' }
-};
-
-const threatTypes = {
-    virus: { health: 50, speed: 2, damage: 5, reward: 20, icon: './api/virus.jpg' },
-    trojan: { health: 80, speed: 1, damage: 10, reward: 30, icon: './api/trojan.jpg' },
-    ransomware: { health: 120, speed: 0.5, damage: 20, reward: 50, icon: './api/ransomware.jpg' },
-    worm: { health: 30, speed: 3, damage: 15, reward: 40, icon: './api/worm.jpg' },
-    botnet: { health: 200, speed: 0.3, damage: 30, reward: 100, icon: './api/botnet.jpg' },
-    phishing: { health: 20, speed: 4, damage: 3, reward: 10, icon: './api/phishing.jpg' },
-    rootkit: { health: 100, speed: 0.8, damage: 15, reward: 50, icon: './api/rootkit.jpg', invisible: true },
-    apt: { health: 150, speed: 1.5, damage: 25, reward: 75, icon: './api/apt.jpg', evolves: true }
-};
 
 function updateUI() {
     document.getElementById('scoreValue').textContent = systemIntegrity;
@@ -57,12 +57,15 @@ function placeTower(type) {
 function spawnEnemy() {
     const threatType = Object.keys(threatTypes)[Math.floor(Math.random() * Object.keys(threatTypes).length)];
     const threat = threatTypes[threatType];
+    const waveMultiplier = 1 + (wave - 1) * 0.1; // 10% increase per wave
     enemies.push({
         x: 0,
         y: Math.random() * canvas.height,
         type: threatType,
         ...threat,
-        currentHealth: threat.health
+        currentHealth: threat.health * waveMultiplier,
+        health: threat.health * waveMultiplier,
+        damage: threat.damage * waveMultiplier
     });
 }
 
@@ -84,7 +87,8 @@ function update(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Spawn enemies
-    if (timestamp - lastSpawnTime > 2000 && enemies.length < wave * 5) {
+    const maxEnemies = Math.min(5 + wave * 2, 30); // Cap at 30 enemies per wave
+    if (timestamp - lastSpawnTime > 2000 && enemies.length < maxEnemies) {
         spawnEnemy();
         lastSpawnTime = timestamp;
     }
