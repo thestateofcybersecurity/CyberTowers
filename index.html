@@ -417,14 +417,14 @@
         }
 
         const publicAPI = {
-            selectLevel: function(level) {
+            selectLevel(level) {
                 currentLevel = level;
                 path = levelPaths[level];
                 document.body.style.backgroundColor = level === 'cloud' ? '#E6F3FF' : '#1A1A1A';
                 resetGame();
             },
 
-            selectDefense: function(type) {
+            selectDefense(type) {
                 selectedDefense = type;
                 const preview = document.querySelector('.radius-preview') || document.createElement('div');
                 preview.className = 'radius-preview';
@@ -457,19 +457,19 @@
                 });
             },
 
-            changeSpeed: function() {
+            changeSpeed() {
                 gameSpeed = gameSpeed === 1 ? 2 : gameSpeed === 2 ? 3 : 1;
-                speedValue.textContent = `${gameSpeed}x`;
+                document.getElementById('speedValue').textContent = `${gameSpeed}x`;
                 clearInterval(gameLoop);
                 gameLoop = setInterval(updateGame, 50 / gameSpeed);
             },
-
-            togglePause: function() {
+    
+            togglePause() {
                 isPaused = !isPaused;
-                document.querySelector('button[onclick="game.togglePause()"]').textContent = isPaused ? 'Resume' : 'Pause';
+                document.getElementById('pauseButton').textContent = isPaused ? 'Resume' : 'Pause';
             },
-
-            upgrade: function(attribute) {
+    
+            upgrade(attribute) {
                 if (selectedTowerForUpgrade && resources >= 100) {
                     const type = selectedTowerForUpgrade.dataset.type;
                     const level = parseInt(selectedTowerForUpgrade.dataset.level);
@@ -496,35 +496,48 @@
                 }
             },
 
-            init: function() {
-                this.selectLevel('cloud');
-                gameLoop = setInterval(updateGame, 50);
-                
-                // Add event listeners for game controls
-                document.getElementById('gameBoard').addEventListener('click', (e) => {
-                    if (selectedDefense) {
-                        const rect = gameBoard.getBoundingClientRect();
-                        const x = e.clientX - rect.left - 20;
-                        const y = e.clientY - rect.top - 20;
-                        createDefense(x, y, selectedDefense);
-                        selectedDefense = null;
-                        document.querySelector('.radius-preview')?.remove();
-                    }
-                });
-
-                // Bind methods to ensure correct 'this' context
-                this.selectLevel = this.selectLevel.bind(this);
-                this.selectDefense = this.selectDefense.bind(this);
-                this.changeSpeed = this.changeSpeed.bind(this);
-                this.togglePause = this.togglePause.bind(this);
-                this.upgrade = this.upgrade.bind(this);
-            }
-        };
+        init() {
+            this.selectLevel('cloud');
+            gameLoop = setInterval(updateGame, 50);
+            
+            gameBoard.addEventListener('click', (e) => {
+                if (selectedDefense) {
+                    const rect = gameBoard.getBoundingClientRect();
+                    const x = e.clientX - rect.left - 20;
+                    const y = e.clientY - rect.top - 20;
+                    createDefense(x, y, selectedDefense);
+                    selectedDefense = null;
+                    document.querySelector('.radius-preview')?.remove();
+                }
+            });
+        }
+    };
 
         return publicAPI;
     })();
-
-    document.addEventListener('DOMContentLoaded', game.init);
+    
+    // Initialize the game when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        game.init();
+        
+        // Set up event listeners for buttons
+        document.getElementById('cloudLevelBtn').addEventListener('click', () => game.selectLevel('cloud'));
+        document.getElementById('darkwebLevelBtn').addEventListener('click', () => game.selectLevel('darkweb'));
+        document.getElementById('speedButton').addEventListener('click', game.changeSpeed);
+        document.getElementById('pauseButton').addEventListener('click', game.togglePause);
+        
+        // Set up event listeners for defense selection buttons
+        const defenseTypes = ['firewall', 'antivirus', 'encryption', 'ai', 'ids', 'soc', 'honeypot'];
+        defenseTypes.forEach(type => {
+            document.getElementById(`${type}Btn`).addEventListener('click', () => game.selectDefense(type));
+        });
+        
+        // Set up event listeners for upgrade buttons
+        const upgradeTypes = ['damage', 'range', 'fireRate'];
+        upgradeTypes.forEach(type => {
+            document.getElementById(`upgrade${type.charAt(0).toUpperCase() + type.slice(1)}Btn`).addEventListener('click', () => game.upgrade(type));
+        });
+    });
     </script>
 </body>
 </html>
