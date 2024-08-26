@@ -1,19 +1,21 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Cybersecurity Defense</title>
+    <title>Cybersecurity Tower Defense</title>
     <style>
         body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #0F0;
+            margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            font-family: 'Courier New', monospace;
-            background-color: #000;
-            color: #0F0;
         }
         #gameContainer {
             text-align: center;
@@ -27,29 +29,32 @@
             background-image: url('./api/background.jpg');
             background-size: cover;
         }
+        .defense, .threat, .projectile {
+            position: absolute;
+            background-size: cover;
+        }
         .defense {
             width: 40px;
             height: 40px;
-            position: absolute;
             border-radius: 50%;
-            background-size: cover;
             cursor: pointer;
             z-index: 10;
         }
         .threat {
             width: 30px;
             height: 30px;
-            position: absolute;
-            background-size: cover;
             z-index: 5;
         }
         .projectile {
             width: 10px;
             height: 10px;
-            position: absolute;
             border-radius: 50%;
             z-index: 15;
-            transition: all 0.5s linear;
+        }
+        .path {
+            position: absolute;
+            background-color: rgba(0, 255, 0, 0.3);
+            z-index: 1;
         }
         .radius-preview {
             position: absolute;
@@ -58,17 +63,8 @@
             pointer-events: none;
             z-index: 20;
         }
-        #score, #resources, #wave {
-            font-size: 18px;
+        #gameInfo, #controls {
             margin: 10px 0;
-        }
-        #defenseSelection, #upgradeMenu {
-            margin-top: 10px;
-        }
-        .path {
-            position: absolute;
-            background-color: #0F0;
-            z-index: 1;
         }
         button {
             background-color: #003;
@@ -82,29 +78,10 @@
             background-color: #0F0;
             color: #000;
         }
-        #speedControl {
-            margin-top: 10px;
-        }
-        #speedButton {
-            background-color: #003;
-            color: #0F0;
-            border: 1px solid #0F0;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        #speedButton:hover {
-            background-color: #0F0;
-            color: #000;
-        }
-        #levelSelection {
-            margin-top: 10px;
-        }
         @keyframes flash {
-            0% { opacity: 1; }
+            0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
-            100% { opacity: 1; }
         }
-        
         .upgraded {
             animation: flash 0.5s ease-in-out 3;
         }
@@ -117,20 +94,12 @@
             <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
             <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
         </div>
-
         <div id="gameBoard"></div>
-
         <div id="controls">
             <div id="levelSelection">
-                <button onclick="selectLevel('cloud')">Cloud Network Level</button>
-                <button onclick="selectLevel('darkweb')">Dark Web Level</button>
+                <button onclick="game.selectLevel('cloud')">Cloud Network Level</button>
+                <button onclick="game.selectLevel('darkweb')">Dark Web Level</button>
             </div>
-
-            <div id="tutorial" style="display: none;">
-                <div id="tutorialContent"></div>
-                <button onclick="nextTutorialStep()">Next</button>
-            </div>
-
             <div id="defenseSelection">
                 <button onclick="game.selectDefense('firewall')">Firewall (100 MB)</button>
                 <button onclick="game.selectDefense('antivirus')">Antivirus (200 MB)</button>
@@ -140,212 +109,51 @@
                 <button onclick="game.selectDefense('soc')">SOC (600 MB)</button>
                 <button onclick="game.selectDefense('honeypot')">Honey Pot (150 MB)</button>
             </div>
-
-            <div id="upgradeMenu" style="display: none;">
-                <button onclick="upgrade('damage')">Upgrade Damage (100 MB)</button>
-                <button onclick="upgrade('range')">Upgrade Range (100 MB)</button>
-                <button onclick="upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
-            </div>
-
             <div id="speedControl">
-                <button id="speedButton" onclick="game.changeSpeed()">Speed: <span id="speedValue">1x</span></button>
+                <button onclick="game.changeSpeed()">Speed: <span id="speedValue">1x</span></button>
             </div>
-            
-            <div id="pauseControl">
-                <button id="pauseButton" onclick="game.togglePause()">Pause</button>
-            </div>
+            <button onclick="game.togglePause()">Pause</button>
+        </div>
+        <div id="upgradeMenu" style="display: none;">
+            <button onclick="game.upgrade('damage')">Upgrade Damage (100 MB)</button>
+            <button onclick="game.upgrade('range')">Upgrade Range (100 MB)</button>
+            <button onclick="game.upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
+        </div>
+        <div id="tutorial" style="display: none;">
+            <div id="tutorialContent"></div>
+            <button onclick="game.nextTutorialStep()">Next</button>
+        </div>
     </div>
-    
-<script>
-    window.game = {};
-    
-    document.addEventListener('DOMContentLoaded', function() {
 
+    <script>
+    const game = (() => {
         let wave = 1;
         let resources = 500;
+        let score = 100;
         let gameSpeed = 1;
         let gameLoop;
         let isPaused = false;
         let currentLevel = 'cloud';
         let threats = [];
         let defenses = [];
-        let projectiles = [];
         let selectedDefense = null;
         let selectedTowerForUpgrade = null;
-        let processingPower = 100;
-        let dataBandwidth = 100;
-        let path = []; // Declare path at the top level
+        let path = [];
 
         const gameBoard = document.getElementById('gameBoard');
         const scoreValue = document.getElementById('scoreValue');
         const resourcesValue = document.getElementById('resourcesValue');
         const waveValue = document.getElementById('waveValue');
-        const speedButton = document.getElementById('speedButton');
+        const speedValue = document.getElementById('speedValue');
 
-        const tutorialSteps = [
-            "Welcome to Cybersecurity Defense! Your goal is to protect the system from various cyber threats.",
-            "Click on a defense type and then click on the game board to place it.",
-            "Different defenses have unique abilities. Experiment to find the best strategy!",
-            "Use the speed control to fast-forward the game if you want more challenge.",
-            "Good luck defending against the cyber threats!"
-        ];
-        
-        let currentTutorialStep = 0;
-        
-        function startTutorial() {
-            document.getElementById('tutorial').style.display = 'block';
-            showTutorialStep();
-        }
-        
-        function showTutorialStep() {
-            document.getElementById('tutorialContent').textContent = tutorialSteps[currentTutorialStep];
-        }
-        
-        function nextTutorialStep() {
-            currentTutorialStep++;
-            if (currentTutorialStep < tutorialSteps.length) {
-                showTutorialStep();
-            } else {
-                document.getElementById('tutorial').style.display = 'none';
-                currentTutorialStep = 0;
-            }
-        }
-        
-        // Call startTutorial() when the game starts or when a "Help" button is clicked
-        
-        // Game functions
-        window.game.selectLevel = function(level) {
-            currentLevel = level;
-            if (level === 'cloud') {
-                path = cloudNetworkPath;
-                document.body.style.backgroundColor = '#E6F3FF';
-            } else if (level === 'darkweb') {
-                path = darkWebPath;
-                document.body.style.backgroundColor = '#1A1A1A';
-            }
-            createPath();
-            startWave();
-        };
-
-        window.game.selectDefense = function(type) {
-            document.addEventListener('DOMContentLoaded', function() {
-                let selectedDefense = type;
-                let preview = document.querySelector('.radius-preview');
-            
-                if (!preview) {
-                    preview = document.createElement('div');
-                    preview.className = 'radius-preview';
-                    gameBoard.appendChild(preview);
-                }
-            
-                // Handle different types of defenses, particularly Honey Pot
-                if (type === 'honeypot') {
-                    preview.style.display = 'none';  // Honey Pot doesn't need a range preview
-                } else {
-                    preview.style.width = `${defenseTypes[type].range * 2}px`;
-                    preview.style.height = `${defenseTypes[type].range * 2}px`;
-                    preview.style.display = 'block';
-                }
-            
-                const movePreview = (e) => {
-                    const rect = gameBoard.getBoundingClientRect();
-                    preview.style.left = `${e.clientX - rect.left - defenseTypes[type].range}px`;
-                    preview.style.top = `${e.clientY - rect.top - defenseTypes[type].range}px`;
-                };
-            
-                const removePreview = () => {
-                    preview.style.display = 'none';
-                    gameBoard.removeEventListener('mousemove', movePreview);
-                };
-            
-                gameBoard.addEventListener('mousemove', movePreview);
-                gameBoard.addEventListener('mouseleave', removePreview);
-                gameBoard.addEventListener('click', removePreview);
-            });
-        };
-
-       window.game.changeSpeed = function() {
-            document.addEventListener('DOMContentLoaded', function() {
-            if (gameSpeed === 1) {
-                gameSpeed = 2;
-                speedButton.textContent = 'Speed: 2x';
-            } else if (gameSpeed === 2) {
-                gameSpeed = 3;
-                speedButton.textContent = 'Speed: 3x';
-            } else {
-                gameSpeed = 1;
-                speedButton.textContent = 'Speed: 1x';
-            }
-            
-            clearInterval(gameLoop);
-            gameLoop = setInterval(updateGame, 50 / gameSpeed);
-            });
-        };
-
-        window.game.togglePause = function() {
-            document.addEventListener('DOMContentLoaded', function() {
-            if (isPaused) {
-                clearInterval(gameLoop);
-                document.getElementById('pauseButton').textContent = 'Resume';
-                } else {
-                    gameLoop = setInterval(updateGame, 50 / gameSpeed);
-                    document.getElementById('pauseButton').textContent = 'Pause';
-                }
-            });
-        };
-        
         const defenseTypes = {
             firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
             antivirus: { cost: 200, damage: 20, range: 150, fireRate: 1500, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
             encryption: { cost: 300, damage: 30, range: 200, fireRate: 2000, icon: './api/encryption.jpg', projectileColor: '#0000FF' },
             ai: { cost: 400, damage: 40, range: 250, fireRate: 2500, icon: './api/ai.jpg', projectileColor: '#FFFF00' },
-            ids: { 
-                cost: 500, 
-                damage: 25, 
-                range: 180, 
-                fireRate: 1800, 
-                icon: './api/ids.jpg', 
-                projectileColor: '#800080',
-                ability: function(threats) {
-                    // Detect and mark all threats in range
-                    threats.forEach(threat => {
-                        if (this.inRange(threat)) {
-                            threat.dataset.detected = 'true';
-                        }
-                    });
-                }
-            },
-            soc: { 
-                cost: 600, 
-                damage: 35, 
-                range: 220, 
-                fireRate: 2200, 
-                icon: './api/soc.jpg', 
-                projectileColor: '#FFA500',
-                ability: function(threats) {
-                    // Coordinate all defenses to focus fire on the strongest threat
-                    const strongestThreat = threats.reduce((max, threat) => 
-                        parseInt(threat.dataset.health) > parseInt(max.dataset.health) ? threat : max
-                    );
-                    defenses.forEach(defense => defense.target = strongestThreat);
-                }
-            },
-            honeypot: { 
-                cost: 150, 
-                damage: 0, 
-                range: 150, 
-                fireRate: 1000, 
-                icon: './api/honeypot.jpg', 
-                projectileColor: '#FFD700',
-                ability: function(threats) {
-                    // Attract nearby threats and slow them down
-                    threats.forEach(threat => {
-                        if (this.inRange(threat)) {
-                            threat.dataset.speed = parseFloat(threat.dataset.speed) * 0.5;
-                        }
-                    });
-                }
-            }
+            ids: { cost: 500, damage: 25, range: 180, fireRate: 1800, icon: './api/ids.jpg', projectileColor: '#800080' },
+            soc: { cost: 600, damage: 35, range: 220, fireRate: 2200, icon: './api/soc.jpg', projectileColor: '#FFA500' },
+            honeypot: { cost: 150, damage: 0, range: 150, fireRate: 1000, icon: './api/honeypot.jpg', projectileColor: '#FFD700' }
         };
 
         const threatTypes = {
@@ -359,75 +167,78 @@
             apt: { health: 150, speed: 1.5, damage: 25, reward: 75, icon: './api/apt.jpg', evolves: true }
         };
 
-        const cloudNetworkPath = [
-            {x: 0, y: 50},
-            {x: 400, y: 50},
-            {x: 400, y: 250},
-            {x: 800, y: 250},
-            {x: 800, y: 450},
-            {x: 400, y: 450},
-            {x: 400, y: 350},
-            {x: 0, y: 350},
-        ];
-    
-        const darkWebPath = [
-            {x: 0, y: 100},
-            {x: 300, y: 100},
-            {x: 300, y: 400},
-            {x: 600, y: 400},
-            {x: 600, y: 200},
-            {x: 100, y: 200},
-            {x: 100, y: 300},
-            {x: 800, y: 300},
-        ];
-    
-    function createPath() {
-            // Clear existing path elements
-            const existingPaths = document.querySelectorAll('.path');
-            existingPaths.forEach(p => p.remove());
-    
-            // Create new path segments
+        const levelPaths = {
+            cloud: [
+                {x: 0, y: 50}, {x: 400, y: 50}, {x: 400, y: 250}, {x: 800, y: 250},
+                {x: 800, y: 450}, {x: 400, y: 450}, {x: 400, y: 350}, {x: 0, y: 350}
+            ],
+            darkweb: [
+                {x: 0, y: 100}, {x: 300, y: 100}, {x: 300, y: 400}, {x: 600, y: 400},
+                {x: 600, y: 200}, {x: 100, y: 200}, {x: 100, y: 300}, {x: 800, y: 300}
+            ]
+        };
+
+        function createPath() {
+            gameBoard.querySelectorAll('.path').forEach(p => p.remove());
             for (let i = 0; i < path.length - 1; i++) {
                 const start = path[i];
                 const end = path[i + 1];
                 const pathSegment = document.createElement('div');
                 pathSegment.className = 'path';
-                
                 if (start.x === end.x) {
-                    // Vertical segment
                     pathSegment.style.left = `${start.x}px`;
                     pathSegment.style.top = `${Math.min(start.y, end.y)}px`;
                     pathSegment.style.width = '40px';
                     pathSegment.style.height = `${Math.abs(end.y - start.y)}px`;
                 } else {
-                    // Horizontal segment
                     pathSegment.style.left = `${Math.min(start.x, end.x)}px`;
                     pathSegment.style.top = `${start.y}px`;
                     pathSegment.style.width = `${Math.abs(end.x - start.x)}px`;
                     pathSegment.style.height = '40px';
                 }
-                
                 gameBoard.appendChild(pathSegment);
             }
         }
-    
-        function startCloudNetworkLevel() {
-            path = cloudNetworkPath;
-            createPath();
-            startWave();
+
+        function createDefense(x, y, type) {
+            if (resources >= defenseTypes[type].cost) {
+                const defense = document.createElement('div');
+                defense.className = 'defense';
+                defense.style.left = `${x}px`;
+                defense.style.top = `${y}px`;
+                defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
+                defense.dataset.type = type;
+                defense.dataset.level = '1';
+                defense.onclick = () => showUpgradeMenu(defense);
+                gameBoard.appendChild(defense);
+                resources -= defenseTypes[type].cost;
+                updateResources();
+                defenses.push(defense);
+                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate / gameSpeed);
+            }
         }
-    
-        function startDarkWebLevel() {
-            path = darkWebPath;
-            createPath();
-            startWave();
+
+        function createThreat(type) {
+            if (path.length === 0) {
+                console.error('Path is not defined. Cannot create threat.');
+                return;
+            }
+            const threat = document.createElement('div');
+            threat.className = 'threat';
+            threat.style.left = `${path[0].x}px`;
+            threat.style.top = `${path[0].y}px`;
+            threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
+            threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
+            threat.dataset.type = type;
+            threat.dataset.pathIndex = '0';
+            gameBoard.appendChild(threat);
+            threats.push(threat);
         }
 
         function fireProjectile(defense) {
             const defenseRect = defense.getBoundingClientRect();
             const defenseType = defense.dataset.type;
             const level = parseInt(defense.dataset.level);
-        
             for (let threat of threats) {
                 const threatRect = threat.getBoundingClientRect();
                 const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
@@ -447,14 +258,14 @@
                         projectile.style.left = `${endX}px`;
                         projectile.style.top = `${endY}px`;
                     });
-        
+
                     projectile.addEventListener('transitionend', () => {
                         if (projectile.parentNode === gameBoard) {
                             gameBoard.removeChild(projectile);
                         }
                         applyDamage(threat, defenseType, level);
                     });
-        
+
                     break;
                 }
             }
@@ -468,44 +279,10 @@
                 }
                 threats = threats.filter(t => t !== threat);
                 resources += threatTypes[threat.dataset.type].reward;
-                resourcesValue.textContent = resources;
+                updateResources();
             } else {
                 threat.dataset.health = threatHealth.toString();
             }
-        }
-
-        function createDefense(x, y, type) {
-            if (resources >= defenseTypes[type].cost && processingPower >= 10) {
-                const defense = document.createElement('div');
-                defense.className = 'defense';
-                defense.style.left = `${x}px`;
-                defense.style.top = `${y}px`;
-                defense.style.backgroundImage = `url('${defenseTypes[type].icon}')`;
-                defense.dataset.type = type;
-                defense.dataset.level = '1';
-                defense.onclick = () => showUpgradeMenu(defense);
-                gameBoard.appendChild(defense);
-
-                processingPower -= 10;
-                updateResources();
-                resources -= defenseTypes[type].cost;
-                resourcesValue.textContent = resources;
-                defenses.push(defense);
-                setInterval(() => fireProjectile(defense), defenseTypes[type].fireRate / gameSpeed);
-            }
-        }
-
-        function createThreat(type) {
-            const threat = document.createElement('div');
-            threat.className = 'threat';
-            threat.style.left = `${path[0].x}px`;
-            threat.style.top = `${path[0].y}px`;
-            threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
-            threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
-            threat.dataset.type = type;
-            threat.dataset.pathIndex = 0;
-            gameBoard.appendChild(threat);
-            threats.push(threat);
         }
 
         function moveThreats() {
@@ -516,14 +293,13 @@
                 
                 if (threatTypes[type].invisible) {
                     threat.style.opacity = '0.5';
-                    // Only AI defenses can detect invisible threats
                     defenses.forEach(defense => {
                         if (defense.dataset.type === 'ai' && isInRange(defense, threat)) {
                             threat.style.opacity = '1';
                         }
                     });
                 }
-        
+
                 if (threatTypes[type].evolves) {
                     const evolutionRate = 1 + (wave * 0.05);
                     threat.dataset.health = (parseInt(threat.dataset.health) * evolutionRate).toString();
@@ -533,14 +309,14 @@
                     gameBoard.removeChild(threat);
                     threats.splice(index, 1);
                     score -= threatTypes[type].damage;
-                    scoreValue.textContent = Math.max(0, score);
+                    updateScore();
                     if (score <= 0) {
                         alert('System Compromised! Game Over!');
-                        location.reload();
+                        resetGame();
                     }
                     return;
                 }
-                        
+                
                 const currentX = parseInt(threat.style.left);
                 const currentY = parseInt(threat.style.top);
                 const dx = targetPoint.x - currentX;
@@ -548,7 +324,7 @@
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 
                 if (distance < threatTypes[type].speed * gameSpeed) {
-                    threat.dataset.pathIndex = pathIndex + 1;
+                    threat.dataset.pathIndex = (pathIndex + 1).toString();
                     threat.style.left = `${targetPoint.x}px`;
                     threat.style.top = `${targetPoint.y}px`;
                 } else {
@@ -567,248 +343,13 @@
             return distance < defenseTypes[defense.dataset.type].range * Math.sqrt(parseInt(defense.dataset.level));
         }
 
-        function moveProjectiles() {
-            projectiles.forEach((projectile, index) => {
-                const projectileRect = projectile.element.getBoundingClientRect();
-                const threatRect = projectile.target.getBoundingClientRect();
-                const dx = threatRect.left - projectileRect.left;
-                const dy = threatRect.top - projectileRect.top;
-                const distance = Math.hypot(dx, dy);
-                if (distance < 5) {
-                    gameBoard.removeChild(projectile.element);
-                    projectiles.splice(index, 1);
-                    const threatHealth = parseInt(projectile.target.dataset.health) - projectile.damage;
-                    if (threatHealth <= 0) {
-                        gameBoard.removeChild(projectile.target);
-                        threats = threats.filter(t => t !== projectile.target);
-                        resources += threatTypes[projectile.target.dataset.type].reward;
-                        resourcesValue.textContent = resources;
-                    } else {
-                        projectile.target.dataset.health = threatHealth;
-                    }
-                } else {
-                    const speed = 5;
-                    const vx = (dx / distance) * speed;
-                    const vy = (dy / distance) * speed;
-                    projectile.element.style.left = `${projectileRect.left + vx}px`;
-                    projectile.element.style.top = `${projectileRect.top + vy}px`;
-                }
-            });
-        }
-
-        function selectDefense(type) {
-            selectedDefense = type;
-            let preview = document.querySelector('.radius-preview');
-        
-            if (!preview) {
-                preview = document.createElement('div');
-                preview.className = 'radius-preview';
-                gameBoard.appendChild(preview);
-            }
-        
-            // Handle different types of defenses, particularly Honey Pot
-            if (type === 'honeypot') {
-                preview.style.display = 'none';  // Honey Pot doesn't need a range preview
-            } else {
-                preview.style.width = `${defenseTypes[type].range * 2}px`;
-                preview.style.height = `${defenseTypes[type].range * 2}px`;
-                preview.style.display = 'block';
-            }
-        
-            const movePreview = (e) => {
-                const rect = gameBoard.getBoundingClientRect();
-                preview.style.left = `${e.clientX - rect.left - defenseTypes[type].range}px`;
-                preview.style.top = `${e.clientY - rect.top - defenseTypes[type].range}px`;
-            };
-        
-            const removePreview = () => {
-                preview.style.display = 'none';
-                gameBoard.removeEventListener('mousemove', movePreview);
-            };
-        
-            gameBoard.addEventListener('mousemove', movePreview);
-            gameBoard.addEventListener('mouseleave', removePreview);
-            gameBoard.addEventListener('click', removePreview);
-        }
-        
-        function showUpgradeMenu(defense) {
-            selectedTowerForUpgrade = defense;
-            upgradeMenu.style.display = 'block';
-            const defenseRect = defense.getBoundingClientRect();
-            const radius = document.querySelector('.radius');
-            radius.style.left = `${defenseRect.left - parseInt(radius.style.width)/2 + 20}px`;
-            radius.style.top = `${defenseRect.top - parseInt(radius.style.height)/2 + 20}px`;
-            radius.style.display = 'block';
-        }
-
-        function upgrade(attribute) {
-            if (selectedTowerForUpgrade && resources >= 100) {
-                const type = selectedTowerForUpgrade.dataset.type;
-                const level = parseInt(selectedTowerForUpgrade.dataset.level);
-                selectedTowerForUpgrade.dataset.level = level + 1;
-                resources -= 100;
-                resourcesValue.textContent = resources;
-                
-                switch(attribute) {
-                    case 'damage':
-                        defenseTypes[type].damage += 10 * level;
-                        break;
-                    case 'range':
-                        defenseTypes[type].range += 20 * level;
-                        updateRangeVisual(selectedTowerForUpgrade);
-                        break;
-                    case 'fireRate':
-                        defenseTypes[type].fireRate = Math.max(100, defenseTypes[type].fireRate - 100 * level);
-                        break;
-                    default:
-                        console.warn('Unknown upgrade attribute:', attribute);
-                        return;
-                }
-        
-                upgradeMenu.style.display = 'none';
-                document.querySelector('.radius').style.display = 'none';
-        
-                selectedTowerForUpgrade.classList.add('upgraded');
-                setTimeout(() => selectedTowerForUpgrade.classList.remove('upgraded'), 1500);
-            }
-        }
-        
-        function updateRangeVisual(defense) {
-            const type = defense.dataset.type;
-            const level = parseInt(defense.dataset.level);
-            const newRange = defenseTypes[type].range * Math.sqrt(level);
-            const radius = document.querySelector('.radius');
-            if (radius) {
-                radius.style.width = `${newRange * 2}px`;
-                radius.style.height = `${newRange * 2}px`;
-                const defenseRect = defense.getBoundingClientRect();
-                radius.style.left = `${defenseRect.left - newRange + 20}px`;
-                radius.style.top = `${defenseRect.top - newRange + 20}px`;
-            }
-        }
-
         function startWave() {
-            const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
+            const numThreats = Math.min(wave * 5, 50);
             const threatTypesList = Object.keys(threatTypes);
             
             for (let i = 0; i < numThreats; i++) {
                 setTimeout(() => {
                     let randomType;
-        
-                    if (i % 5 === 0) {
-                        // Every 5th threat is part of a combination attack
-                        randomType = "phishing"; // Start with a phishing attack
-                    } else if (i % 5 === 1) {
-                        randomType = "botnet"; // Follow up with a botnet attack
-                    } else if (i % 5 === 2) {
-                        randomType = "worm"; // Finish with a worm
-                    } else {
-                        randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
-                    }
-                    
-                    createThreat(randomType);
-                }, i * (2000 / Math.sqrt(wave)) / gameSpeed);
-            }
-        }
-
-        function playerUsesFirewalls() {
-            return defenses.filter(d => d.dataset.type === 'firewall').length > 3;
-        }
-        
-        function playerUsesAntivirus() {
-            return defenses.filter(d => d.dataset.type === 'antivirus').length > 3;
-        }
-
-        function togglePause() {
-            isPaused = !isPaused;
-            if (isPaused) {
-                clearInterval(gameLoop);
-                document.getElementById('pauseButton').textContent = 'Resume';
-            } else {
-                gameLoop = setInterval(updateGame, 50 / gameSpeed);
-                document.getElementById('pauseButton').textContent = 'Pause';
-            }
-        }
-    
-        function updateGame() {
-            if (!isPaused) {
-                moveThreats();
-                if (threats.length === 0) {
-                    wave++;
-                    waveValue.textContent = wave;
-                    startWave();
-                    resources += 100 + (wave * 10);
-                    resourcesValue.textContent = resources;
-                }
-            }
-        }
-        
-        function resetGame() {
-            wave = 1;
-            resources = 500;
-            threats = [];
-            defenses = [];
-            startWave();
-        }
-            
-        function updateResources() {
-            resourcesValue.textContent = resources;
-        }
-
-        function changeSpeed() {
-            if (gameSpeed === 1) {
-                gameSpeed = 2;
-                speedButton.textContent = 'Speed: 2x';
-            } else if (gameSpeed === 2) {
-                gameSpeed = 3;
-                speedButton.textContent = 'Speed: 3x';
-            } else {
-                gameSpeed = 1;
-                speedButton.textContent = 'Speed: 1x';
-            }
-            
-            clearInterval(gameLoop);
-            gameLoop = setInterval(updateGame, 50 / gameSpeed);
-        }
-    
-        function selectLevel(level) {
-            currentLevel = level;
-            if (level === 'cloud') {
-                path = cloudNetworkPath;
-                document.body.style.backgroundColor = '#E6F3FF';
-            } else if (level === 'darkweb') {
-                path = darkWebPath;
-                document.body.style.backgroundColor = '#1A1A1A';
-            }
-            createPath();
-            startWave();
-        }
-    
-        function createThreat(type) {
-            if (path.length === 0) {
-                console.error('Path is not defined. Cannot create threat.');
-                return;
-            }
-            const threat = document.createElement('div');
-            threat.className = 'threat';
-            threat.style.left = `${path[0].x}px`;
-            threat.style.top = `${path[0].y}px`;
-            threat.style.backgroundImage = `url('${threatTypes[type].icon}')`;
-            threat.dataset.health = threatTypes[type].health * Math.pow(1.1, wave - 1);
-            threat.dataset.type = type;
-            threat.dataset.pathIndex = 0;
-            gameBoard.appendChild(threat);
-            threats.push(threat);
-        }
-    
-        function startWave() {
-            const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
-            const threatTypesList = Object.keys(threatTypes);
-            
-            for (let i = 0; i < numThreats; i++) {
-                setTimeout(() => {
-                    let randomType;
-        
                     if (i % 5 === 0) {
                         randomType = "phishing";
                     } else if (i % 5 === 1) {
@@ -818,64 +359,153 @@
                     } else {
                         randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
                     }
-                    
                     createThreat(randomType);
                 }, i * (2000 / Math.sqrt(wave)) / gameSpeed);
             }
         }
-        
-        function initGame() {
-            if (speedButton) {
-                speedButton.addEventListener('click', changeSpeed);
-            } else {
-                console.error('Speed button not found in the DOM');
-            }
-    
-            if (gameBoard) {
-                gameBoard.addEventListener('click', handleGameBoardClick);
-            } else {
-                console.error('Game board not found in the DOM');
-            }
-    
-            document.addEventListener('keydown', handleKeyPress);
-    
-            selectLevel('cloud'); // Start with cloud level by default
-        }
-    
-        function handleGameBoardClick(e) {
-            if (selectedDefense) {
-                const rect = gameBoard.getBoundingClientRect();
-                const x = e.clientX - rect.left - 20;
-                const y = e.clientY - rect.top - 20;
-                createDefense(x, y, selectedDefense);
-                selectedDefense = null;
+
+        function updateGame() {
+            if (!isPaused) {
+                moveThreats();
+                if (threats.length === 0) {
+                    wave++;
+                    updateWave();
+                    startWave();
+                    resources += 100 + (wave * 10);
+                    updateResources();
+                }
             }
         }
-    
-        function handleKeyPress(e) {
-            switch(e.key) {
-                case '1':
-                    selectDefense('firewall');
-                    break;
-                case '2':
-                    selectDefense('antivirus');
-                    break;
-                case '3':
-                    selectDefense('encryption');
-                    break;
-                case '4':
-                    selectDefense('ai');
-                    break;
-            }
+
+        function showUpgradeMenu(defense) {
+            selectedTowerForUpgrade = defense;
+            document.getElementById('upgradeMenu').style.display = 'block';
+            const defenseRect = defense.getBoundingClientRect();
+            const radius = document.createElement('div');
+            radius.className = 'radius-preview';
+            radius.style.width = `${defenseTypes[defense.dataset.type].range * 2}px`;
+            radius.style.height = `${defenseTypes[defense.dataset.type].range * 2}px`;
+            radius.style.left = `${defenseRect.left - defenseTypes[defense.dataset.type].range + 20}px`;
+            radius.style.top = `${defenseRect.top - defenseTypes[defense.dataset.type].range + 20}px`;
+            gameBoard.appendChild(radius);
         }
-    
-        // Initialize the game
-        initGame();
-    
-        // Start the game loop
-        gameLoop = setInterval(updateGame, 50);
-    });
-    
+
+        function updateScore() {
+            scoreValue.textContent = score;
+        }
+
+        function updateResources() {
+            resourcesValue.textContent = resources;
+        }
+
+        function updateWave() {
+            waveValue.textContent = wave;
+        }
+
+        function resetGame() {
+            wave = 1;
+            resources = 500;
+            score = 100;
+            threats = [];
+            defenses = [];
+            gameBoard.innerHTML = '';
+            updateScore();
+            updateResources();
+            updateWave();
+            createPath();
+            startWave();
+        }
+
+        const publicAPI = {
+            selectLevel: function(level) {
+                currentLevel = level;
+                path = levelPaths[level];
+                document.body.style.backgroundColor = level === 'cloud' ? '#E6F3FF' : '#1A1A1A';
+                resetGame();
+            },
+
+            selectDefense: function(type) {
+                selectedDefense = type;
+                const preview = document.querySelector('.radius-preview') || document.createElement('div');
+                preview.className = 'radius-preview';
+                preview.style.width = `${defenseTypes[type].range * 2}px`;
+                preview.style.height = `${defenseTypes[type].range * 2}px`;
+                gameBoard.appendChild(preview);
+
+                const movePreview = (e) => {
+                    const rect = gameBoard.getBoundingClientRect();
+                    preview.style.left = `${e.clientX - rect.left - defenseTypes[type].range}px`;
+                    preview.style.top = `${e.clientY - rect.top - defenseTypes[type].range}px`;
+                };
+
+                const removePreview = () => {
+                    preview.remove();
+                    gameBoard.removeEventListener('mousemove', movePreview);
+                };
+
+                gameBoard.addEventListener('mousemove', movePreview);
+                gameBoard.addEventListener('mouseleave', removePreview);
+                gameBoard.addEventListener('click', (e) => {
+                    if (selectedDefense) {
+                        const rect = gameBoard.getBoundingClientRect();
+                        const x = e.clientX - rect.left - 20;
+                        const y = e.clientY - rect.top - 20;
+                        createDefense(x, y, selectedDefense);
+                        selectedDefense = null;
+                        removePreview();
+                    }
+                });
+            },
+
+            changeSpeed: function() {
+                gameSpeed = gameSpeed === 1 ? 2 : gameSpeed === 2 ? 3 : 1;
+                speedValue.textContent = `${gameSpeed}x`;
+                clearInterval(gameLoop);
+                gameLoop = setInterval(updateGame, 50 / gameSpeed);
+            },
+
+            togglePause: function() {
+                isPaused = !isPaused;
+                document.querySelector('button[onclick="game.togglePause()"]').textContent = isPaused ? 'Resume' : 'Pause';
+            },
+
+            upgrade: function(attribute) {
+                if (selectedTowerForUpgrade && resources >= 100) {
+                    const type = selectedTowerForUpgrade.dataset.type;
+                    const level = parseInt(selectedTowerForUpgrade.dataset.level);
+                    selectedTowerForUpgrade.dataset.level = (level + 1).toString();
+                    resources -= 100;
+                    updateResources();
+
+                    switch(attribute) {
+                        case 'damage':
+                            defenseTypes[type].damage += 10;
+                            break;
+                        case 'range':
+                            defenseTypes[type].range += 20;
+                            break;
+                        case 'fireRate':
+                            defenseTypes[type].fireRate = Math.max(100, defenseTypes[type].fireRate - 100);
+                            break;
+                    }
+
+                    selectedTowerForUpgrade.classList.add('upgraded');
+                    setTimeout(() => selectedTowerForUpgrade.classList.remove('upgraded'), 1500);
+                    document.getElementById('upgradeMenu').style.display = 'none';
+                    document.querySelector('.radius-preview').remove();
+                }
+            },
+
+            init: function() {
+                this.selectLevel('cloud');
+                gameLoop = setInterval(updateGame, 50);
+            }
+        };
+
+        return publicAPI;
+    })();
+
+    document.addEventListener('DOMContentLoaded', game.init);
     </script>
 </body>
 </html>
