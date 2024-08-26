@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Tower Defense</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="gameInfo">
+            <div id="score">System Integrity: <span id="scoreValue">100</span>%</div>
+            <div id="resources">Resources: <span id="resourcesValue">500</span> MB</div>
+            <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
+        </div>
+        <canvas id="gameBoard"></canvas>
+        <div id="controls">
+            <div id="defenseSelection">
+                <button onclick="placeTower('Firewall')">Firewall (100 MB)</button>
+                <button onclick="placeTower('Antivirus')">Antivirus (200 MB)</button>
+                <button onclick="placeTower('Encryption')">Encryption (300 MB)</button>
+                <button onclick="placeTower('AI Defense')">AI Defense (400 MB)</button>
+                <button onclick="placeTower('IDS')">IDS (500 MB)</button>
+                <button onclick="placeTower('SOC')">SOC (600 MB)</button>
+                <button onclick="placeTower('Honey Pot')">Honey Pot (150 MB)</button>
+            </div>
+            <button onclick="togglePause()">Pause</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
