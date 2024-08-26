@@ -232,6 +232,7 @@
             threat.dataset.pathIndex = '0';
             gameBoard.appendChild(threat);
             threats.push(threat);
+            console.log(`Threat of type ${type} created and added to the game board`);
         }
 
         function fireProjectile(defense) {
@@ -408,41 +409,44 @@
             }
         };
         
-          function startWave() {
-                if (isWaveInProgress) return;
-                
-                isWaveInProgress = true;
-                const numThreats = Math.min(wave * 5, 50); // Cap at 50 threats per wave
-                const threatTypesList = Object.keys(threatTypes);
-                let threatsCreated = 0;
+        function startWave() {
+            if (isWaveInProgress) return;
             
-                function createNextThreat() {
-                    if (threatsCreated >= numThreats) {
-                        isWaveInProgress = false;
-                        return;
-                    }
-            
-                    let randomType;
-                    if (threatsCreated % 5 === 0) {
-                        randomType = "phishing";
-                    } else if (threatsCreated % 5 === 1) {
-                        randomType = "botnet";
-                    } else if (threatsCreated % 5 === 2) {
-                        randomType = "worm";
-                    } else {
-                        randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
-                    }
-            
-                    createThreat(randomType);
-                    threatsCreated++;
-            
-                    // Schedule the next threat creation
-                    setTimeout(createNextThreat, 2000 / Math.sqrt(wave) / gameSpeed);
+            isWaveInProgress = true;
+            const numThreats = Math.min(wave * 5, 50);
+            console.log(`Starting wave ${wave} with ${numThreats} threats`);
+            const threatTypesList = Object.keys(threatTypes);
+            let threatsCreated = 0;
+        
+            function createNextThreat() {
+                if (threatsCreated >= numThreats) {
+                    console.log(`Wave complete. Created ${threatsCreated} threats`);
+                    isWaveInProgress = false;
+                    return;
                 }
-            
-                // Start creating threats
-                createNextThreat();
+        
+                let randomType;
+                if (threatsCreated % 5 === 0) {
+                    randomType = "phishing";
+                } else if (threatsCreated % 5 === 1) {
+                    randomType = "botnet";
+                } else if (threatsCreated % 5 === 2) {
+                    randomType = "worm";
+                } else {
+                    randomType = threatTypesList[Math.floor(Math.random() * threatTypesList.length)];
+                }
+        
+                createThreat(randomType);
+                threatsCreated++;
+                console.log(`Created threat ${threatsCreated} of type ${randomType}`);
+        
+                // Schedule the next threat creation
+                setTimeout(createNextThreat, 2000 / Math.sqrt(wave) / gameSpeed);
             }
+        
+            // Start creating threats
+            createNextThreat();
+        }
         
             function updateGame() {
                 if (!isPaused) {
