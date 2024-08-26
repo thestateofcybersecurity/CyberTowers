@@ -239,33 +239,45 @@
             const defenseRect = defense.getBoundingClientRect();
             const defenseType = defense.dataset.type;
             const level = parseInt(defense.dataset.level);
+            
             for (let threat of threats) {
                 const threatRect = threat.getBoundingClientRect();
-                const distance = Math.hypot(defenseRect.left - threatRect.left, defenseRect.top - threatRect.top);
+                const distance = Math.hypot(
+                    defenseRect.left + defenseRect.width / 2 - (threatRect.left + threatRect.width / 2),
+                    defenseRect.top + defenseRect.height / 2 - (threatRect.top + threatRect.height / 2)
+                );
+                
                 if (distance < defenseTypes[defenseType].range * Math.sqrt(level)) {
                     const projectile = document.createElement('div');
                     projectile.className = 'projectile';
-                    projectile.style.left = `${defenseRect.left + 20}px`;
-                    projectile.style.top = `${defenseRect.top + 20}px`;
+                    
+                    // Set initial position to the center of the defense tower
+                    const startX = defenseRect.left + defenseRect.width / 2 - 5; // 5 is half the projectile width
+                    const startY = defenseRect.top + defenseRect.height / 2 - 5; // 5 is half the projectile height
+                    
+                    projectile.style.left = `${startX}px`;
+                    projectile.style.top = `${startY}px`;
                     projectile.style.backgroundColor = defenseTypes[defenseType].projectileColor;
                     gameBoard.appendChild(projectile);
                     
-                    const endX = threatRect.left + 15;
-                    const endY = threatRect.top + 15;
+                    // Calculate end position (center of the threat)
+                    const endX = threatRect.left + threatRect.width / 2 - 5;
+                    const endY = threatRect.top + threatRect.height / 2 - 5;
                     
-                    projectile.style.transition = `all ${distance / 200}s linear`;
+                    // Use requestAnimationFrame for smooth animation
                     requestAnimationFrame(() => {
+                        projectile.style.transition = `all ${distance / 200}s linear`;
                         projectile.style.left = `${endX}px`;
                         projectile.style.top = `${endY}px`;
                     });
-
+        
                     projectile.addEventListener('transitionend', () => {
                         if (projectile.parentNode === gameBoard) {
                             gameBoard.removeChild(projectile);
                         }
                         applyDamage(threat, defenseType, level);
                     });
-
+        
                     break;
                 }
             }
