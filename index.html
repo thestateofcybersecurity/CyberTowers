@@ -132,13 +132,13 @@
             </div>
 
             <div id="defenseSelection">
-                <button onclick="selectDefense('firewall')">Firewall (100 MB)</button>
-                <button onclick="selectDefense('antivirus')">Antivirus (200 MB)</button>
-                <button onclick="selectDefense('encryption')">Encryption (300 MB)</button>
-                <button onclick="selectDefense('ai')">AI Defense (400 MB)</button>
-                <button onclick="selectDefense('ids')">IDS (500 MB)</button>
-                <button onclick="selectDefense('soc')">SOC (600 MB)</button>
-                <button onclick="selectDefense('honeypot')">Honey Pot (150 MB)</button>
+                <button onclick="game.selectDefense('firewall')">Firewall (100 MB)</button>
+                <button onclick="game.selectDefense('antivirus')">Antivirus (200 MB)</button>
+                <button onclick="game.selectDefense('encryption')">Encryption (300 MB)</button>
+                <button onclick="game.selectDefense('ai')">AI Defense (400 MB)</button>
+                <button onclick="game.selectDefense('ids')">IDS (500 MB)</button>
+                <button onclick="game.selectDefense('soc')">SOC (600 MB)</button>
+                <button onclick="game.selectDefense('honeypot')">Honey Pot (150 MB)</button>
             </div>
 
             <div id="upgradeMenu" style="display: none;">
@@ -148,11 +148,12 @@
             </div>
 
             <div id="speedControl">
-                <button id="speedButton" onclick="changeSpeed()">Speed: <span id="speedValue">1x</span></button>
+                <button id="speedButton" onclick="game.changeSpeed()">Speed: <span id="speedValue">1x</span></button>
             </div>
-
-            <button id="pauseButton" onclick="togglePause()">Pause</button>
-        </div>
+            
+            <div id="pauseControl">
+                <button id="pauseButton" onclick="game.togglePause()">Pause</button>
+            </div>
     </div>
     
 <script>
@@ -227,11 +228,44 @@
         };
 
         window.game.selectDefense = function(type) {
-            selectedDefense = type;
-            // ... (rest of selectDefense logic)
+            document.addEventListener('DOMContentLoaded', function() {
+                let selectedDefense = type;
+                let preview = document.querySelector('.radius-preview');
+            
+                if (!preview) {
+                    preview = document.createElement('div');
+                    preview.className = 'radius-preview';
+                    gameBoard.appendChild(preview);
+                }
+            
+                // Handle different types of defenses, particularly Honey Pot
+                if (type === 'honeypot') {
+                    preview.style.display = 'none';  // Honey Pot doesn't need a range preview
+                } else {
+                    preview.style.width = `${defenseTypes[type].range * 2}px`;
+                    preview.style.height = `${defenseTypes[type].range * 2}px`;
+                    preview.style.display = 'block';
+                }
+            
+                const movePreview = (e) => {
+                    const rect = gameBoard.getBoundingClientRect();
+                    preview.style.left = `${e.clientX - rect.left - defenseTypes[type].range}px`;
+                    preview.style.top = `${e.clientY - rect.top - defenseTypes[type].range}px`;
+                };
+            
+                const removePreview = () => {
+                    preview.style.display = 'none';
+                    gameBoard.removeEventListener('mousemove', movePreview);
+                };
+            
+                gameBoard.addEventListener('mousemove', movePreview);
+                gameBoard.addEventListener('mouseleave', removePreview);
+                gameBoard.addEventListener('click', removePreview);
+            });
         };
 
-        window.game.changeSpeed = function() {
+       window.game.changeSpeed = function() {
+            document.addEventListener('DOMContentLoaded', function() {
             if (gameSpeed === 1) {
                 gameSpeed = 2;
                 speedButton.textContent = 'Speed: 2x';
@@ -245,10 +279,11 @@
             
             clearInterval(gameLoop);
             gameLoop = setInterval(updateGame, 50 / gameSpeed);
+            });
         };
 
         window.game.togglePause = function() {
-            isPaused = !isPaused;
+            document.addEventListener('DOMContentLoaded', function() {
             if (isPaused) {
                 clearInterval(gameLoop);
                 document.getElementById('pauseButton').textContent = 'Resume';
@@ -256,7 +291,8 @@
                     gameLoop = setInterval(updateGame, 50 / gameSpeed);
                     document.getElementById('pauseButton').textContent = 'Pause';
                 }
-            };
+            });
+        };
         
         const defenseTypes = {
             firewall: { cost: 100, damage: 10, range: 100, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
