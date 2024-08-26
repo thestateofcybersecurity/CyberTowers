@@ -647,8 +647,9 @@
 
                 init() {
                     this.selectLevel('cloud');
+                    waveManager.startWave();
                     gameLoop = setInterval(updateGame, 50);
-        
+                
                     gameBoard.addEventListener('click', (e) => {
                         if (selectedDefense) {
                             const rect = gameBoard.getBoundingClientRect();
