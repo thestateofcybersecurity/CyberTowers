@@ -98,34 +98,30 @@
         </div>
         <div id="gameBoard"></div>
         <div id="controls">
-            <div id="levelSelection">
-                <button onclick="game.selectLevel('cloud')">Cloud Network Level</button>
-                <button onclick="game.selectLevel('darkweb')">Dark Web Level</button>
-            </div>
-            <div id="defenseSelection">
-                <button onclick="game.selectDefense('firewall')">Firewall (100 MB)</button>
-                <button onclick="game.selectDefense('antivirus')">Antivirus (200 MB)</button>
-                <button onclick="game.selectDefense('encryption')">Encryption (300 MB)</button>
-                <button onclick="game.selectDefense('ai')">AI Defense (400 MB)</button>
-                <button onclick="game.selectDefense('ids')">IDS (500 MB)</button>
-                <button onclick="game.selectDefense('soc')">SOC (600 MB)</button>
-                <button onclick="game.selectDefense('honeypot')">Honey Pot (150 MB)</button>
-            </div>
-            <div id="speedControl">
-                <button onclick="game.changeSpeed()">Speed: <span id="speedValue">1x</span></button>
-            </div>
-            <button onclick="game.togglePause()">Pause</button>
-        </div>
-        <div id="upgradeMenu" style="display: none;">
-            <button onclick="game.upgrade('damage')">Upgrade Damage (100 MB)</button>
-            <button onclick="game.upgrade('range')">Upgrade Range (100 MB)</button>
-            <button onclick="game.upgrade('fireRate')">Upgrade Fire Rate (100 MB)</button>
-        </div>
-        <div id="tutorial" style="display: none;">
-            <div id="tutorialContent"></div>
-            <button onclick="game.nextTutorialStep()">Next</button>
-        </div>
-    </div>
+           <div id="levelSelection">
+               <button id="cloudLevelBtn">Cloud Network Level</button>
+               <button id="darkwebLevelBtn">Dark Web Level</button>
+           </div>
+           <div id="defenseSelection">
+               <button id="firewallBtn">Firewall (100 MB)</button>
+               <button id="antivirusBtn">Antivirus (200 MB)</button>
+               <button id="encryptionBtn">Encryption (300 MB)</button>
+               <button id="aiBtn">AI Defense (400 MB)</button>
+               <button id="idsBtn">IDS (500 MB)</button>
+               <button id="socBtn">SOC (600 MB)</button>
+               <button id="honeypotBtn">Honey Pot (150 MB)</button>
+           </div>
+           <div id="speedControl">
+               <button id="speedButton">Speed: <span id="speedValue">1x</span></button>
+           </div>
+           <button id="pauseButton">Pause</button>
+       </div>
+       <div id="upgradeMenu" style="display: none;">
+           <button id="upgradeDamageBtn">Upgrade Damage (100 MB)</button>
+           <button id="upgradeRangeBtn">Upgrade Range (100 MB)</button>
+           <button id="upgradeFireRateBtn">Upgrade Fire Rate (100 MB)</button>
+       </div>
+   </div>
 
     <script>
     const game = (() => {
