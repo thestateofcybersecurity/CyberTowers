@@ -353,7 +353,113 @@
             return distance < defenseTypes[defense.dataset.type].range * Math.sqrt(parseInt(defense.dataset.level));
         }
 
-        let isWaveInProgress = false;
+        let currentWave = 1;
+        let waveInProgress = false;
+        let waveInterval;
+        const WAVE_COOLDOWN = 10000; // 10 seconds between waves
+    
+        const waveManager = {
+            startWave() {
+                if (waveInProgress) return;
+                waveInProgress = true;
+                const numThreats = Math.min(currentWave * 5, 50);
+                let threatsCreated = 0;
+    
+                const createThreat = () => {
+                    if (threatsCreated >= numThreats) {
+                        clearInterval(waveInterval);
+                        waveInProgress = false;
+                        setTimeout(() => this.startWave(), WAVE_COOLDOWN);
+                        return;
+                    }
+    
+                    const threatType = this.selectThreatType(threatsCreated);
+                    const newThreat = this.createThreatInstance(threatType);
+                    threats.push(newThreat);
+                    gameBoard.appendChild(newThreat.element);
+                    threatsCreated++;
+                };
+    
+                waveInterval = setInterval(createThreat, 2000 / Math.sqrt(currentWave));
+            },
+    
+            selectThreatType(index) {
+                const threatTypes = Object.keys(THREAT_TYPES);
+                if (index % 5 === 0) return "phishing";
+                if (index % 5 === 1) return "botnet";
+                if (index % 5 === 2) return "worm";
+                return threatTypes[Math.floor(Math.random() * threatTypes.length)];
+            },
+    
+            createThreatInstance(type) {
+                const threat = {
+                    type: type,
+                    health: THREAT_TYPES[type].health * Math.pow(1.1, currentWave - 1),
+                    speed: THREAT_TYPES[type].speed * (1 + (currentWave - 1) * 0.1),
+                    damage: THREAT_TYPES[type].damage,
+                    reward: THREAT_TYPES[type].reward,
+                    pathIndex: 0,
+                    element: document.createElement('div')
+                };
+    
+                threat.element.className = 'threat';
+                threat.element.style.backgroundImage = `url('${THREAT_TYPES[type].icon}')`;
+                threat.element.style.left = `${path[0].x}px`;
+                threat.element.style.top = `${path[0].y}px`;
+    
+                return threat;
+            },
+    
+            endWave() {
+                currentWave++;
+                updateWaveDisplay();
+                resources += 100 + (currentWave * 10);
+                updateResourcesDisplay();
+            }
+        };
+    
+        function updateGame() {
+            if (!isPaused) {
+                moveThreats();
+                if (threats.length === 0 && !waveInProgress) {
+                    waveManager.endWave();
+                    waveManager.startWave();
+                }
+            }
+        }
+    
+        function moveThreats() {
+            threats.forEach((threat, index) => {
+                const targetPoint = path[threat.pathIndex + 1];
+                if (!targetPoint) {
+                    // Threat reached the end
+                    gameBoard.removeChild(threat.element);
+                    threats.splice(index, 1);
+                    score -= threat.damage;
+                    updateScoreDisplay();
+                    if (score <= 0) {
+                        alert('System Compromised! Game Over!');
+                        resetGame();
+                    }
+                    return;
+                }
+    
+                const dx = targetPoint.x - parseInt(threat.element.style.left);
+                const dy = targetPoint.y - parseInt(threat.element.style.top);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+    
+                if (distance < threat.speed) {
+                    threat.pathIndex++;
+                    threat.element.style.left = `${targetPoint.x}px`;
+                    threat.element.style.top = `${targetPoint.y}px`;
+                } else {
+                    const vx = (dx / distance) * threat.speed;
+                    const vy = (dy / distance) * threat.speed;
+                    threat.element.style.left = `${parseInt(threat.element.style.left) + vx}px`;
+                    threat.element.style.top = `${parseInt(threat.element.style.top) + vy}px`;
+                }
+            });
+        }
         
         function startWave() {
             if (isWaveInProgress) return;
