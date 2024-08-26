@@ -561,11 +561,9 @@
             return publicAPI;
         })();
         
-        // The game is now initialized when the DOM is fully loaded
+
+        // The game is initialized and event listeners are set up when the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', () => {
-            game.init();
-        });
-            
             // Helper function to safely add event listeners
             function safeAddEventListener(id, event, handler) {
                 const element = document.getElementById(id);
@@ -594,6 +592,9 @@
                 const btnId = `upgrade${type.charAt(0).toUpperCase() + type.slice(1)}Btn`;
                 safeAddEventListener(btnId, 'click', () => game.upgrade(type));
             });
+        
+            // Initialize the game
+            game.init();
         });
     </script>
 </body>
