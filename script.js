@@ -698,21 +698,6 @@ const game = {
         // Update and draw effects
         this.updateAndDrawEffects();
 
-        // Draw grid
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        for (let x = 0; x < canvas.width; x += this.gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
-            ctx.stroke();
-        }
-        for (let y = 0; y < canvas.height; y += this.gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(canvas.width, y);
-            ctx.stroke();
-        }
-
         requestAnimationFrame(this.update.bind(this));
     },
 
