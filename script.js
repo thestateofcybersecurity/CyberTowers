@@ -168,6 +168,11 @@ const game = {
         enemyDeath: new Audio('./api/enemy_death.mp3')
     },
 
+        startBackgroundMusic() {
+        // Remove automatic play
+        this.sounds.backgroundMusic.loop = true;
+    },
+
     initializeGrid() {
         for (let y = 0; y < canvas.height; y += this.gridSize) {
             for (let x = 0; x < canvas.width; x += this.gridSize) {
@@ -481,8 +486,16 @@ const game = {
         });
 
         this.updateUI();
-        this.startNewWave();  // Start the first wave immediately
-        requestAnimationFrame(this.update.bind(this));
+        // Add a start button
+        const startButton = document.createElement('button');
+        startButton.textContent = 'Start Game';
+        startButton.addEventListener('click', () => {
+            this.sounds.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+            this.startNewWave();
+            requestAnimationFrame(this.update.bind(this));
+            startButton.remove();
+        });
+        document.body.appendChild(startButton);
     }
 };
 
