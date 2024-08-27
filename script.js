@@ -437,7 +437,6 @@ const game = {
 
     update(timestamp) {
         if (this.isGamePaused) return;
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Update wave system
@@ -525,6 +524,7 @@ const game = {
             ctx.fill();
 
             return true;
+            requestAnimationFrame(this.update.bind(this));
         });
 
         // Update and draw effects
@@ -613,6 +613,12 @@ const game = {
         document.getElementById('pauseButton').addEventListener('click', () => {
             this.togglePause();
         });
+
+        // Bind the update method to the game object
+        this.boundUpdate = this.update.bind(this);
+
+        // Start the game loop
+        requestAnimationFrame(this.boundUpdate);
 
         this.updateUI();
         // Add a start button
