@@ -153,6 +153,9 @@ const game = {
     breakDuration: 10000,
     isWaveActive: false,
     isGamePaused: false,
+    gridColor: '#0A3C59',
+    backgroundColor: '#020E18',
+    pathColor: '#00FFFF',
 
     path: [
         {x: 0, y: 300},
@@ -186,6 +189,38 @@ const game = {
         }
     },
 
+    drawBackground() {
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    },
+
+    drawGrid() {
+        ctx.strokeStyle = this.gridColor;
+        ctx.lineWidth = 0.5;
+        for (let x = 0; x < canvas.width; x += this.gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += this.gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+    },
+
+    drawPath() {
+        ctx.strokeStyle = this.pathColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(this.path[0].x, this.path[0].y);
+        for (let i = 1; i < this.path.length; i++) {
+            ctx.lineTo(this.path[i].x, this.path[i].y);
+        }
+        ctx.stroke();
+    },  
     
     fireProjectile(tower, target, damage) {
         this.projectiles.push({
@@ -439,6 +474,10 @@ const game = {
         if (this.isGamePaused) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        this.drawBackground();
+        this.drawGrid();
+        this.drawPath();
+
         // Update wave system
         this.updateWaveSystem(timestamp);
 
@@ -456,22 +495,24 @@ const game = {
                 this.updateUI();
                 return false;
             }
-
             if (!enemy.invisible || enemy.revealed) {
                 ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
-                // Health bar
-                ctx.fillStyle = 'black';
-                ctx.fillRect(enemy.x, enemy.y - 10, 30, 5);
-                ctx.fillStyle = 'red';
+                // Health bar with Tron-like glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(0, 255, 255, 0.7)';
+                ctx.fillStyle = '#00FFFF';
                 ctx.fillRect(enemy.x, enemy.y - 10, (enemy.currentHealth / enemy.health) * 30, 5);
+                ctx.shadowBlur = 0;
             }
-
             return true;
         });
-
+        
         // Update and draw towers
         this.towers.forEach(tower => {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(0, 255, 255, 0.7)';
             ctx.drawImage(tower.image, tower.x, tower.y, this.gridSize, this.gridSize);
+            ctx.shadowBlur = 0;
 
             if (timestamp - tower.lastFired > tower.fireRate) {
                 const target = this.enemies.find(enemy => {
