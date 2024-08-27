@@ -343,6 +343,10 @@ const game = {
             tower.level++;
             tower.experience -= expForNextLevel;
             this.updateTowerStats(tower);
+    
+            // Reward player with additional resources when a tower levels up
+            this.resources += 50 * tower.level; // Scale reward based on tower level
+            this.updateUI();
         }
     },
 
@@ -353,6 +357,7 @@ const game = {
         if (nextLevel && this.playerExperience >= nextLevel.expRequired) {
             this.playerLevel++;
             this.unlockedDefenses.push(nextLevel.unlock);
+            this.resources += 100 * this.playerLevel; // Resource bonus for leveling up
             this.updateUI();
         }
     },
@@ -460,11 +465,22 @@ const game = {
         });
     },
     
-    spawnEnemy() {
+    spawnEnemy(waveMultiplier) {
         const threatTypes = Object.keys(this.threatTypes);
-        const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+        
+        let threatType;
+        if (this.currentWave <= 5) {
+            // Early game threats
+            threatType = threatTypes[Math.floor(Math.random() * 2)]; // Virus, Worm
+        } else if (this.currentWave <= 10) {
+            // Mid game threats
+            threatType = threatTypes[Math.floor(Math.random() * 4)]; // Add Trojan, Ransomware
+        } else {
+            // Late game threats
+            threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+        }
+    
         const threat = this.threatTypes[threatType];
-        const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
         const enemy = {
             x: this.path[0].x,
             y: this.path[0].y,
@@ -473,6 +489,7 @@ const game = {
             currentHealth: threat.health * waveMultiplier,
             health: threat.health * waveMultiplier,
             damage: threat.damage * waveMultiplier,
+            reward: threat.reward * waveMultiplier,
             image: new Image(),
             pathIndex: 0
         };
@@ -531,16 +548,28 @@ const game = {
         this.currentWave++;
         this.isWaveActive = true;
         this.waveTimer = performance.now();
-        for (let i = 0; i < this.currentWave * 2; i++) {
-            this.spawnEnemy();
+        
+        const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
+        const enemiesPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 enemies per wave
+    
+        for (let i = 0; i < enemiesPerWave; i++) {
+            const delay = i * 1000 / waveMultiplier; // Stagger enemy spawns
+            setTimeout(() => this.spawnEnemy(waveMultiplier), delay);
         }
     },
 
     endWave() {
         this.isWaveActive = false;
         this.waveTimer = performance.now();
-        this.resources += 100 * this.currentWave;
+        this.resources += 100 * this.currentWave; // Wave completion bonus
         this.updateUI();
+    
+        // Introduce resource bonuses or tower upgrades based on wave completion
+        if (this.currentWave % 5 === 0) {
+            this.resources += this.resources * 0.1; // 10% resource bonus every 5 waves
+            // Optionally unlock a special upgrade or give a bonus
+            // e.g., Automatically level up a random tower
+        }
     },
 
     playSoundEffect(soundName) {
@@ -684,13 +713,19 @@ const game = {
         document.querySelector(`[data-tower="${towerType}"]`).classList.add('selected');
     },
 
+    // Update UI method to reflect wave, resources, and difficulty
     updateUI() {
         document.getElementById('scoreValue').textContent = this.systemIntegrity;
         document.getElementById('resourcesValue').textContent = this.resources;
         document.getElementById('waveValue').textContent = this.currentWave;
         document.getElementById('playerLevel').textContent = this.playerLevel;
         document.getElementById('playerExperience').textContent = this.playerExperience;
-
+    
+        // Show if the game is in hard mode
+        const difficultyText = document.getElementById('difficultyText');
+        difficultyText.textContent = this.isHardMode ? "Hard Mode" : "Normal Mode";
+        difficultyText.style.color = this.isHardMode ? "red" : "green";
+    
         // Update tower buttons based on unlocked defenses and available resources
         Object.keys(this.defenseTypes).forEach(defenseType => {
             const button = document.querySelector(`[data-tower="${defenseType}"]`);
@@ -719,6 +754,20 @@ const game = {
             const img = new Image();
             img.src = type.icon;
         });
+
+        // Hard mode increases threat health and damage by 50%
+        const hardMode = confirm("Start in Hard Mode?");
+        if (hardMode) {
+            this.threatTypes = Object.keys(this.threatTypes).reduce((acc, key) => {
+                const threat = this.threatTypes[key];
+                acc[key] = {
+                    ...threat,
+                    health: threat.health * 1.5,
+                    damage: threat.damage * 1.5
+                };
+                return acc;
+            }, {});
+        }
 
         // Add event listeners for tower selection
         document.querySelectorAll('.towerButton').forEach(button => {
