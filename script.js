@@ -152,6 +152,7 @@ const game = {
     waveDuration: 30000,
     breakDuration: 10000,
     isWaveActive: false,
+    isGamePaused: false,
 
     path: [
         {x: 0, y: 300},
@@ -168,9 +169,35 @@ const game = {
         enemyDeath: new Audio('./api/enemy_death.mp3')
     },
 
-        startBackgroundMusic() {
+    startBackgroundMusic() {
         // Remove automatic play
         this.sounds.backgroundMusic.loop = true;
+    },
+
+    togglePause() {
+        this.isGamePaused = !this.isGamePaused;
+        if (this.isGamePaused) {
+            // Optionally, you can add code here to show a "Paused" message on the screen
+            console.log("Game Paused");
+        } else {
+            console.log("Game Resumed");
+            // If the game was paused, we need to restart the game loop
+            requestAnimationFrame(this.update.bind(this));
+        }
+    },
+
+    
+    fireProjectile(tower, target, damage) {
+        this.projectiles.push({
+            x: tower.x,
+            y: tower.y,
+            targetX: target.x,
+            targetY: target.y,
+            damage: damage,
+            speed: 5,
+            color: tower.projectileColor,
+            tower: tower
+        });
     },
 
     initializeGrid() {
