@@ -3,16 +3,6 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
-const defenseTypes = {
-    firewall: { cost: 100, damage: 15, range: 120, fireRate: 1000, icon: './api/firewall.jpg', projectileColor: '#FF0000' },
-    antivirus: { cost: 200, damage: 25, range: 150, fireRate: 1200, icon: './api/antivirus.jpg', projectileColor: '#00FF00' },
-    encryption: { cost: 300, damage: 35, range: 180, fireRate: 1500, icon: './api/encryption.jpg', projectileColor: '#0000FF' },
-    ai: { cost: 450, damage: 50, range: 200, fireRate: 2000, icon: './api/ai.jpg', projectileColor: '#FFFF00' },
-    ids: { cost: 350, damage: 30, range: 220, fireRate: 1300, icon: './api/ids.jpg', projectileColor: '#800080' },
-    soc: { cost: 550, damage: 45, range: 250, fireRate: 1800, icon: './api/soc.jpg', projectileColor: '#FFA500' },
-    honeypot: { cost: 150, damage: 5, range: 150, fireRate: 800, icon: './api/honeypot.jpg', projectileColor: '#FFD700', special: 'attract' }
-};
-
 const threatTypes = {
     virus: { health: 50, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
     trojan: { health: 80, speed: 1, damage: 8, reward: 30, icon: './api/trojan.jpg' },
