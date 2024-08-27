@@ -414,6 +414,15 @@ const game = {
         requestAnimationFrame(this.update.bind(this));
     },
 
+        selectTower(towerType) {
+        this.selectedTowerType = towerType;
+        // Update UI to show selected tower
+        document.querySelectorAll('.towerButton').forEach(button => {
+            button.classList.remove('selected');
+        });
+        document.querySelector(`[data-tower="${towerType}"]`).classList.add('selected');
+    },
+
     updateUI() {
         document.getElementById('scoreValue').textContent = this.systemIntegrity;
         document.getElementById('resourcesValue').textContent = this.resources;
@@ -421,11 +430,14 @@ const game = {
         document.getElementById('playerLevel').textContent = this.playerLevel;
         document.getElementById('playerExperience').textContent = this.playerExperience;
 
-        // Update defense buttons based on unlocked defenses
+        // Update tower buttons based on unlocked defenses and available resources
         Object.keys(this.defenseTypes).forEach(defenseType => {
-            const button = document.getElementById(`${defenseType}Button`);
+            const button = document.querySelector(`[data-tower="${defenseType}"]`);
             if (button) {
-                button.disabled = !this.unlockedDefenses.includes(defenseType);
+                const isUnlocked = this.unlockedDefenses.includes(defenseType);
+                const isAffordable = this.resources >= this.defenseTypes[defenseType].cost;
+                button.disabled = !isUnlocked || !isAffordable;
+                button.classList.toggle('affordable', isAffordable);
             }
         });
     },
@@ -447,9 +459,13 @@ const game = {
             img.src = type.icon;
         });
 
-        this.updateUI();
-        this.startNewWave();  // Start the first wave immediately
-        requestAnimationFrame(this.update.bind(this));
+        // Add event listeners for tower selection
+        document.querySelectorAll('.towerButton').forEach(button => {
+            button.addEventListener('click', () => {
+                const towerType = button.getAttribute('data-tower');
+                this.selectTower(towerType);
+            });
+        });
 
         // Add event listener for tower placement
         canvas.addEventListener('click', (event) => {
@@ -458,6 +474,15 @@ const game = {
             const y = event.clientY - rect.top;
             this.placeTower(this.selectedTowerType, x, y);
         });
+
+        // Add event listener for pause button
+        document.getElementById('pauseButton').addEventListener('click', () => {
+            this.togglePause();
+        });
+
+        this.updateUI();
+        this.startNewWave();  // Start the first wave immediately
+        requestAnimationFrame(this.update.bind(this));
     }
 };
 
