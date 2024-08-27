@@ -20,13 +20,13 @@
         <canvas id="gameBoard"></canvas>
         <div id="controls">
             <div id="defenseSelection">
-                <button onclick="game.placeTower('Firewall')">Firewall (100 MB)</button>
-                <button onclick="game.placeTower('Antivirus')">Antivirus (200 MB)</button>
-                <button onclick="game.placeTower('Encryption')">Encryption (300 MB)</button>
-                <button onclick="game.placeTower('AI')">AI Defense (450 MB)</button>
-                <button onclick="game.placeTower('IDS')">IDS (350 MB)</button>
-                <button onclick="game.placeTower('SOC')">SOC (550 MB)</button>
-                <button onclick="game.placeTower('Honeypot')">Honey Pot (150 MB)</button>
+                <button id="firewallButton" onclick="game.placeTower('Firewall')">Firewall (100 MB)</button>
+                <button id="antivirusButton" onclick="game.placeTower('Antivirus')">Antivirus (200 MB)</button>
+                <button id="encryptionButton" onclick="game.placeTower('Encryption')">Encryption (300 MB)</button>
+                <button id="idsButton" onclick="game.placeTower('IDS')">IDS (350 MB)</button>
+                <button id="aiButton" onclick="game.placeTower('AI')">AI Defense (450 MB)</button>
+                <button id="socButton" onclick="game.placeTower('SOC')">SOC (550 MB)</button>
+                <button id="honeypotButton" onclick="game.placeTower('Honeypot')">Honey Pot (150 MB)</button>
             </div>
             <button onclick="game.togglePause()">Pause</button>
         </div>
