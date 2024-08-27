@@ -210,6 +210,108 @@ const game = {
         }
     },
 
+    applySpecialAbilities(tower, enemy) {
+        let damage = tower.damage;
+
+        switch (tower.type.toLowerCase()) {
+            case 'firewall':
+                if (tower.applyBurnEffect) {
+                    enemy.burningDuration = 3; // Apply burn for 3 seconds
+                    enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
+                }
+                break;
+
+            case 'antivirus':
+                if (tower.applyChainReaction) {
+                    const nearbyEnemies = this.enemies.filter(e => 
+                        e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+                    );
+                    nearbyEnemies.forEach(e => {
+                        e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
+                    });
+                }
+                break;
+
+            case 'encryption':
+                if (tower.applySlowEffect) {
+                    enemy.slowDuration = 3; // Slow for 3 seconds
+                    enemy.slowFactor = 0.5; // Reduce speed by 50%
+                }
+                break;
+
+            case 'ai':
+                if (tower.applyAdaptiveDamage) {
+                    tower.adaptiveDamageCounter = (tower.adaptiveDamageCounter || 0) + 1;
+                    damage *= (1 + tower.adaptiveDamageCounter * 0.1); // 10% increase per hit
+                }
+                break;
+
+            case 'ids':
+                if (tower.applyRevealInvisible) {
+                    enemy.revealed = true; // Mark enemy as revealed
+                }
+                break;
+
+            case 'soc':
+                if (tower.applyCoordinatedBoost) {
+                    const nearbyTowers = this.towers.filter(t => 
+                        t !== tower && Math.hypot(t.x - tower.x, t.y - tower.y) < 100
+                    );
+                    nearbyTowers.forEach(t => {
+                        t.coordinatedBoost = 1.2; // 20% damage boost to nearby towers
+                    });
+                }
+                break;
+
+            case 'honeypot':
+                if (tower.applyConfuseEffect) {
+                    enemy.confusedDuration = 3; // Confuse for 3 seconds
+                }
+                break;
+        }
+
+        return damage;
+    },
+
+    updateEnemies() {
+        this.enemies.forEach(enemy => {
+            // Apply burning effect
+            if (enemy.burningDuration > 0) {
+                enemy.currentHealth -= enemy.burningDamage;
+                enemy.burningDuration--;
+            }
+
+            // Apply slow effect
+            if (enemy.slowDuration > 0) {
+                enemy.speed *= enemy.slowFactor;
+                enemy.slowDuration--;
+            } else {
+                enemy.speed = this.threatTypes[enemy.type].speed; // Reset speed when slow effect ends
+            }
+
+            // Apply confusion effect
+            if (enemy.confusedDuration > 0) {
+                if (Math.random() < 0.3) { // 30% chance to attack other enemies
+                    const nearbyEnemy = this.enemies.find(e => 
+                        e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+                    );
+                    if (nearbyEnemy) {
+                        nearbyEnemy.currentHealth -= enemy.damage;
+                    }
+                }
+                enemy.confusedDuration--;
+            }
+
+            // Move enemy
+            const reachedEnd = this.moveEnemyAlongPath(enemy);
+            if (reachedEnd) {
+                this.systemIntegrity -= enemy.damage;
+                this.enemies = this.enemies.filter(e => e !== enemy);
+                this.updateUI();
+            }
+        });
+    },
+    
     spawnEnemy() {
         const threatTypes = Object.keys(this.threatTypes);
         const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
@@ -362,23 +464,6 @@ const game = {
                 }
             }
         });
-
-            applySpecialAbilities(tower, enemy) {
-        let damage = tower.damage;
-
-        if (tower.applyBurnEffect) {
-            enemy.burningDuration = 3; // Apply burn for 3 seconds
-            enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
-        }
-
-        if (tower.applyChainReaction) {
-            const nearbyEnemies = this.enemies.filter(e => 
-                e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
-            );
-            nearbyEnemies.forEach(e => {
-                e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
-            });
-        }
 
         // Update and draw projectiles
         this.projectiles = this.projectiles.filter((projectile) => {
