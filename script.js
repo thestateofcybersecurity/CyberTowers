@@ -19,15 +19,15 @@ const defenseTypes = {
         cost: 100, 
         damage: 15, 
         range: 120, 
-        fireRate: 1000, 
+        fireRate: 100, 
         icon: './api/firewall.jpg', 
         projectileColor: '#FF0000',
         maxLevel: 5,
         upgrades: [
             { level: 2, damage: 18, range: 130 },
-            { level: 3, damage: 22, fireRate: 900 },
+            { level: 3, damage: 22, fireRate: 90 },
             { level: 4, damage: 26, range: 140 },
-            { level: 5, damage: 30, fireRate: 800, special: 'Burn damage over time' }
+            { level: 5, damage: 30, fireRate: 80, special: 'Burn damage over time' }
         ]
     },
     antivirus: { 
@@ -134,7 +134,7 @@ const playerProgressionLevels = [
 
 const game = {
     systemIntegrity: 100,
-    resources: 300,
+    resources: 500,
     enemies: [],
     towers: [],
     projectiles: [],
