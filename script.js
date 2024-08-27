@@ -135,23 +135,62 @@ const playerProgressionLevels = [
 const game = {
     systemIntegrity: 100,
     resources: 300,
-    wave: 1,
     enemies: [],
     towers: [],
     projectiles: [],
+    effects: [],
     isGamePaused: false,
     lastSpawnTime: 0,
     playerLevel: 1,
     playerExperience: 0,
-    unlockedDefenses: ['firewall'], // Start with only firewall unlocked
+    unlockedDefenses: ['firewall'],
+    selectedTowerType: 'firewall',
+    gridSize: 40,
+    grid: [],
+    currentWave: 0,
+    waveTimer: 0,
+    waveDuration: 30000,
+    breakDuration: 10000,
+    isWaveActive: false,
 
-    placeTower(type) {
+    path: [
+        {x: 0, y: 300},
+        {x: 200, y: 300},
+        {x: 200, y: 100},
+        {x: 600, y: 100},
+        {x: 600, y: 500},
+        {x: 800, y: 500}
+    ],
+
+    sounds: {
+        backgroundMusic: new Audio('./api/background_music.mp3'),
+        towerShoot: new Audio('./api/tower_shoot.mp3'),
+        enemyDeath: new Audio('./api/enemy_death.mp3')
+    },
+
+    initializeGrid() {
+        for (let y = 0; y < canvas.height; y += this.gridSize) {
+            for (let x = 0; x < canvas.width; x += this.gridSize) {
+                this.grid.push({x, y, occupied: false});
+            }
+        }
+    },
+
+    getGridCell(x, y) {
+        return this.grid.find(cell => 
+            x >= cell.x && x < cell.x + this.gridSize &&
+            y >= cell.y && y < cell.y + this.gridSize
+        );
+    },
+
+    placeTower(type, x, y) {
         const towerType = this.defenseTypes[type.toLowerCase()];
-        if (this.resources >= towerType.cost && this.unlockedDefenses.includes(type.toLowerCase())) {
+        const cell = this.getGridCell(x, y);
+        if (this.resources >= towerType.cost && this.unlockedDefenses.includes(type.toLowerCase()) && cell && !cell.occupied) {
             this.resources -= towerType.cost;
             const tower = {
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
+                x: cell.x,
+                y: cell.y,
                 type: type,
                 ...towerType,
                 lastFired: 0,
@@ -161,179 +200,7 @@ const game = {
             };
             tower.image.src = towerType.icon;
             this.towers.push(tower);
-            this.updateUI();
-        }
-    },
-
-    togglePause() {
-        this.isGamePaused = !this.isGamePaused;
-        if (!this.isGamePaused) {
-            requestAnimationFrame(this.update.bind(this));
-        }
-    },
-
-    updateUI() {
-        document.getElementById('scoreValue').textContent = this.systemIntegrity;
-        document.getElementById('resourcesValue').textContent = this.resources;
-        document.getElementById('waveValue').textContent = this.wave;
-        document.getElementById('playerLevel').textContent = this.playerLevel;
-        document.getElementById('playerExperience').textContent = this.playerExperience;
-
-        // Update defense buttons based on unlocked defenses
-        Object.keys(defenseTypes).forEach(defenseType => {
-            const button = document.getElementById(`${defenseType}Button`);
-            if (button) {
-                button.disabled = !this.unlockedDefenses.includes(defenseType);
-            }
-        });
-    },
-
-    updateTowerStats(tower) {
-        const baseStats = defenseTypes[tower.type.toLowerCase()];
-        const upgradeStats = baseStats.upgrades.find(upgrade => upgrade.level === tower.level) || {};
-
-        Object.keys(upgradeStats).forEach(stat => {
-            if (stat !== 'level' && stat !== 'special') {
-                tower[stat] = upgradeStats[stat];
-            }
-        });
-
-        // Reset special abilities
-        tower.applyBurnEffect = false;
-        tower.applyChainReaction = false;
-        tower.applySlowEffect = false;
-        tower.applyAdaptiveDamage = false;
-        tower.applyRevealInvisible = false;
-        tower.applyCoordinatedBoost = false;
-        tower.applyConfuseEffect = false;
-
-        // Handle special abilities at level 5
-        if (tower.level === 5) {
-            switch (tower.type.toLowerCase()) {
-                case 'firewall':
-                    tower.applyBurnEffect = true;
-                    break;
-                case 'antivirus':
-                    tower.applyChainReaction = true;
-                    break;
-                case 'encryption':
-                    tower.applySlowEffect = true;
-                    break;
-                case 'ai':
-                    tower.applyAdaptiveDamage = true;
-                    tower.adaptiveDamageCounter = 0;
-                    break;
-                case 'ids':
-                    tower.applyRevealInvisible = true;
-                    break;
-                case 'soc':
-                    tower.applyCoordinatedBoost = true;
-                    break;
-                case 'honeypot':
-                    tower.applyConfuseEffect = true;
-                    break;
-            }
-        }
-    },
-
-    applySpecialAbilities(tower, enemy) {
-        let damage = tower.damage;
-
-        if (tower.applyBurnEffect) {
-            enemy.burningDuration = 3; // Apply burn for 3 seconds
-            enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
-        }
-
-        if (tower.applyChainReaction) {
-            const nearbyEnemies = this.enemies.filter(e => 
-                e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
-            );
-            nearbyEnemies.forEach(e => {
-                e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
-            });
-        }
-
-        if (tower.applySlowEffect) {
-            enemy.slowDuration = 3; // Slow for 3 seconds
-            enemy.slowFactor = 0.5; // Reduce speed by 50%
-        }
-
-        if (tower.applyAdaptiveDamage) {
-            tower.adaptiveDamageCounter++;
-            damage *= (1 + tower.adaptiveDamageCounter * 0.1); // 10% increase per hit
-        }
-
-        if (tower.applyRevealInvisible) {
-            enemy.revealed = true; // Mark enemy as revealed
-        }
-
-        if (tower.applyCoordinatedBoost) {
-            const nearbyTowers = this.towers.filter(t => 
-                t !== tower && Math.hypot(t.x - tower.x, t.y - tower.y) < 100
-            );
-            nearbyTowers.forEach(t => {
-                t.coordinatedBoost = 1.2; // 20% damage boost to nearby towers
-            });
-        }
-
-        if (tower.applyConfuseEffect) {
-            enemy.confusedDuration = 3; // Confuse for 3 seconds
-        }
-
-        return damage;
-    },
-
-    updateEnemies() {
-        this.enemies.forEach(enemy => {
-            if (enemy.burningDuration > 0) {
-                enemy.currentHealth -= enemy.burningDamage;
-                enemy.burningDuration--;
-            }
-
-            if (enemy.slowDuration > 0) {
-                enemy.speed *= enemy.slowFactor;
-                enemy.slowDuration--;
-            }
-
-            if (enemy.confusedDuration > 0) {
-                if (Math.random() < 0.3) { // 30% chance to attack other enemies
-                    const nearbyEnemy = this.enemies.find(e => 
-                        e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
-                    );
-                    if (nearbyEnemy) {
-                        nearbyEnemy.currentHealth -= enemy.damage;
-                    }
-                }
-                enemy.confusedDuration--;
-            }
-
-            // Move enemy
-            if (enemy.slowDuration === 0) {
-                enemy.x += enemy.speed;
-            } else {
-                enemy.x += enemy.speed * enemy.slowFactor;
-            }
-        });
-    },
-
-    addExperienceToTower(tower, amount) {
-        tower.experience += amount;
-        const expForNextLevel = Math.pow(tower.level, 2) * 100;
-
-        if (tower.experience >= expForNextLevel && tower.level < defenseTypes[tower.type.toLowerCase()].maxLevel) {
-            tower.level++;
-            tower.experience -= expForNextLevel;
-            this.updateTowerStats(tower);
-        }
-    },
-
-    addPlayerExperience(amount) {
-        this.playerExperience += amount;
-        const nextLevel = playerProgressionLevels.find(level => level.level === this.playerLevel + 1);
-
-        if (nextLevel && this.playerExperience >= nextLevel.expRequired) {
-            this.playerLevel++;
-            this.unlockedDefenses.push(nextLevel.unlock);
+            cell.occupied = true;
             this.updateUI();
         }
     },
@@ -342,32 +209,96 @@ const game = {
         const threatTypes = Object.keys(this.threatTypes);
         const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
         const threat = this.threatTypes[threatType];
-        const waveMultiplier = 1 + (this.wave - 1) * 0.1; // 10% increase per wave
+        const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
         const enemy = {
-            x: 0,
-            y: Math.random() * canvas.height,
+            x: this.path[0].x,
+            y: this.path[0].y,
             type: threatType,
             ...threat,
             currentHealth: threat.health * waveMultiplier,
             health: threat.health * waveMultiplier,
             damage: threat.damage * waveMultiplier,
-            image: new Image()
+            image: new Image(),
+            pathIndex: 0
         };
         enemy.image.src = threat.icon;
         this.enemies.push(enemy);
     },
 
-    fireProjectile(tower, target, damage) {
-        this.projectiles.push({
-            x: tower.x,
-            y: tower.y,
-            targetX: target.x,
-            targetY: target.y,
-            color: tower.projectileColor,
-            damage: damage,
-            speed: 5,
-            tower: tower
+    moveEnemyAlongPath(enemy) {
+        const targetPoint = this.path[enemy.pathIndex];
+        const dx = targetPoint.x - enemy.x;
+        const dy = targetPoint.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < enemy.speed) {
+            enemy.pathIndex++;
+            if (enemy.pathIndex >= this.path.length) {
+                return true; // Enemy reached the end
+            }
+        } else {
+            enemy.x += (dx / distance) * enemy.speed;
+            enemy.y += (dy / distance) * enemy.speed;
+        }
+        return false;
+    },
+
+    addEffect(x, y, type) {
+        this.effects.push({x, y, type, frame: 0});
+    },
+
+    updateAndDrawEffects() {
+        this.effects = this.effects.filter(effect => {
+            effect.frame++;
+            if (effect.type === 'explosion') {
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.frame, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 0, 0, ${1 - effect.frame / 20})`;
+                ctx.fill();
+            }
+            return effect.frame < 20;
         });
+    },
+
+    updateWaveSystem(timestamp) {
+        if (!this.isWaveActive) {
+            if (timestamp - this.waveTimer > this.breakDuration) {
+                this.startNewWave();
+            }
+        } else {
+            if (timestamp - this.waveTimer > this.waveDuration || this.enemies.length === 0) {
+                this.endWave();
+            }
+        }
+    },
+
+    startNewWave() {
+        this.currentWave++;
+        this.isWaveActive = true;
+        this.waveTimer = performance.now();
+        for (let i = 0; i < this.currentWave * 2; i++) {
+            this.spawnEnemy();
+        }
+    },
+
+    endWave() {
+        this.isWaveActive = false;
+        this.waveTimer = performance.now();
+        this.resources += 100 * this.currentWave;
+        this.updateUI();
+    },
+
+    playSoundEffect(soundName) {
+        const sound = this.sounds[soundName];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play();
+        }
+    },
+
+    startBackgroundMusic() {
+        this.sounds.backgroundMusic.loop = true;
+        this.sounds.backgroundMusic.play();
     },
 
     update(timestamp) {
@@ -375,17 +306,25 @@ const game = {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Update wave system
+        this.updateWaveSystem(timestamp);
+
         // Spawn enemies
-        const maxEnemies = Math.min(5 + this.wave * 2, 30); // Cap at 30 enemies per wave
-        if (timestamp - this.lastSpawnTime > 2000 && this.enemies.length < maxEnemies) {
+        if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.enemies.length < this.currentWave * 5) {
             this.spawnEnemy();
             this.lastSpawnTime = timestamp;
         }
 
         // Update and draw enemies
-        this.updateEnemies();
-        this.enemies.forEach((enemy, index) => {
-            if (!enemy.invisible || enemy.revealed || Math.random() < 0.1) {
+        this.enemies = this.enemies.filter((enemy) => {
+            const reachedEnd = this.moveEnemyAlongPath(enemy);
+            if (reachedEnd) {
+                this.systemIntegrity -= enemy.damage;
+                this.updateUI();
+                return false;
+            }
+
+            if (!enemy.invisible || enemy.revealed) {
                 ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
                 // Health bar
                 ctx.fillStyle = 'black';
@@ -394,21 +333,12 @@ const game = {
                 ctx.fillRect(enemy.x, enemy.y - 10, (enemy.currentHealth / enemy.health) * 30, 5);
             }
 
-            if (enemy.x > canvas.width) {
-                this.systemIntegrity -= enemy.damage;
-                this.enemies.splice(index, 1);
-                this.updateUI();
-            }
+            return true;
         });
 
         // Update and draw towers
         this.towers.forEach(tower => {
-            if (tower.coordinatedBoost) {
-                tower.damage *= tower.coordinatedBoost;
-                delete tower.coordinatedBoost;
-            }
-
-            ctx.drawImage(tower.image, tower.x, tower.y, 40, 40);
+            ctx.drawImage(tower.image, tower.x, tower.y, this.gridSize, this.gridSize);
 
             if (timestamp - tower.lastFired > tower.fireRate) {
                 const target = this.enemies.find(enemy => {
@@ -423,57 +353,88 @@ const game = {
                     const damage = this.applySpecialAbilities(tower, target);
                     this.fireProjectile(tower, target, damage);
                     tower.lastFired = timestamp;
+                    this.playSoundEffect('towerShoot');
                 }
             }
         });
 
         // Update and draw projectiles
-        this.projectiles.forEach((projectile, index) => {
+        this.projectiles = this.projectiles.filter((projectile) => {
             const dx = projectile.targetX - projectile.x;
             const dy = projectile.targetY - projectile.y;
             const distance = Math.hypot(dx, dy);
 
             if (distance < projectile.speed) {
-                this.projectiles.splice(index, 1);
-            } else {
-                projectile.x += (dx / distance) * projectile.speed;
-                projectile.y += (dy / distance) * projectile.speed;
-
-                ctx.beginPath();
-                ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
-                ctx.fillStyle = projectile.color;
-                ctx.fill();
-            }
-
-                                             // Check for collision with enemies
-            this.enemies.forEach((enemy, enemyIndex) => {
-                if (Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y) < 15) {
-                    enemy.currentHealth -= projectile.damage;
-                    this.projectiles.splice(index, 1);
-
-                    if (enemy.currentHealth <= 0) {
-                        this.resources += enemy.reward;
-                        this.addExperienceToTower(projectile.tower, enemy.reward);
-                        this.addPlayerExperience(enemy.reward);
-                        this.enemies.splice(enemyIndex, 1);
-                        this.updateUI();
+                const targetEnemy = this.enemies.find(enemy => 
+                    Math.hypot(enemy.x - projectile.targetX, enemy.y - projectile.targetY) < 15
+                );
+                if (targetEnemy) {
+                    targetEnemy.currentHealth -= projectile.damage;
+                    this.addEffect(projectile.targetX, projectile.targetY, 'explosion');
+                    if (targetEnemy.currentHealth <= 0) {
+                        this.resources += targetEnemy.reward;
+                        this.addExperienceToTower(projectile.tower, targetEnemy.reward);
+                        this.addPlayerExperience(targetEnemy.reward);
+                        this.enemies = this.enemies.filter(e => e !== targetEnemy);
+                        this.playSoundEffect('enemyDeath');
                     }
                 }
-            });
+                return false;
+            }
+
+            projectile.x += (dx / distance) * projectile.speed;
+            projectile.y += (dy / distance) * projectile.speed;
+
+            ctx.beginPath();
+            ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = projectile.color;
+            ctx.fill();
+
+            return true;
         });
 
-        // Check for wave completion
-        if (this.enemies.length === 0 && timestamp - this.lastSpawnTime > 5000) {
-            this.wave++;
-            this.updateUI();
+        // Update and draw effects
+        this.updateAndDrawEffects();
+
+        // Draw grid
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        for (let x = 0; x < canvas.width; x += this.gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += this.gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
         }
 
         requestAnimationFrame(this.update.bind(this));
     },
 
+    updateUI() {
+        document.getElementById('scoreValue').textContent = this.systemIntegrity;
+        document.getElementById('resourcesValue').textContent = this.resources;
+        document.getElementById('waveValue').textContent = this.currentWave;
+        document.getElementById('playerLevel').textContent = this.playerLevel;
+        document.getElementById('playerExperience').textContent = this.playerExperience;
+
+        // Update defense buttons based on unlocked defenses
+        Object.keys(this.defenseTypes).forEach(defenseType => {
+            const button = document.getElementById(`${defenseType}Button`);
+            if (button) {
+                button.disabled = !this.unlockedDefenses.includes(defenseType);
+            }
+        });
+    },
+
     start() {
         this.threatTypes = threatTypes;
         this.defenseTypes = defenseTypes;
+        this.initializeGrid();
+        this.startBackgroundMusic();
 
         // Load images
         Object.values(this.defenseTypes).forEach(type => {
@@ -487,7 +448,16 @@ const game = {
         });
 
         this.updateUI();
+        this.startNewWave();  // Start the first wave immediately
         requestAnimationFrame(this.update.bind(this));
+
+        // Add event listener for tower placement
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            this.placeTower(this.selectedTowerType, x, y);
+        });
     }
 };
 
