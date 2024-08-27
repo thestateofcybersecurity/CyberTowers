@@ -363,6 +363,23 @@ const game = {
             }
         });
 
+            applySpecialAbilities(tower, enemy) {
+        let damage = tower.damage;
+
+        if (tower.applyBurnEffect) {
+            enemy.burningDuration = 3; // Apply burn for 3 seconds
+            enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
+        }
+
+        if (tower.applyChainReaction) {
+            const nearbyEnemies = this.enemies.filter(e => 
+                e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+            );
+            nearbyEnemies.forEach(e => {
+                e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
+            });
+        }
+
         // Update and draw projectiles
         this.projectiles = this.projectiles.filter((projectile) => {
             const dx = projectile.targetX - projectile.x;
