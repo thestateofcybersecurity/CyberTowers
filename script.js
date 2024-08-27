@@ -721,11 +721,6 @@ const game = {
         document.getElementById('playerLevel').textContent = this.playerLevel;
         document.getElementById('playerExperience').textContent = this.playerExperience;
     
-        // Show if the game is in hard mode
-        const difficultyText = document.getElementById('difficultyText');
-        difficultyText.textContent = this.isHardMode ? "Hard Mode" : "Normal Mode";
-        difficultyText.style.color = this.isHardMode ? "red" : "green";
-    
         // Update tower buttons based on unlocked defenses and available resources
         Object.keys(this.defenseTypes).forEach(defenseType => {
             const button = document.querySelector(`[data-tower="${defenseType}"]`);
@@ -754,20 +749,6 @@ const game = {
             const img = new Image();
             img.src = type.icon;
         });
-
-        // Hard mode increases threat health and damage by 50%
-        const hardMode = confirm("Start in Hard Mode?");
-        if (hardMode) {
-            this.threatTypes = Object.keys(this.threatTypes).reduce((acc, key) => {
-                const threat = this.threatTypes[key];
-                acc[key] = {
-                    ...threat,
-                    health: threat.health * 1.5,
-                    damage: threat.damage * 1.5
-                };
-                return acc;
-            }, {});
-        }
 
         // Add event listeners for tower selection
         document.querySelectorAll('.towerButton').forEach(button => {
