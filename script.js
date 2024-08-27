@@ -146,18 +146,21 @@ const game = {
     unlockedDefenses: ['firewall'], // Start with only firewall unlocked
 
     placeTower(type) {
-        const towerType = defenseTypes[type.toLowerCase()];
+        const towerType = this.defenseTypes[type.toLowerCase()];
         if (this.resources >= towerType.cost && this.unlockedDefenses.includes(type.toLowerCase())) {
             this.resources -= towerType.cost;
-            this.towers.push({
+            const tower = {
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
                 type: type,
                 ...towerType,
                 lastFired: 0,
                 level: 1,
-                experience: 0
-            });
+                experience: 0,
+                image: new Image()
+            };
+            tower.image.src = towerType.icon;
+            this.towers.push(tower);
             this.updateUI();
         }
     },
@@ -336,18 +339,22 @@ const game = {
     },
 
     spawnEnemy() {
-        const threatType = Object.keys(threatTypes)[Math.floor(Math.random() * Object.keys(threatTypes).length)];
-        const threat = threatTypes[threatType];
+        const threatTypes = Object.keys(this.threatTypes);
+        const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+        const threat = this.threatTypes[threatType];
         const waveMultiplier = 1 + (this.wave - 1) * 0.1; // 10% increase per wave
-        this.enemies.push({
+        const enemy = {
             x: 0,
             y: Math.random() * canvas.height,
             type: threatType,
             ...threat,
             currentHealth: threat.health * waveMultiplier,
             health: threat.health * waveMultiplier,
-            damage: threat.damage * waveMultiplier
-        });
+            damage: threat.damage * waveMultiplier,
+            image: new Image()
+        };
+        enemy.image.src = threat.icon;
+        this.enemies.push(enemy);
     },
 
     fireProjectile(tower, target, damage) {
@@ -379,7 +386,8 @@ const game = {
         this.updateEnemies();
         this.enemies.forEach((enemy, index) => {
             if (!enemy.invisible || enemy.revealed || Math.random() < 0.1) {
-                ctx.drawImage(new Image(), enemy.x, enemy.y, 30, 30);
+                ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
+                // Health bar
                 ctx.fillStyle = 'black';
                 ctx.fillRect(enemy.x, enemy.y - 10, 30, 5);
                 ctx.fillStyle = 'red';
@@ -400,7 +408,7 @@ const game = {
                 delete tower.coordinatedBoost;
             }
 
-            ctx.drawImage(new Image(), tower.x, tower.y, 40, 40);
+            ctx.drawImage(tower.image, tower.x, tower.y, 40, 40);
 
             if (timestamp - tower.lastFired > tower.fireRate) {
                 const target = this.enemies.find(enemy => {
@@ -464,13 +472,16 @@ const game = {
     },
 
     start() {
+        this.threatTypes = threatTypes;
+        this.defenseTypes = defenseTypes;
+
         // Load images
-        Object.values(defenseTypes).forEach(type => {
+        Object.values(this.defenseTypes).forEach(type => {
             const img = new Image();
             img.src = type.icon;
         });
 
-        Object.values(threatTypes).forEach(type => {
+        Object.values(this.threatTypes).forEach(type => {
             const img = new Image();
             img.src = type.icon;
         });
