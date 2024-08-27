@@ -14,19 +14,6 @@ const threatTypes = {
     apt: { health: 150, speed: 1.2, damage: 18, reward: 60, icon: './api/apt.jpg', evolves: true }
 };
 
-let systemIntegrity = 100;
-let resources = 300; // Reduced starting resources
-let wave = 1;
-let enemies = [];
-let towers = [];
-let projectiles = [];
-let isGamePaused = false;
-let lastSpawnTime = 0;
-let playerLevel = 1;
-let playerExperience = 0;
-let unlockedDefenses = ['firewall']; // Start with only firewall unlocked
-
-
 const defenseTypes = {
     firewall: { 
         cost: 100, 
@@ -135,12 +122,6 @@ const defenseTypes = {
     }
 };
 
-function updateUI() {
-    document.getElementById('scoreValue').textContent = systemIntegrity;
-    document.getElementById('resourcesValue').textContent = resources;
-    document.getElementById('waveValue').textContent = wave;
-}
-
 const playerProgressionLevels = [
     { level: 1, expRequired: 0, unlock: 'firewall' },
     { level: 2, expRequired: 100, unlock: 'antivirus' },
@@ -151,333 +132,353 @@ const playerProgressionLevels = [
     { level: 7, expRequired: 2100, unlock: 'honeypot' }
 ];
 
-function placeTower(type) {
-    const towerType = defenseTypes[type.toLowerCase()];
-    if (resources >= towerType.cost && unlockedDefenses.includes(type.toLowerCase())) {
-        resources -= towerType.cost;
-        towers.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            type: type,
-            ...towerType,
-            lastFired: 0,
-            level: 1,
-            experience: 0
-        });
-        updateUI();
-    }
-}
+const game = {
+    systemIntegrity: 100,
+    resources: 300,
+    wave: 1,
+    enemies: [],
+    towers: [],
+    projectiles: [],
+    isGamePaused: false,
+    lastSpawnTime: 0,
+    playerLevel: 1,
+    playerExperience: 0,
+    unlockedDefenses: ['firewall'], // Start with only firewall unlocked
 
-function updateTowerStats(tower) {
-    const baseStats = defenseTypes[tower.type.toLowerCase()];
-    const upgradeStats = baseStats.upgrades.find(upgrade => upgrade.level === tower.level) || {};
-    
-    Object.keys(upgradeStats).forEach(stat => {
-        if (stat !== 'level' && stat !== 'special') {
-            tower[stat] = upgradeStats[stat];
-        }
-    });
-
-    // Reset special abilities
-    tower.applyBurnEffect = false;
-    tower.applyChainReaction = false;
-    tower.applySlowEffect = false;
-    tower.applyAdaptiveDamage = false;
-    tower.applyRevealInvisible = false;
-    tower.applyCoordinatedBoost = false;
-    tower.applyConfuseEffect = false;
-
-    // Handle special abilities at level 5
-    if (tower.level === 5) {
-        switch (tower.type.toLowerCase()) {
-            case 'firewall':
-                tower.applyBurnEffect = true;
-                break;
-            case 'antivirus':
-                tower.applyChainReaction = true;
-                break;
-            case 'encryption':
-                tower.applySlowEffect = true;
-                break;
-            case 'ai':
-                tower.applyAdaptiveDamage = true;
-                tower.adaptiveDamageCounter = 0;
-                break;
-            case 'ids':
-                tower.applyRevealInvisible = true;
-                break;
-            case 'soc':
-                tower.applyCoordinatedBoost = true;
-                break;
-            case 'honeypot':
-                tower.applyConfuseEffect = true;
-                break;
-        }
-    }
-}
-
-function applySpecialAbilities(tower, enemy) {
-    let damage = tower.damage;
-
-    if (tower.applyBurnEffect) {
-        enemy.burningDuration = 3; // Apply burn for 3 seconds
-        enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
-    }
-
-    if (tower.applyChainReaction) {
-        const nearbyEnemies = enemies.filter(e => 
-            e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
-        );
-        nearbyEnemies.forEach(e => {
-            e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
-        });
-    }
-
-    if (tower.applySlowEffect) {
-        enemy.slowDuration = 3; // Slow for 3 seconds
-        enemy.slowFactor = 0.5; // Reduce speed by 50%
-    }
-
-    if (tower.applyAdaptiveDamage) {
-        tower.adaptiveDamageCounter++;
-        damage *= (1 + tower.adaptiveDamageCounter * 0.1); // 10% increase per hit
-    }
-
-    if (tower.applyRevealInvisible) {
-        enemy.revealed = true; // Mark enemy as revealed
-    }
-
-    if (tower.applyCoordinatedBoost) {
-        const nearbyTowers = towers.filter(t => 
-            t !== tower && Math.hypot(t.x - tower.x, t.y - tower.y) < 100
-        );
-        nearbyTowers.forEach(t => {
-            t.coordinatedBoost = 1.2; // 20% damage boost to nearby towers
-        });
-    }
-
-    if (tower.applyConfuseEffect) {
-        enemy.confusedDuration = 3; // Confuse for 3 seconds
-    }
-
-    return damage;
-}
-
-function updateEnemies() {
-    enemies.forEach(enemy => {
-        if (enemy.burningDuration > 0) {
-            enemy.currentHealth -= enemy.burningDamage;
-            enemy.burningDuration--;
-        }
-
-        if (enemy.slowDuration > 0) {
-            enemy.speed *= enemy.slowFactor;
-            enemy.slowDuration--;
-        }
-
-        if (enemy.confusedDuration > 0) {
-            if (Math.random() < 0.3) { // 30% chance to attack other enemies
-                const nearbyEnemy = enemies.find(e => 
-                    e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
-                );
-                if (nearbyEnemy) {
-                    nearbyEnemy.currentHealth -= enemy.damage;
-                }
-            }
-            enemy.confusedDuration--;
-        }
-
-        // Move enemy
-        if (enemy.slowDuration === 0) {
-            enemy.x += enemy.speed;
-        } else {
-            enemy.x += enemy.speed * enemy.slowFactor;
-        }
-    });
-}
-
-function addExperienceToTower(tower, amount) {
-    tower.experience += amount;
-    const expForNextLevel = Math.pow(tower.level, 2) * 100;
-    
-    if (tower.experience >= expForNextLevel && tower.level < defenseTypes[tower.type.toLowerCase()].maxLevel) {
-        tower.level++;
-        tower.experience -= expForNextLevel;
-        updateTowerStats(tower);
-    }
-}
-
-function addPlayerExperience(amount) {
-    playerExperience += amount;
-    const nextLevel = playerProgressionLevels.find(level => level.level === playerLevel + 1);
-    
-    if (nextLevel && playerExperience >= nextLevel.expRequired) {
-        playerLevel++;
-        unlockedDefenses.push(nextLevel.unlock);
-        updateUI();
-    }
-}
-
-function spawnEnemy() {
-    const threatType = Object.keys(threatTypes)[Math.floor(Math.random() * Object.keys(threatTypes).length)];
-    const threat = threatTypes[threatType];
-    const waveMultiplier = 1 + (wave - 1) * 0.1; // 10% increase per wave
-    enemies.push({
-        x: 0,
-        y: Math.random() * canvas.height,
-        type: threatType,
-        ...threat,
-        currentHealth: threat.health * waveMultiplier,
-        health: threat.health * waveMultiplier,
-        damage: threat.damage * waveMultiplier
-    });
-}
-
-function fireProjectile(tower, target, damage) {
-    projectiles.push({
-        x: tower.x,
-        y: tower.y,
-        targetX: target.x,
-        targetY: target.y,
-        color: tower.projectileColor,
-        damage: damage,
-        speed: 5,
-        tower: tower
-    });
-}
-
-function update(timestamp) {
-    if (isGamePaused) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Spawn enemies
-    const maxEnemies = Math.min(5 + wave * 2, 30); // Cap at 30 enemies per wave
-    if (timestamp - lastSpawnTime > 2000 && enemies.length < maxEnemies) {
-        spawnEnemy();
-        lastSpawnTime = timestamp;
-    }
-
-    // Move and draw enemies
-    enemies.forEach((enemy, index) => {
-        enemy.x += enemy.speed;
-        if (!enemy.invisible || Math.random() < 0.1) {
-            ctx.drawImage(new Image(), enemy.x, enemy.y, 30, 30);
-            ctx.fillStyle = 'black';
-            ctx.fillRect(enemy.x, enemy.y - 10, 30, 5);
-            ctx.fillStyle = 'red';
-            ctx.fillRect(enemy.x, enemy.y - 10, (enemy.currentHealth / enemy.health) * 30, 5);
-        }
-
-        if (enemy.x > canvas.width) {
-            systemIntegrity -= enemy.damage;
-            enemies.splice(index, 1);
-            updateUI();
-            updateEnemies();
-        }
-    });
-
-    // Draw and activate towers
-    towers.forEach(tower => {
-        if (tower.coordinatedBoost) {
-            tower.damage *= tower.coordinatedBoost;
-            delete tower.coordinatedBoost;
-        }
-
-        if (timestamp - tower.lastFired > tower.fireRate) {
-            const target = enemies.find(enemy => {
-                if (tower.applyRevealInvisible || !enemy.invisible) {
-                    const distance = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
-                    return distance < tower.range;
-                }
-                return false;
+    placeTower(type) {
+        const towerType = defenseTypes[type.toLowerCase()];
+        if (this.resources >= towerType.cost && this.unlockedDefenses.includes(type.toLowerCase())) {
+            this.resources -= towerType.cost;
+            this.towers.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                type: type,
+                ...towerType,
+                lastFired: 0,
+                level: 1,
+                experience: 0
             });
+            this.updateUI();
+        }
+    },
 
-            if (target) {
-                const damage = applySpecialAbilities(tower, target);
-                fireProjectile(tower, target, damage);
-                tower.lastFired = timestamp;
+    togglePause() {
+        this.isGamePaused = !this.isGamePaused;
+        if (!this.isGamePaused) {
+            requestAnimationFrame(this.update.bind(this));
+        }
+    },
+
+    updateUI() {
+        document.getElementById('scoreValue').textContent = this.systemIntegrity;
+        document.getElementById('resourcesValue').textContent = this.resources;
+        document.getElementById('waveValue').textContent = this.wave;
+        document.getElementById('playerLevel').textContent = this.playerLevel;
+        document.getElementById('playerExperience').textContent = this.playerExperience;
+
+        // Update defense buttons based on unlocked defenses
+        Object.keys(defenseTypes).forEach(defenseType => {
+            const button = document.getElementById(`${defenseType}Button`);
+            if (button) {
+                button.disabled = !this.unlockedDefenses.includes(defenseType);
+            }
+        });
+    },
+
+    updateTowerStats(tower) {
+        const baseStats = defenseTypes[tower.type.toLowerCase()];
+        const upgradeStats = baseStats.upgrades.find(upgrade => upgrade.level === tower.level) || {};
+
+        Object.keys(upgradeStats).forEach(stat => {
+            if (stat !== 'level' && stat !== 'special') {
+                tower[stat] = upgradeStats[stat];
+            }
+        });
+
+        // Reset special abilities
+        tower.applyBurnEffect = false;
+        tower.applyChainReaction = false;
+        tower.applySlowEffect = false;
+        tower.applyAdaptiveDamage = false;
+        tower.applyRevealInvisible = false;
+        tower.applyCoordinatedBoost = false;
+        tower.applyConfuseEffect = false;
+
+        // Handle special abilities at level 5
+        if (tower.level === 5) {
+            switch (tower.type.toLowerCase()) {
+                case 'firewall':
+                    tower.applyBurnEffect = true;
+                    break;
+                case 'antivirus':
+                    tower.applyChainReaction = true;
+                    break;
+                case 'encryption':
+                    tower.applySlowEffect = true;
+                    break;
+                case 'ai':
+                    tower.applyAdaptiveDamage = true;
+                    tower.adaptiveDamageCounter = 0;
+                    break;
+                case 'ids':
+                    tower.applyRevealInvisible = true;
+                    break;
+                case 'soc':
+                    tower.applyCoordinatedBoost = true;
+                    break;
+                case 'honeypot':
+                    tower.applyConfuseEffect = true;
+                    break;
             }
         }
-    });
+    },
 
-    // Move and draw projectiles
-    projectiles.forEach((projectile, index) => {
-        const dx = projectile.targetX - projectile.x;
-        const dy = projectile.targetY - projectile.y;
-        const distance = Math.hypot(dx, dy);
+    applySpecialAbilities(tower, enemy) {
+        let damage = tower.damage;
 
-        if (distance < projectile.speed) {
-            projectiles.splice(index, 1);
-        } else {
-            projectile.x += (dx / distance) * projectile.speed;
-            projectile.y += (dy / distance) * projectile.speed;
-
-            ctx.beginPath();
-            ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
-            ctx.fillStyle = projectile.color;
-            ctx.fill();
+        if (tower.applyBurnEffect) {
+            enemy.burningDuration = 3; // Apply burn for 3 seconds
+            enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
         }
 
-        // Check for collision with enemies
-        enemies.forEach((enemy, enemyIndex) => {
-            if (Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y) < 15) {
-                enemy.currentHealth -= projectile.damage;
-                projectiles.splice(index, 1);
+        if (tower.applyChainReaction) {
+            const nearbyEnemies = this.enemies.filter(e => 
+                e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+            );
+            nearbyEnemies.forEach(e => {
+                e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
+            });
+        }
 
-                if (enemy.currentHealth <= 0) {
-                    resources += enemy.reward;
-                    addExperienceToTower(projectile.tower, enemy.reward);
-                    addPlayerExperience(enemy.reward);
-                    enemies.splice(enemyIndex, 1);
-                    updateUI();
+        if (tower.applySlowEffect) {
+            enemy.slowDuration = 3; // Slow for 3 seconds
+            enemy.slowFactor = 0.5; // Reduce speed by 50%
+        }
+
+        if (tower.applyAdaptiveDamage) {
+            tower.adaptiveDamageCounter++;
+            damage *= (1 + tower.adaptiveDamageCounter * 0.1); // 10% increase per hit
+        }
+
+        if (tower.applyRevealInvisible) {
+            enemy.revealed = true; // Mark enemy as revealed
+        }
+
+        if (tower.applyCoordinatedBoost) {
+            const nearbyTowers = this.towers.filter(t => 
+                t !== tower && Math.hypot(t.x - tower.x, t.y - tower.y) < 100
+            );
+            nearbyTowers.forEach(t => {
+                t.coordinatedBoost = 1.2; // 20% damage boost to nearby towers
+            });
+        }
+
+        if (tower.applyConfuseEffect) {
+            enemy.confusedDuration = 3; // Confuse for 3 seconds
+        }
+
+        return damage;
+    },
+
+    updateEnemies() {
+        this.enemies.forEach(enemy => {
+            if (enemy.burningDuration > 0) {
+                enemy.currentHealth -= enemy.burningDamage;
+                enemy.burningDuration--;
+            }
+
+            if (enemy.slowDuration > 0) {
+                enemy.speed *= enemy.slowFactor;
+                enemy.slowDuration--;
+            }
+
+            if (enemy.confusedDuration > 0) {
+                if (Math.random() < 0.3) { // 30% chance to attack other enemies
+                    const nearbyEnemy = this.enemies.find(e => 
+                        e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+                    );
+                    if (nearbyEnemy) {
+                        nearbyEnemy.currentHealth -= enemy.damage;
+                    }
+                }
+                enemy.confusedDuration--;
+            }
+
+            // Move enemy
+            if (enemy.slowDuration === 0) {
+                enemy.x += enemy.speed;
+            } else {
+                enemy.x += enemy.speed * enemy.slowFactor;
+            }
+        });
+    },
+
+    addExperienceToTower(tower, amount) {
+        tower.experience += amount;
+        const expForNextLevel = Math.pow(tower.level, 2) * 100;
+
+        if (tower.experience >= expForNextLevel && tower.level < defenseTypes[tower.type.toLowerCase()].maxLevel) {
+            tower.level++;
+            tower.experience -= expForNextLevel;
+            this.updateTowerStats(tower);
+        }
+    },
+
+    addPlayerExperience(amount) {
+        this.playerExperience += amount;
+        const nextLevel = playerProgressionLevels.find(level => level.level === this.playerLevel + 1);
+
+        if (nextLevel && this.playerExperience >= nextLevel.expRequired) {
+            this.playerLevel++;
+            this.unlockedDefenses.push(nextLevel.unlock);
+            this.updateUI();
+        }
+    },
+
+    spawnEnemy() {
+        const threatType = Object.keys(threatTypes)[Math.floor(Math.random() * Object.keys(threatTypes).length)];
+        const threat = threatTypes[threatType];
+        const waveMultiplier = 1 + (this.wave - 1) * 0.1; // 10% increase per wave
+        this.enemies.push({
+            x: 0,
+            y: Math.random() * canvas.height,
+            type: threatType,
+            ...threat,
+            currentHealth: threat.health * waveMultiplier,
+            health: threat.health * waveMultiplier,
+            damage: threat.damage * waveMultiplier
+        });
+    },
+
+    fireProjectile(tower, target, damage) {
+        this.projectiles.push({
+            x: tower.x,
+            y: tower.y,
+            targetX: target.x,
+            targetY: target.y,
+            color: tower.projectileColor,
+            damage: damage,
+            speed: 5,
+            tower: tower
+        });
+    },
+
+    update(timestamp) {
+        if (this.isGamePaused) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Spawn enemies
+        const maxEnemies = Math.min(5 + this.wave * 2, 30); // Cap at 30 enemies per wave
+        if (timestamp - this.lastSpawnTime > 2000 && this.enemies.length < maxEnemies) {
+            this.spawnEnemy();
+            this.lastSpawnTime = timestamp;
+        }
+
+        // Update and draw enemies
+        this.updateEnemies();
+        this.enemies.forEach((enemy, index) => {
+            if (!enemy.invisible || enemy.revealed || Math.random() < 0.1) {
+                ctx.drawImage(new Image(), enemy.x, enemy.y, 30, 30);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(enemy.x, enemy.y - 10, 30, 5);
+                ctx.fillStyle = 'red';
+                ctx.fillRect(enemy.x, enemy.y - 10, (enemy.currentHealth / enemy.health) * 30, 5);
+            }
+
+            if (enemy.x > canvas.width) {
+                this.systemIntegrity -= enemy.damage;
+                this.enemies.splice(index, 1);
+                this.updateUI();
+            }
+        });
+
+        // Update and draw towers
+        this.towers.forEach(tower => {
+            if (tower.coordinatedBoost) {
+                tower.damage *= tower.coordinatedBoost;
+                delete tower.coordinatedBoost;
+            }
+
+            ctx.drawImage(new Image(), tower.x, tower.y, 40, 40);
+
+            if (timestamp - tower.lastFired > tower.fireRate) {
+                const target = this.enemies.find(enemy => {
+                    if (tower.applyRevealInvisible || !enemy.invisible) {
+                        const distance = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
+                        return distance < tower.range;
+                    }
+                    return false;
+                });
+
+                if (target) {
+                    const damage = this.applySpecialAbilities(tower, target);
+                    this.fireProjectile(tower, target, damage);
+                    tower.lastFired = timestamp;
                 }
             }
         });
-    });
 
-    // Check for wave completion
-    if (enemies.length === 0 && timestamp - lastSpawnTime > 5000) {
-        wave++;
-        updateUI();
-    }
+        // Update and draw projectiles
+        this.projectiles.forEach((projectile, index) => {
+            const dx = projectile.targetX - projectile.x;
+            const dy = projectile.targetY - projectile.y;
+            const distance = Math.hypot(dx, dy);
 
-    requestAnimationFrame(update);
-}
+            if (distance < projectile.speed) {
+                this.projectiles.splice(index, 1);
+            } else {
+                projectile.x += (dx / distance) * projectile.speed;
+                projectile.y += (dy / distance) * projectile.speed;
 
-function togglePause() {
-    isGamePaused = !isGamePaused;
-    if (!isGamePaused) {
-        requestAnimationFrame(update);
-    }
-}
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = projectile.color;
+                ctx.fill();
+            }
 
-function updateUI() {
-    document.getElementById('scoreValue').textContent = systemIntegrity;
-    document.getElementById('resourcesValue').textContent = resources;
-    document.getElementById('waveValue').textContent = wave;
-    document.getElementById('playerLevel').textContent = playerLevel;
-    document.getElementById('playerExperience').textContent = playerExperience;
-    
-    // Update defense buttons based on unlocked defenses
-    Object.keys(defenseTypes).forEach(defenseType => {
-        const button = document.getElementById(`${defenseType}Button`);
-        if (button) {
-            button.disabled = !unlockedDefenses.includes(defenseType);
+                                             // Check for collision with enemies
+            this.enemies.forEach((enemy, enemyIndex) => {
+                if (Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y) < 15) {
+                    enemy.currentHealth -= projectile.damage;
+                    this.projectiles.splice(index, 1);
+
+                    if (enemy.currentHealth <= 0) {
+                        this.resources += enemy.reward;
+                        this.addExperienceToTower(projectile.tower, enemy.reward);
+                        this.addPlayerExperience(enemy.reward);
+                        this.enemies.splice(enemyIndex, 1);
+                        this.updateUI();
+                    }
+                }
+            });
+        });
+
+        // Check for wave completion
+        if (this.enemies.length === 0 && timestamp - this.lastSpawnTime > 5000) {
+            this.wave++;
+            this.updateUI();
         }
-    });
-}
 
-// Load images
-Object.values(defenseTypes).forEach(type => {
-    const img = new Image();
-    img.src = type.icon;
-});
+        requestAnimationFrame(this.update.bind(this));
+    },
 
-Object.values(threatTypes).forEach(type => {
-    const img = new Image();
-    img.src = type.icon;
-});
+    start() {
+        // Load images
+        Object.values(defenseTypes).forEach(type => {
+            const img = new Image();
+            img.src = type.icon;
+        });
 
-requestAnimationFrame(update);
-updateUI();
+        Object.values(threatTypes).forEach(type => {
+            const img = new Image();
+            img.src = type.icon;
+        });
+
+        this.updateUI();
+        requestAnimationFrame(this.update.bind(this));
+    }
+};
+
+// Start the game
+game.start();
