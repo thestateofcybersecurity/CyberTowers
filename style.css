@@ -29,7 +29,33 @@ body {
     margin-top: 10px;
 }
 
-button {
+.towerButton {
     margin: 5px;
     padding: 5px 10px;
+    background-color: #ddd;
+    border: 1px solid #999;
+    cursor: pointer;
+}
+
+.towerButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.towerButton.selected {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.towerButton.affordable {
+    border-color: #4CAF50;
+}
+
+#pauseButton {
+    margin-top: 10px;
+    padding: 5px 15px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
