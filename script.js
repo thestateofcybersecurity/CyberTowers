@@ -486,7 +486,7 @@ const game = {
             type: threatType,
             ...threat,
             currentHealth: threat.health * waveMultiplier,
-            health: threat.health * waveMultiplier,
+            maxHealth: threat.health * waveMultiplier, // Store the max health
             damage: threat.damage * waveMultiplier,
             reward: threat.reward * waveMultiplier,
             image: new Image(),
@@ -602,22 +602,35 @@ const game = {
         }
 
         // Update and draw enemies
-        this.enemies = this.enemies.filter((enemy) => {
+        this.enemies.forEach((enemy, index) => {
             const reachedEnd = this.moveEnemyAlongPath(enemy);
             if (reachedEnd) {
                 this.systemIntegrity -= enemy.damage;
+                this.enemies.splice(index, 1);
                 this.updateUI();
-                return false;
-            }
-            if (!enemy.invisible || enemy.revealed) {
-                ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
-                // Health bar with Tron-like glow
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = 'rgba(0, 255, 255, 0.7)';
-                ctx.fillStyle = '#00FFFF';
-                ctx.fillRect(enemy.x, enemy.y - 10, (enemy.currentHealth / enemy.health) * 30, 5);
-                ctx.shadowBlur = 0;
-            }
+            } else {
+                // Draw enemy
+                if (!enemy.invisible || enemy.revealed) {
+                    ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
+                    
+                    // Draw health bar
+                    const healthPercentage = enemy.currentHealth / enemy.maxHealth;
+                    const healthBarWidth = 30; // Same as enemy width
+                    const healthBarHeight = 5;
+                    const healthBarY = enemy.y - 10;
+
+                    // Health bar background
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
+
+                    // Health bar fill
+                    ctx.fillStyle = this.getHealthBarColor(healthPercentage);
+                    ctx.fillRect(enemy.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
+
+                    // Optional: Add outline to health bar
+                    ctx.strokeStyle = 'white';
+                    ctx.strokeRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
+                    
             return true;
         });
         
@@ -780,6 +793,12 @@ const game = {
 
         // Start the game loop
         requestAnimationFrame(this.boundUpdate);
+
+        getHealthBarColor(percentage) {
+            if (percentage > 0.6) return 'green';
+            if (percentage > 0.3) return 'yellow';
+            return 'red';
+        },
 
         this.updateUI();
         // Add a start button
