@@ -601,38 +601,39 @@ const game = {
             this.lastSpawnTime = timestamp;
         }
 
-        // Update and draw enemies
-        this.enemies.forEach((enemy, index) => {
-            const reachedEnd = this.moveEnemyAlongPath(enemy);
-            if (reachedEnd) {
-                this.systemIntegrity -= enemy.damage;
-                this.enemies.splice(index, 1);
-                this.updateUI();
-            } else {
-                // Draw enemy
-                if (!enemy.invisible || enemy.revealed) {
-                    ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
-                    
-                    // Draw health bar
-                    const healthPercentage = enemy.currentHealth / enemy.maxHealth;
-                    const healthBarWidth = 30; // Same as enemy width
-                    const healthBarHeight = 5;
-                    const healthBarY = enemy.y - 10;
-
-                    // Health bar background
-                    ctx.fillStyle = 'black';
-                    ctx.fillRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
-
-                    // Health bar fill
-                    ctx.fillStyle = this.getHealthBarColor(healthPercentage);
-                    ctx.fillRect(enemy.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
-
-                    // Optional: Add outline to health bar
-                    ctx.strokeStyle = 'white';
-                    ctx.strokeRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
-                    
-            return true;
-        });
+    // Update and draw enemies
+    this.enemies = this.enemies.filter((enemy) => {
+        const reachedEnd = this.moveEnemyAlongPath(enemy);
+        if (reachedEnd) {
+            this.systemIntegrity -= enemy.damage;
+            this.updateUI();
+            return false; // Remove this enemy from the array
+        } else {
+            // Draw enemy
+            if (!enemy.invisible || enemy.revealed) {
+                ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
+                
+                // Draw health bar
+                const healthPercentage = enemy.currentHealth / enemy.maxHealth;
+                const healthBarWidth = 30; // Same as enemy width
+                const healthBarHeight = 5;
+                const healthBarY = enemy.y - 10;
+    
+                // Health bar background
+                ctx.fillStyle = 'black';
+                ctx.fillRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
+    
+                // Health bar fill
+                ctx.fillStyle = this.getHealthBarColor(healthPercentage);
+                ctx.fillRect(enemy.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
+    
+                // Optional: Add outline to health bar
+                ctx.strokeStyle = 'white';
+                ctx.strokeRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
+            }
+            return true; // Keep this enemy in the array
+        }
+    });
         
         // Update and draw towers
         this.towers.forEach(tower => {
