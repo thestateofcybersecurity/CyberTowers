@@ -19,16 +19,16 @@
         </div>
         <canvas id="gameBoard"></canvas>
         <div id="controls">
-            <div id="defenseSelection">
-                <button id="firewallButton" onclick="game.placeTower('Firewall')">Firewall (100 MB)</button>
-                <button id="antivirusButton" onclick="game.placeTower('Antivirus')">Antivirus (200 MB)</button>
-                <button id="encryptionButton" onclick="game.placeTower('Encryption')">Encryption (300 MB)</button>
-                <button id="idsButton" onclick="game.placeTower('IDS')">IDS (350 MB)</button>
-                <button id="aiButton" onclick="game.placeTower('AI')">AI Defense (450 MB)</button>
-                <button id="socButton" onclick="game.placeTower('SOC')">SOC (550 MB)</button>
-                <button id="honeypotButton" onclick="game.placeTower('Honeypot')">Honey Pot (150 MB)</button>
+            <div id="towerSelection">
+                <button id="firewallButton" class="towerButton" data-tower="firewall">Firewall (100 MB)</button>
+                <button id="antivirusButton" class="towerButton" data-tower="antivirus">Antivirus (200 MB)</button>
+                <button id="encryptionButton" class="towerButton" data-tower="encryption">Encryption (300 MB)</button>
+                <button id="idsButton" class="towerButton" data-tower="ids">IDS (350 MB)</button>
+                <button id="aiButton" class="towerButton" data-tower="ai">AI Defense (450 MB)</button>
+                <button id="socButton" class="towerButton" data-tower="soc">SOC (550 MB)</button>
+                <button id="honeypotButton" class="towerButton" data-tower="honeypot">Honey Pot (150 MB)</button>
             </div>
-            <button onclick="game.togglePause()">Pause</button>
+            <button id="pauseButton">Pause</button>
         </div>
     </div>
     <script src="script.js"></script>
