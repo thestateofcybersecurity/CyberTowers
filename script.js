@@ -335,6 +335,92 @@ const game = {
         return damage;
     },
 
+    addExperienceToTower(tower, amount) {
+        tower.experience += amount;
+        const expForNextLevel = Math.pow(tower.level, 2) * 100;
+        
+        if (tower.experience >= expForNextLevel && tower.level < this.defenseTypes[tower.type.toLowerCase()].maxLevel) {
+            tower.level++;
+            tower.experience -= expForNextLevel;
+            this.updateTowerStats(tower);
+        }
+    },
+
+    addPlayerExperience(amount) {
+        this.playerExperience += amount;
+        const nextLevel = this.playerProgressionLevels.find(level => level.level === this.playerLevel + 1);
+        
+        if (nextLevel && this.playerExperience >= nextLevel.expRequired) {
+            this.playerLevel++;
+            this.unlockedDefenses.push(nextLevel.unlock);
+            this.updateUI();
+        }
+    },
+
+    updateTowerStats(tower) {
+        const baseStats = this.defenseTypes[tower.type.toLowerCase()];
+        const upgradeStats = baseStats.upgrades.find(upgrade => upgrade.level === tower.level) || {};
+        
+        // Update basic stats
+        Object.keys(upgradeStats).forEach(stat => {
+            if (stat !== 'level' && stat !== 'special') {
+                tower[stat] = upgradeStats[stat];
+            }
+        });
+
+        // Reset all special abilities
+        tower.applyBurnEffect = false;
+        tower.applyChainReaction = false;
+        tower.applySlowEffect = false;
+        tower.applyAdaptiveDamage = false;
+        tower.applyRevealInvisible = false;
+        tower.applyCoordinatedBoost = false;
+        tower.applyConfuseEffect = false;
+
+        // Handle special abilities at level 5
+        if (tower.level === 5) {
+            switch (tower.type.toLowerCase()) {
+                case 'firewall':
+                    tower.applyBurnEffect = true;
+                    tower.burnDamage = tower.damage * 0.2; // 20% of tower's damage per second
+                    tower.burnDuration = 3; // 3 seconds
+                    break;
+                case 'antivirus':
+                    tower.applyChainReaction = true;
+                    tower.chainReactionRange = 50; // 50 pixel radius
+                    tower.chainReactionDamage = tower.damage * 0.5; // 50% of tower's damage
+                    break;
+                case 'encryption':
+                    tower.applySlowEffect = true;
+                    tower.slowFactor = 0.5; // Reduce speed by 50%
+                    tower.slowDuration = 3; // 3 seconds
+                    break;
+                case 'ai':
+                    tower.applyAdaptiveDamage = true;
+                    tower.adaptiveDamageIncrease = 0.1; // 10% increase per hit
+                    tower.adaptiveDamageCounter = 0;
+                    break;
+                case 'ids':
+                    tower.applyRevealInvisible = true;
+                    tower.revealDuration = 5; // 5 seconds
+                    break;
+                case 'soc':
+                    tower.applyCoordinatedBoost = true;
+                    tower.coordinatedBoostRange = 100; // 100 pixel radius
+                    tower.coordinatedBoostFactor = 1.2; // 20% damage boost
+                    break;
+                case 'honeypot':
+                    tower.applyConfuseEffect = true;
+                    tower.confuseDuration = 3; // 3 seconds
+                    tower.confuseChance = 0.3; // 30% chance to attack other enemies
+                    break;
+            }
+        }
+
+        // Update tower's appearance or any other relevant properties
+        this.updateTowerAppearance(tower);
+    },
+
     updateEnemies() {
         this.enemies.forEach(enemy => {
             // Apply burning effect
