@@ -122,16 +122,6 @@ const defenseTypes = {
     }
 };
 
-const playerProgressionLevels = [
-    { level: 1, expRequired: 0, unlock: 'firewall' },
-    { level: 2, expRequired: 100, unlock: 'antivirus' },
-    { level: 3, expRequired: 300, unlock: 'encryption' },
-    { level: 4, expRequired: 600, unlock: 'ids' },
-    { level: 5, expRequired: 1000, unlock: 'ai' },
-    { level: 6, expRequired: 1500, unlock: 'soc' },
-    { level: 7, expRequired: 2100, unlock: 'honeypot' }
-];
-
 const game = {
     systemIntegrity: 100,
     resources: 500,
@@ -350,6 +340,16 @@ const game = {
         }
     },
 
+    playerProgressionLevels: [
+        { level: 1, expRequired: 0, unlock: 'firewall' },
+        { level: 2, expRequired: 100, unlock: 'antivirus' },
+        { level: 3, expRequired: 300, unlock: 'encryption' },
+        { level: 4, expRequired: 600, unlock: 'ids' },
+        { level: 5, expRequired: 1000, unlock: 'ai' },
+        { level: 6, expRequired: 1500, unlock: 'soc' },
+        { level: 7, expRequired: 2100, unlock: 'honeypot' }
+    ],
+
     addPlayerExperience(amount) {
         this.playerExperience += amount;
         const nextLevel = this.playerProgressionLevels.find(level => level.level === this.playerLevel + 1);
@@ -357,11 +357,10 @@ const game = {
         if (nextLevel && this.playerExperience >= nextLevel.expRequired) {
             this.playerLevel++;
             this.unlockedDefenses.push(nextLevel.unlock);
-            this.resources += 100 * this.playerLevel; // Resource bonus for leveling up
             this.updateUI();
         }
     },
-
+    
     updateTowerStats(tower) {
         const baseStats = this.defenseTypes[tower.type.toLowerCase()];
         const upgradeStats = baseStats.upgrades.find(upgrade => upgrade.level === tower.level) || {};
@@ -749,6 +748,11 @@ const game = {
             const img = new Image();
             img.src = type.icon;
         });
+
+        // Ensure playerProgressionLevels is set
+        if (!this.playerProgressionLevels) {
+            console.error('playerProgressionLevels is not defined!');
+        }
 
         // Add event listeners for tower selection
         document.querySelectorAll('.towerButton').forEach(button => {
