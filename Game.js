@@ -1,5 +1,4 @@
 // Game.js
-import { GAME_STATES, CANVAS_WIDTH, CANVAS_HEIGHT } from './constants.js';
 import { Threat } from './Threat.js';
 import { Tower } from './Tower.js';
 import { Projectile } from './Projectile.js';
