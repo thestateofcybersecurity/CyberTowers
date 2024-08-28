@@ -23,14 +23,65 @@ export class UIManager {
         });
     }
 
+    showTowerUpgradeMenu(tower) {
+        const upgradeMenu = document.createElement('div');
+        upgradeMenu.id = 'towerUpgradeMenu';
+        upgradeMenu.style.position = 'absolute';
+        upgradeMenu.style.left = `${tower.x + 50}px`;
+        upgradeMenu.style.top = `${tower.y}px`;
+        upgradeMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        upgradeMenu.style.padding = '10px';
+        upgradeMenu.style.borderRadius = '5px';
+
+        const upgradeCost = Math.pow(tower.level, 2) * 50; // Example cost calculation
+
+        upgradeMenu.innerHTML = `
+            <h3>${tower.type} Tower (Level ${tower.level})</h3>
+            <p>Damage: ${tower.damage}</p>
+            <p>Range: ${tower.range}</p>
+            <p>Fire Rate: ${tower.fireRate}ms</p>
+            <button id="upgradeTowerBtn">Upgrade (${upgradeCost} MB)</button>
+            <button id="closeTowerMenuBtn">Close</button>
+        `;
+
+        document.body.appendChild(upgradeMenu);
+
+        document.getElementById('upgradeTowerBtn').addEventListener('click', () => {
+            if (this.game.resources >= upgradeCost) {
+                this.game.resources -= upgradeCost;
+                tower.levelUp();
+                this.showTowerUpgradeMenu(tower); // Refresh the menu
+                this.updateUI();
+            } else {
+                alert('Not enough resources!');
+            }
+        });
+
+        document.getElementById('closeTowerMenuBtn').addEventListener('click', () => {
+            document.body.removeChild(upgradeMenu);
+        });
+    }
+
     addEventListeners() {
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
                 const towerType = button.dataset.tower;
                 this.game.selectedTowerType = towerType;
                 this.updateTowerSelection();
+            this.game.canvas.addEventListener('click', (event) => {
+                const rect = this.game.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                const clickedTower = this.game.towers.find(tower => 
+                    x >= tower.x && x <= tower.x + 40 && y >= tower.y && y <= tower.y + 40
+                );
+    
+                if (clickedTower) {
+                    this.showTowerUpgradeMenu(clickedTower);
+                }
             });
-        });
+        }
     }
 
     setupEventListeners() {
