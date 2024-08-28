@@ -662,7 +662,7 @@ const game = {
         this.currentWave++;
         this.isWaveActive = true;
         this.waveTimer = performance.now();
-        
+    
         const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
         const threatsPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 threats per wave
     
@@ -678,7 +678,7 @@ const game = {
         this.resources = 500;
         this.endless = true;
         this.setState('playing');
-    }
+    },
     
     endWave() {
         if (this.endless) {
@@ -687,16 +687,17 @@ const game = {
             this.updateUI();
             setTimeout(() => this.startNewWave(), 3000); // Auto-start next wave after a short break
         } else {
-        this.isWaveActive = false;
-        this.waveTimer = performance.now();
-        const waveBonus = this.systemIntegrity / 100 * 100 * this.currentWave; // Bonus based on system integrity
-        this.resources += waveBonus;
-        this.updateUI();
+            this.isWaveActive = false;
+            this.waveTimer = performance.now();
+            const waveBonus = this.systemIntegrity / 100 * 100 * this.currentWave; // Bonus based on system integrity
+            this.resources += waveBonus;
+            this.updateUI();
     
-        if (this.currentWave % 5 === 0) {
-            this.resources += this.resources * 0.1; // 10% resource bonus every 5 waves
+            if (this.currentWave % 5 === 0) {
+                this.resources += this.resources * 0.1; // 10% resource bonus every 5 waves
+            }
         }
-    }
+    },
 
     // Add challenge modes
     startChallengeMode(challenge) {
