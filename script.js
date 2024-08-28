@@ -57,7 +57,7 @@ const defenseTypes = {
             { level: 2, damage: 40, range: 190 },
             { level: 3, damage: 45, fireRate: 1400 },
             { level: 4, damage: 50, range: 200 },
-            { level: 5, damage: 55, fireRate: 1300, special: 'Slow down enemies' }
+            { level: 5, damage: 55, fireRate: 1300, special: 'Slow down threats' }
         ]
     },
     ai: { 
@@ -87,7 +87,7 @@ const defenseTypes = {
             { level: 2, damage: 35, range: 240 },
             { level: 3, damage: 40, fireRate: 1200 },
             { level: 4, damage: 45, range: 260 },
-            { level: 5, damage: 50, fireRate: 1100, special: 'Reveal invisible enemies' }
+            { level: 5, damage: 50, fireRate: 1100, special: 'Reveal invisible threats' }
         ]
     },
     soc: { 
@@ -114,10 +114,10 @@ const defenseTypes = {
         projectileColor: '#FFD700',
         maxLevel: 5,
         upgrades: [
-            { level: 2, range: 170, special: 'Attract enemies in range' },
+            { level: 2, range: 170, special: 'Attract threats in range' },
             { level: 3, damage: 10, fireRate: 700 },
-            { level: 4, range: 190, special: 'Slow enemies in range' },
-            { level: 5, damage: 15, fireRate: 600, special: 'Confuse enemies, making them attack each other' }
+            { level: 4, range: 190, special: 'Slow threats in range' },
+            { level: 5, damage: 15, fireRate: 600, special: 'Confuse threats, making them attack each other' }
         ]
     }
 };
@@ -182,7 +182,7 @@ const game = {
     sounds: {
         backgroundMusic: new Audio('./api/background_music.mp3'),
         towerShoot: new Audio('./api/tower_shoot.mp3'),
-        enemyDeath: new Audio('./api/enemy_death.mp3')
+        threatDeath: new Audio('./api/threat_death.mp3')
     },
 
     startBackgroundMusic() {
@@ -285,7 +285,7 @@ const game = {
         }
     },
 
-    applySpecialAbilities(tower, threat) { // Changed enemy to threat
+    applySpecialAbilities(tower, threat) { // Changed threat to threat
         let damage = tower.damage;
 
         switch (tower.type.toLowerCase()) {
@@ -298,19 +298,19 @@ const game = {
 
             case 'antivirus':
                 if (tower.applyChainReaction) {
-                    const nearbyEnemies = this.enemies.filter(e => 
-                        e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+                    const nearbyThreats = this.threats.filter(e => 
+                        e !== threat && Math.hypot(e.x - threat.x, e.y - threat.y) < 50
                     );
-                    nearbyEnemies.forEach(e => {
-                        e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby enemies
+                    nearbyThreats.forEach(e => {
+                        e.currentHealth -= tower.damage * 0.5; // 50% damage to nearby threats
                     });
                 }
                 break;
 
             case 'encryption':
                 if (tower.applySlowEffect) {
-                    enemy.slowDuration = 3; // Slow for 3 seconds
-                    enemy.slowFactor = 0.5; // Reduce speed by 50%
+                    threat.slowDuration = 3; // Slow for 3 seconds
+                    threat.slowFactor = 0.5; // Reduce speed by 50%
                 }
                 break;
 
@@ -323,7 +323,7 @@ const game = {
 
             case 'ids':
                 if (tower.applyRevealInvisible) {
-                    enemy.revealed = true; // Mark enemy as revealed
+                    threat.revealed = true; // Mark threat as revealed
                 }
                 break;
 
@@ -340,7 +340,7 @@ const game = {
 
             case 'honeypot':
                 if (tower.applyConfuseEffect) {
-                    enemy.confusedDuration = 3; // Confuse for 3 seconds
+                    threat.confusedDuration = 3; // Confuse for 3 seconds
                 }
                 break;
         }
@@ -439,13 +439,13 @@ const game = {
                 case 'honeypot':
                     tower.applyConfuseEffect = true;
                     tower.confuseDuration = 3; // 3 seconds
-                    tower.confuseChance = 0.3; // 30% chance to attack other enemies
+                    tower.confuseChance = 0.3; // 30% chance to attack other threats
                     break;
             }
         }
     }
     
-    updateThreats() { // Changed from updateEnemies
+    updateThreats() { // Changed from updateThreats
         this.threats.forEach(threat => {
             // Apply burning effect
             if (threat.burningDuration > 0) {
@@ -484,7 +484,7 @@ const game = {
         });
     },
 
-    spawnThreat(waveMultiplier) { // Changed from spawnEnemy
+    spawnThreat(waveMultiplier) { // Changed from spawnThreat
         const threatTypes = Object.keys(this.threatTypes);
         let threatType = this.selectThreatType();
         const threat = this.threatTypes[threatType];
@@ -503,7 +503,7 @@ const game = {
         this.threats.push(newThreat);
     },
 
-    moveThreatAlongPath(threat) { // Changed from moveEnemyAlongPath
+    moveThreatAlongPath(threat) { // Changed from moveThreatAlongPath
         const targetPoint = this.path[threat.pathIndex];
         const dx = targetPoint.x - threat.x;
         const dy = targetPoint.y - threat.y;
@@ -544,7 +544,7 @@ const game = {
                 this.startNewWave();
             }
         } else {
-            if (timestamp - this.waveTimer > this.waveDuration || this.enemies.length === 0) {
+            if (timestamp - this.waveTimer > this.waveDuration || this.threats.length === 0) {
                 this.endWave();
             }
         }
@@ -556,10 +556,10 @@ const game = {
         this.waveTimer = performance.now();
         
         const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
-        const enemiesPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 enemies per wave
+        const threatsPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 threats per wave
     
-        for (let i = 0; i < enemiesPerWave; i++) {
-            const delay = i * 1000 / waveMultiplier; // Stagger enemy spawns
+        for (let i = 0; i < threatsPerWave; i++) {
+            const delay = i * 1000 / waveMultiplier; // Stagger threat spawns
             setTimeout(() => this.spawnThreat(waveMultiplier), delay);
         }
     },
@@ -617,7 +617,7 @@ const game = {
         this.drawBackground();
         this.drawGrid();
         this.drawPath();
-        this.updateEnemies();
+        this.updateThreats();
 
         // Use object pooling for projectiles
         this.updateProjectiles(timestamp);
@@ -625,43 +625,43 @@ const game = {
         // Update wave system
         this.updateWaveSystem(timestamp);
 
-        // Spawn enemies
-        if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.enemies.length < this.currentWave * 5) {
+        // Spawn threats
+        if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.threats.length < this.currentWave * 5) {
             this.spawnThreat();
             this.lastSpawnTime = timestamp;
         }
 
-    // Update and draw enemies
-    this.enemies = this.enemies.filter((enemy) => {
+    // Update and draw threats
+    this.threats = this.threats.filter((threat) => {
         const reachedEnd = this.moveThreatAlongPath(Threat);
         if (reachedEnd) {
-            this.systemIntegrity -= enemy.damage;
+            this.systemIntegrity -= threat.damage;
             this.updateUI();
-            return false; // Remove this enemy from the array
+            return false; // Remove this threat from the array
         } else {
-            // Draw enemy
-            if (!enemy.invisible || enemy.revealed) {
-                ctx.drawImage(enemy.image, enemy.x, enemy.y, 30, 30);
+            // Draw threat
+            if (!threat.invisible || threat.revealed) {
+                ctx.drawImage(threat.image, threat.x, threat.y, 30, 30);
                 
                 // Draw health bar
-                const healthPercentage = enemy.currentHealth / enemy.maxHealth;
-                const healthBarWidth = 30; // Same as enemy width
+                const healthPercentage = threat.currentHealth / threat.maxHealth;
+                const healthBarWidth = 30; // Same as threat width
                 const healthBarHeight = 5;
-                const healthBarY = enemy.y - 10;
+                const healthBarY = threat.y - 10;
     
                 // Health bar background
                 ctx.fillStyle = 'black';
-                ctx.fillRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
+                ctx.fillRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
     
                 // Health bar fill
                 ctx.fillStyle = this.getHealthBarColor(healthPercentage);
-                ctx.fillRect(enemy.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
+                ctx.fillRect(threat.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
     
                 // Optional: Add outline to health bar
                 ctx.strokeStyle = 'white';
-                ctx.strokeRect(enemy.x, healthBarY, healthBarWidth, healthBarHeight);
+                ctx.strokeRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
             }
-            return true; // Keep this enemy in the array
+            return true; // Keep this threat in the array
         }
     });
         
@@ -673,9 +673,9 @@ const game = {
             ctx.shadowBlur = 0;
 
             if (timestamp - tower.lastFired > tower.fireRate) {
-                const target = this.enemies.find(enemy => {
-                    if (tower.applyRevealInvisible || !enemy.invisible) {
-                        const distance = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
+                const target = this.threats.find(threat => {
+                    if (tower.applyRevealInvisible || !threat.invisible) {
+                        const distance = Math.hypot(threat.x - tower.x, threat.y - tower.y);
                         return distance < tower.range;
                     }
                     return false;
@@ -697,18 +697,18 @@ const game = {
             const distance = Math.hypot(dx, dy);
 
             if (distance < projectile.speed) {
-                const targetEnemy = this.enemies.find(enemy => 
-                    Math.hypot(enemy.x - projectile.targetX, enemy.y - projectile.targetY) < 15
+                const targetThreat = this.threats.find(threat => 
+                    Math.hypot(threat.x - projectile.targetX, threat.y - projectile.targetY) < 15
                 );
-                if (targetEnemy) {
-                    targetEnemy.currentHealth -= projectile.damage;
+                if (targetThreat) {
+                    targetThreat.currentHealth -= projectile.damage;
                     this.addEffect(projectile.targetX, projectile.targetY, 'explosion');
-                    if (targetEnemy.currentHealth <= 0) {
-                        this.resources += targetEnemy.reward;
-                        this.addExperienceToTower(projectile.tower, targetEnemy.reward);
-                        this.addPlayerExperience(targetEnemy.reward);
-                        this.enemies = this.enemies.filter(e => e !== targetEnemy);
-                        this.playSoundEffect('enemyDeath');
+                    if (targetThreat.currentHealth <= 0) {
+                        this.resources += targetThreat.reward;
+                        this.addExperienceToTower(projectile.tower, targetThreat.reward);
+                        this.addPlayerExperience(targetThreat.reward);
+                        this.threats = this.threats.filter(e => e !== targetThreat);
+                        this.playSoundEffect('threatDeath');
                     }
                 }
                 return false;
@@ -781,26 +781,26 @@ const game = {
     },
 
     handleProjectileImpact(projectile) {
-        const targetEnemy = this.findEnemyAtPosition(projectile.targetX, projectile.targetY);
-        if (targetEnemy) {
-            targetEnemy.currentHealth -= projectile.damage;
+        const targetThreat = this.findThreatAtPosition(projectile.targetX, projectile.targetY);
+        if (targetThreat) {
+            targetThreat.currentHealth -= projectile.damage;
             this.addEffect(projectile.targetX, projectile.targetY, 'explosion');
-            if (targetEnemy.currentHealth <= 0) {
-                this.handleEnemyDeath(targetEnemy, projectile.tower);
+            if (targetThreat.currentHealth <= 0) {
+                this.handleThreatDeath(targetThreat, projectile.tower);
             }
         }
     },
 
-    findEnemyAtPosition(x, y) {
-        return this.enemies.find(enemy => Math.hypot(enemy.x - x, enemy.y - y) < 15);
+    findThreatAtPosition(x, y) {
+        return this.threats.find(threat => Math.hypot(threat.x - x, threat.y - y) < 15);
     },
 
-    handleEnemyDeath(enemy, tower) {
-        this.resources += enemy.reward;
-        this.addExperienceToTower(tower, enemy.reward);
-        this.addPlayerExperience(enemy.reward);
-        this.enemies = this.enemies.filter(e => e !== enemy);
-        this.playSoundEffect('enemyDeath');
+    handleThreatDeath(threat, tower) {
+        this.resources += threat.reward;
+        this.addExperienceToTower(tower, threat.reward);
+        this.addPlayerExperience(threat.reward);
+        this.threats = this.threats.filter(e => e !== threat);
+        this.playSoundEffect('threatDeath');
     },
 
     drawProjectile(projectile) {
