@@ -662,7 +662,7 @@ const game = {
 
     // Update and draw threats
     this.threats = this.threats.filter((threat) => {
-        const reachedEnd = this.moveThreatAlongPath(Threat);
+        const reachedEnd = this.moveThreatAlongPath(threat);
         if (reachedEnd) {
             this.systemIntegrity -= threat.damage;
             this.updateUI();
