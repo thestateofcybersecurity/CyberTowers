@@ -31,6 +31,7 @@ export class Game {
         this.assetLoader = new AssetLoader();
         this.gridManager = new GridManager(CANVAS_WIDTH, CANVAS_HEIGHT);
         this.boundUpdate = this.update.bind(this);
+        this.highScore = 0;
     }
 
     async start() {
@@ -39,7 +40,7 @@ export class Game {
             this.initializeEventListeners();
             this.resetGameLogic();
             this.setState(GAME_STATES.MENU);
-            requestAnimationFrame(this.boundUpdate);
+            this.uiManager.showMenu();
         } catch (error) {
             console.error("Failed to load game resources:", error);
             this.uiManager.showErrorMessage("Failed to load game resources. Please refresh the page.");
@@ -85,6 +86,36 @@ export class Game {
         this.playerExperience = 0;
         this.selectedTowerType = 'firewall';
         this.gridManager.resetGrid();
+    }
+
+    startGame() {
+        this.resetGameLogic();
+        this.setState(GAME_STATES.PLAYING);
+        this.uiManager.hideMenu();
+        requestAnimationFrame(this.boundUpdate);
+    }
+
+    showOptions() {
+        // Implement options menu logic
+    }
+
+    restartGame() {
+        this.resetGameLogic();
+        this.startGame();
+    }
+
+    showMenu() {
+        this.setState(GAME_STATES.MENU);
+        this.uiManager.showMenu();
+    }
+
+    togglePause() {
+        if (this.state === GAME_STATES.PLAYING) {
+            this.setState(GAME_STATES.PAUSED);
+        } else if (this.state === GAME_STATES.PAUSED) {
+            this.setState(GAME_STATES.PLAYING);
+        }
+        this.uiManager.updatePauseButton();
     }
 
     update(timestamp) {
@@ -238,7 +269,15 @@ export class Game {
         if (this.systemIntegrity <= 0) {
             this.systemIntegrity = 0;
             this.setState(GAME_STATES.GAME_OVER);
-            // Implement game over logic
+            this.updateHighScore();
+            this.uiManager.showGameOver();
+        }
+    }
+
+    updateHighScore() {
+        if (this.currentWave > this.highScore) {
+            this.highScore = this.currentWave;
+            localStorage.setItem('highScore', this.highScore);
         }
     }
 
