@@ -4,8 +4,8 @@ canvas.width = 800;
 canvas.height = 600;
 
 const threatTypes = {
-    virus: { health: 50, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
-    trojan: { health: 80, speed: 1, damage: 8, reward: 30, icon: './api/trojan.jpg' },
+    virus: { health: 45, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
+    trojan: { health: 75, speed: 1, damage: 8, reward: 30, icon: './api/trojan.jpg' },
     ransomware: { health: 120, speed: 0.7, damage: 15, reward: 50, icon: './api/ransomware.jpg' },
     worm: { health: 30, speed: 2, damage: 10, reward: 25, icon: './api/worm.jpg' },
     botnet: { health: 200, speed: 0.5, damage: 20, reward: 80, icon: './api/botnet.jpg' },
@@ -897,6 +897,12 @@ const game = {
         ctx.fillStyle = '#00FFFF';
         ctx.fillText(`Final Score: Wave ${this.currentWave}`, canvas.width / 2, canvas.height / 2 - 30);
         ctx.fillText(`High Score: Wave ${this.highScore}`, canvas.width / 2, canvas.height / 2 + 10);
+
+        // New high score notification
+        if (this.currentWave === this.highScore) {
+            ctx.fillStyle = '#FFFF00';
+            ctx.fillText('New High Score!', canvas.width / 2, canvas.height / 2 + 20);
+        }
 
         // Create buttons
         const buttonStyle = `
