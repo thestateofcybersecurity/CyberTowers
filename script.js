@@ -151,7 +151,23 @@ const game = {
     threatTypes: threatTypes,
     defenseTypes: defenseTypes,
     endless: false,
+    gameContainer: null,
     menuContainer: null,
+    optionsContainer: null,
+
+    initializeDOM() {
+        this.gameContainer = document.createElement('div');
+        this.gameContainer.id = 'gameContainer';
+        document.body.appendChild(this.gameContainer);
+
+        this.menuContainer = document.createElement('div');
+        this.menuContainer.id = 'menuContainer';
+        this.gameContainer.appendChild(this.menuContainer);
+
+        this.optionsContainer = document.createElement('div');
+        this.optionsContainer.id = 'optionsContainer';
+        this.gameContainer.appendChild(this.optionsContainer);
+    },
     
     preloadImages() {
         const imagesToLoad = [
@@ -711,43 +727,31 @@ const game = {
     },
 
     showMenu() {
-        // Clear the screen
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.clearContainer(this.menuContainer);
         
-        // Display the title
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.font = '48px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText('Cybersecurity Tower Defense', canvas.width / 2, 150);
 
-        // Create a container for menu buttons if it doesn't exist
-        if (!this.menuContainer) {
-            this.menuContainer = document.createElement('div');
-            this.menuContainer.id = 'menuContainer';
-            document.body.appendChild(this.menuContainer);
-        }
-    
-        this.createButton('Start Game', canvas.width / 2 - 60, 250, () => {
-            this.startGame();
-        });
+        this.createButton('Start Game', canvas.width / 2 - 60, 250, () => this.startGame(), this.menuContainer);
+        this.createButton('Options', canvas.width / 2 - 60, 320, () => this.showOptions(), this.menuContainer);
+        this.createButton('Exit', canvas.width / 2 - 60, 390, () => window.close(), this.menuContainer);
 
-        this.createButton('Options', canvas.width / 2 - 60, 320, () => {
-            this.showOptions();
-        });
-
-        this.createButton('Exit', canvas.width / 2 - 60, 390, () => {
-            window.close();
-        });
+        this.menuContainer.style.display = 'block';
+        this.optionsContainer.style.display = 'none';
     },
 
-    createButton(text, x, y, onClick) {
+    createButton(text, x, y, onClick, container) {
         const button = document.createElement('button');
         button.textContent = text;
         button.style.position = 'absolute';
         button.style.left = `${x}px`;
         button.style.top = `${y}px`;
         button.addEventListener('click', onClick);
-        this.menuContainer.appendChild(button);
+        container.appendChild(button);
+        return button;
     },
 
     startGame() {
@@ -756,10 +760,8 @@ const game = {
         this.systemIntegrity = 100;
         this.resources = 500;
 
-        if (this.menuContainer) {
-            document.body.removeChild(this.menuContainer);
-            this.menuContainer = null;
-        }
+        this.menuContainer.style.display = 'none';
+        this.optionsContainer.style.display = 'none';
 
         this.initializeGrid();
         this.startNewWave();
@@ -848,25 +850,33 @@ const game = {
         }
     },
 
+    clearContainer(container) {
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+    },
+
     showOptions() {
-        // Clear the screen
+        this.clearContainer(this.optionsContainer);
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Display the options title
         ctx.font = '36px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText('Options', canvas.width / 2, 150);
-    
-        // Create volume control slider
-        const volumeLabel = document.createElement('label');
-        volumeLabel.textContent = 'Volume:';
-        volumeLabel.style.position = 'absolute';
-        volumeLabel.style.left = `${canvas.width / 2 - 80}px`;
-        volumeLabel.style.top = '220px';
-        volumeLabel.style.color = 'white';
-        document.body.appendChild(volumeLabel);
-    
+
+        const createLabel = (text, x, y) => {
+            const label = document.createElement('label');
+            label.textContent = text;
+            label.style.position = 'absolute';
+            label.style.left = `${x}px`;
+            label.style.top = `${y}px`;
+            label.style.color = 'white';
+            this.optionsContainer.appendChild(label);
+            return label;
+        };
+
+        createLabel('Volume:', canvas.width / 2 - 80, 220);
         const volumeSlider = document.createElement('input');
         volumeSlider.type = 'range';
         volumeSlider.min = '0';
@@ -877,83 +887,29 @@ const game = {
         volumeSlider.style.top = '220px';
         volumeSlider.addEventListener('input', (event) => {
             const volume = event.target.value / 100;
-            this.sounds.backgroundMusic.volume = volume;
-            Object.keys(this.sounds).forEach(soundKey => {
-                this.sounds[soundKey].volume = volume;
-            });
+            Object.values(this.sounds).forEach(sound => sound.volume = volume);
         });
-        document.body.appendChild(volumeSlider);
-    
-        // Create difficulty setting dropdown
-        const difficultyLabel = document.createElement('label');
-        difficultyLabel.textContent = 'Difficulty:';
-        difficultyLabel.style.position = 'absolute';
-        difficultyLabel.style.left = `${canvas.width / 2 - 80}px`;
-        difficultyLabel.style.top = '270px';
-        difficultyLabel.style.color = 'white';
-        document.body.appendChild(difficultyLabel);
-    
+        this.optionsContainer.appendChild(volumeSlider);
+
+        createLabel('Difficulty:', canvas.width / 2 - 80, 270);
         const difficultySelect = document.createElement('select');
         difficultySelect.style.position = 'absolute';
         difficultySelect.style.left = `${canvas.width / 2 - 10}px`;
         difficultySelect.style.top = '270px';
-        const difficulties = ['Easy', 'Normal', 'Hard'];
-        difficulties.forEach(diff => {
+        ['Easy', 'Normal', 'Hard'].forEach(diff => {
             const option = document.createElement('option');
             option.value = diff.toLowerCase();
             option.textContent = diff;
             difficultySelect.appendChild(option);
         });
-        difficultySelect.value = 'normal'; // Default to normal
-        difficultySelect.addEventListener('change', (event) => {
-            this.setDifficulty(event.target.value);
-        });
-        document.body.appendChild(difficultySelect);
-    
-        // Create graphics quality dropdown
-        const graphicsLabel = document.createElement('label');
-        graphicsLabel.textContent = 'Graphics Quality:';
-        graphicsLabel.style.position = 'absolute';
-        graphicsLabel.style.left = `${canvas.width / 2 - 140}px`;
-        graphicsLabel.style.top = '320px';
-        graphicsLabel.style.color = 'white';
-        document.body.appendChild(graphicsLabel);
-    
-        const graphicsSelect = document.createElement('select');
-        graphicsSelect.style.position = 'absolute';
-        graphicsSelect.style.left = `${canvas.width / 2 - 10}px`;
-        graphicsSelect.style.top = '320px';
-        const graphicsOptions = ['Low', 'Medium', 'High'];
-        graphicsOptions.forEach(option => {
-            const opt = document.createElement('option');
-            opt.value = option.toLowerCase();
-            opt.textContent = option;
-            graphicsSelect.appendChild(opt);
-        });
-        graphicsSelect.value = 'high'; // Default to high
-        graphicsSelect.addEventListener('change', (event) => {
-            this.setGraphicsQuality(event.target.value);
-        });
-        document.body.appendChild(graphicsSelect);
-    
-        // Add a back button to return to the main menu
-        const backButton = document.createElement('button');
-        backButton.textContent = 'Back';
-        backButton.style.position = 'absolute';
-        backButton.style.left = `${canvas.width / 2 - 60}px`;
-        backButton.style.top = '390px';
-        backButton.addEventListener('click', () => {
-            // Remove all option controls before returning to the menu
-            document.body.removeChild(volumeLabel);
-            document.body.removeChild(volumeSlider);
-            document.body.removeChild(difficultyLabel);
-            document.body.removeChild(difficultySelect);
-            document.body.removeChild(graphicsLabel);
-            document.body.removeChild(graphicsSelect);
-            document.body.removeChild(backButton);
-            this.showMenu();
-        });
-        document.body.appendChild(backButton);
+        difficultySelect.value = 'normal';
+        difficultySelect.addEventListener('change', (event) => this.setDifficulty(event.target.value));
+        this.optionsContainer.appendChild(difficultySelect);
+
+        this.createButton('Back', canvas.width / 2 - 60, 390, () => this.showMenu(), this.optionsContainer);
+
+        this.menuContainer.style.display = 'none';
+        this.optionsContainer.style.display = 'block';
     },
     
     // Supporting function to set graphics quality
@@ -991,7 +947,7 @@ const game = {
         );
     },
     
-        update(timestamp) {
+    update(timestamp) {
         if (this.state !== 'playing') return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1099,7 +1055,7 @@ const game = {
         }
     },
 
-handleThreatDeath(threat, tower) {
+    handleThreatDeath(threat, tower) {
         this.resources += threat.reward;
         this.addExperienceToTower(tower, threat.reward);
         this.addPlayerExperience(threat.reward);
@@ -1161,10 +1117,10 @@ handleThreatDeath(threat, tower) {
     getTowerTooltip(defenseType) {
         const tower = this.defenseTypes[defenseType];
         return `Cost: ${tower.cost} MB
-Damage: ${tower.damage}
-Range: ${tower.range}
-Fire Rate: ${tower.fireRate}ms
-Special: ${tower.upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
+                Damage: ${tower.damage}
+                Range: ${tower.range}
+                Fire Rate: ${tower.fireRate}ms
+                Special: ${tower.upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
     },
 
     getNextWaveInfo() {
@@ -1232,6 +1188,7 @@ Special: ${tower.upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`
     },
 
     start() {
+        this.initializeDOM();
         this.preloadImages()
             .then(() => {
                 this.initializeGrid();
