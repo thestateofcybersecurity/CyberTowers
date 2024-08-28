@@ -957,6 +957,40 @@ const game = {
             ])
         );
     },
+
+    updateProjectiles(timestamp) {
+        this.projectiles = this.projectiles.filter(projectile => {
+            const dx = projectile.targetX - projectile.x;
+            const dy = projectile.targetY - projectile.y;
+            const distance = Math.hypot(dx, dy);
+
+            if (distance < projectile.speed) {
+                this.handleProjectileImpact(projectile);
+                return false;
+            }
+
+            projectile.x += (dx / distance) * projectile.speed;
+            projectile.y += (dy / distance) * projectile.speed;
+
+            ctx.beginPath();
+            ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = projectile.color;
+            ctx.fill();
+
+            return true;
+        });
+    },
+
+    handleProjectileImpact(projectile) {
+        const targetThreat = this.findThreatAtPosition(projectile.targetX, projectile.targetY);
+        if (targetThreat) {
+            targetThreat.currentHealth -= projectile.damage;
+            this.addEffect(projectile.targetX, projectile.targetY, 'explosion');
+            if (targetThreat.currentHealth <= 0) {
+                this.handleThreatDeath(targetThreat, projectile.tower);
+            }
+        }
+    },
     
     update(timestamp) {
         if (this.state !== 'playing') return;
@@ -977,7 +1011,6 @@ const game = {
 
         this.drawThreats();
         this.updateAndDrawTowers(timestamp);
-        this.updateAndDrawProjectiles();
         this.updateAndDrawEffects();
 
         requestAnimationFrame(this.boundUpdate);
