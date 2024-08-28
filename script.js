@@ -1254,10 +1254,10 @@ const game = {
 
     drawHealthBar(threat) {
         const healthPercentage = threat.currentHealth / threat.maxHealth;
-        const healthBarWidth = 30;
-        const healthBarHeight = 5;
-        const healthBarY = threat.y - 10;
-
+        const healthBarWidth = 25; // Slightly smaller than the threat width
+        const healthBarHeight = 3; // Smaller height
+        const healthBarY = threat.y - 5; // Position it closer to the threat
+    
         ctx.fillStyle = 'black';
         ctx.fillRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
         ctx.fillStyle = this.getHealthBarColor(healthPercentage);
@@ -1508,7 +1508,6 @@ const game = {
             })
             .catch(error => {
                 console.error("Failed to load game resources:", error);
-                // Show error message to user
                 this.showErrorMessage("Failed to load game resources. Please refresh the page.");
             });
 
