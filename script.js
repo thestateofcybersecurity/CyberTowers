@@ -392,11 +392,13 @@ const game = {
     placeTower(type, x, y) {
         const towerType = this.defenseTypes[type.toLowerCase()];
         const cell = this.getGridCell(x, y);
+
         if (this.resources >= towerType.cost && 
             this.unlockedDefenses.includes(type.toLowerCase()) && 
             cell && 
             !cell.occupied && 
             !this.isPositionOnPath(cell.x + this.gridSize / 2, cell.y + this.gridSize / 2)) {
+            
             this.resources -= towerType.cost;
             const tower = {
                 x: cell.x,
@@ -823,22 +825,69 @@ const game = {
     },
 
     showMenu() {
-        this.clearContainer(this.menuContainer);
-        
+        // Reset game logic
+        this.resetGameLogic();
+    
+        // Clear the screen
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Display the title
         ctx.font = '48px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText('Cybersecurity Tower Defense', canvas.width / 2, 150);
-
-        this.createButton('Start Game', canvas.width / 2 - 60, 250, () => this.startGame(), this.menuContainer);
-        this.createButton('Options', canvas.width / 2 - 60, 320, () => this.showOptions(), this.menuContainer);
-        this.createButton('Exit', canvas.width / 2 - 60, 390, () => window.close(), this.menuContainer);
-
-        this.menuContainer.style.display = 'block';
-        this.optionsContainer.style.display = 'none';
+    
+        // Create and display buttons
+        const startButton = document.createElement('button');
+        startButton.textContent = 'Start Game';
+        startButton.style.position = 'absolute';
+        startButton.style.left = `${canvas.width / 2 - 60}px`;
+        startButton.style.top = '250px';
+        startButton.addEventListener('click', () => {
+            document.body.removeChild(startButton);
+            document.body.removeChild(optionsButton);
+            document.body.removeChild(exitButton);
+            this.startGame();
+        });
+        document.body.appendChild(startButton);
+    
+        const optionsButton = document.createElement('button');
+        optionsButton.textContent = 'Options';
+        optionsButton.style.position = 'absolute';
+        optionsButton.style.left = `${canvas.width / 2 - 60}px`;
+        optionsButton.style.top = '320px';
+        optionsButton.addEventListener('click', () => {
+            this.showOptions();
+        });
+        document.body.appendChild(optionsButton);
+    
+        const exitButton = document.createElement('button');
+        exitButton.textContent = 'Exit';
+        exitButton.style.position = 'absolute';
+        exitButton.style.left = `${canvas.width / 2 - 60}px`;
+        exitButton.style.top = '390px';
+        exitButton.addEventListener('click', () => {
+            window.close(); // Close the browser window or exit the game
+        });
+        document.body.appendChild(exitButton);
     },
 
+    // Function to reset game logic
+    resetGameLogic() {
+        this.currentWave = 1;
+        this.systemIntegrity = 100;
+        this.resources = 500;
+        this.towers = [];
+        this.threats = [];
+        this.isGamePaused = false;
+        this.boundUpdate = this.update.bind(this);
+        this.highScore = localStorage.getItem('highScore') || 0;
+    
+        // Reset other necessary game state variables as needed
+        this.resetGrid();  // Clear any grid-based data
+        this.updateUI();  // Reset the UI elements
+    },
+    
     createButton(text, x, y, onClick, container) {
         const button = document.createElement('button');
         button.textContent = text;
@@ -967,7 +1016,7 @@ const game = {
             ctx.fillText('New High Score!', canvas.width / 2, canvas.height / 2 + 20);
         }
 
-        // Create buttons
+        // Create buttons after drawing the text
         const buttonStyle = `
             position: absolute;
             width: 150px;
@@ -1308,12 +1357,12 @@ const game = {
     },
 
     updateUI() {
-        this.updateUIElement('scoreValue', this.systemIntegrity);
-        this.updateUIElement('resourcesValue', this.resources);
-        this.updateUIElement('waveValue', this.currentWave);
-        this.updateUIElement('playerLevel', this.playerLevel);
-        this.updateUIElement('playerExperience', this.playerExperience);
-
+        document.getElementById('scoreValue').textContent = Math.floor(this.systemIntegrity);  // Ensuring whole number display
+        document.getElementById('resourcesValue').textContent = Math.floor(this.resources);   // Ensuring whole number display
+        document.getElementById('waveValue').textContent = this.currentWave;
+        document.getElementById('playerLevel').textContent = this.playerLevel;
+        document.getElementById('playerExperience').textContent = this.playerExperience;
+    
         Object.keys(this.defenseTypes).forEach(defenseType => {
             const button = document.querySelector(`[data-tower="${defenseType}"]`);
             if (button) {
@@ -1321,7 +1370,7 @@ const game = {
                 const isAffordable = this.resources >= this.defenseTypes[defenseType].cost;
                 button.disabled = !isUnlocked || !isAffordable;
                 button.classList.toggle('affordable', isAffordable);
-                button.title = this.getTowerTooltip(defenseType);
+                button.title = `Cost: ${this.defenseTypes[defenseType].cost} MB\nDamage: ${this.defenseTypes[defenseType].damage}\nRange: ${this.defenseTypes[defenseType].range}\nFire Rate: ${this.defenseTypes[defenseType].fireRate}ms\nSpecial: ${this.defenseTypes[defenseType].upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
             }
         });
 
