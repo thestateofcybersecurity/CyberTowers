@@ -163,6 +163,7 @@ export class Tower {
         this.level++;
         this.experience -= Math.pow(this.level - 1, 2) * 100;
         this.upgradeStats();
+        this.game.addVisualEffect('levelUp', this.x, this.y);
     }
 
     upgradeStats() {
