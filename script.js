@@ -640,7 +640,7 @@ const game = {
                 this.endWave();
             }
         }
-    },
+    }
 
     startNewWave() {
         this.currentWave++;
@@ -654,7 +654,7 @@ const game = {
             const delay = i * 1000 / waveMultiplier; // Stagger threat spawns
             setTimeout(() => this.spawnThreat(waveMultiplier), delay);
         }
-    },
+    }
 
     startEndlessMode() {
         this.currentWave = 1;
@@ -662,7 +662,7 @@ const game = {
         this.resources = 500;
         this.endless = true;
         this.setState('playing');
-    },
+    }
     
     endWave() {
         if (this.endless) {
