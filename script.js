@@ -296,14 +296,23 @@ const game = {
 
     drawPath() {
         ctx.strokeStyle = this.pathColor;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 40; // Make the path visibly wide
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
         ctx.moveTo(this.path[0].x, this.path[0].y);
         for (let i = 1; i < this.path.length; i++) {
             ctx.lineTo(this.path[i].x, this.path[i].y);
         }
         ctx.stroke();
-    },  
+
+        // Draw a border around the path
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 42;
+        ctx.globalAlpha = 0.3;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+    },
     
     fireProjectile(tower, target, damage) {
         this.projectiles.push({
@@ -333,10 +342,61 @@ const game = {
         return this.gridMap.get(key);
     },
 
+    isPositionOnPath(x, y) {
+        const tolerance = 20; // Adjust this value to change how close to the path is considered "on" the path
+        for (let i = 1; i < this.path.length; i++) {
+            const start = this.path[i - 1];
+            const end = this.path[i];
+            
+            // Check if (x, y) is close to the line segment from start to end
+            const distanceToSegment = this.distanceToLineSegment(x, y, start.x, start.y, end.x, end.y);
+            if (distanceToSegment < tolerance) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    distanceToLineSegment(x, y, x1, y1, x2, y2) {
+        const A = x - x1;
+        const B = y - y1;
+        const C = x2 - x1;
+        const D = y2 - y1;
+
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
+        if (lenSq !== 0) // in case of 0 length line
+            param = dot / lenSq;
+
+        let xx, yy;
+
+        if (param < 0) {
+            xx = x1;
+            yy = y1;
+        }
+        else if (param > 1) {
+            xx = x2;
+            yy = y2;
+        }
+        else {
+            xx = x1 + param * C;
+            yy = y1 + param * D;
+        }
+
+        const dx = x - xx;
+        const dy = y - yy;
+        return Math.sqrt(dx * dx + dy * dy);
+    },
+    
     placeTower(type, x, y) {
         const towerType = this.defenseTypes[type.toLowerCase()];
         const cell = this.getGridCell(x, y);
-        if (this.resources >= towerType.cost && this.unlockedDefenses.includes(type.toLowerCase()) && cell && !cell.occupied) {
+        if (this.resources >= towerType.cost && 
+            this.unlockedDefenses.includes(type.toLowerCase()) && 
+            cell && 
+            !cell.occupied && 
+            !this.isPositionOnPath(cell.x + this.gridSize / 2, cell.y + this.gridSize / 2)) {
             this.resources -= towerType.cost;
             const tower = {
                 x: cell.x,
@@ -352,6 +412,9 @@ const game = {
             cell.occupied = true;
             this.applySynergyBonus(tower, cell);
             this.updateUI();
+        } else if (this.isPositionOnPath(cell.x + this.gridSize / 2, cell.y + this.gridSize / 2)) {
+            console.log("Cannot place tower on the path!");
+            // Optionally, display a message to the player
         }
     },
     
