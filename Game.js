@@ -306,6 +306,12 @@ export class Game {
         });
     }
 
+    drawThreats() {
+        this.threats.forEach(threat => {
+            threat.draw(this.ctx);
+        });
+    }
+
     updateAndDrawEffects() {
         this.effects = this.effects.filter(effect => {
             effect.frame++;
