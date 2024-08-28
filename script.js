@@ -640,6 +640,7 @@ const game = {
     
     update(timestamp) {
         if (this.state !== 'playing') return;
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.drawBackground();
@@ -935,7 +936,7 @@ const game = {
                 this.initializeGrid();
                 this.initializeEventListeners();
                 this.updateUI();
-                this.setState('menu');
+                this.showMenu();  // Show the menu instead of setting state directly
             })
             .catch(error => {
                 console.error("Failed to load game resources:", error);
@@ -944,9 +945,7 @@ const game = {
 
         // Bind the update method to the game object
         this.boundUpdate = this.update.bind(this);
-    
-        this.updateUI();
-    
+
         // Add a start button
         const startButton = document.createElement('button');
         startButton.textContent = 'Start Game';
@@ -954,11 +953,34 @@ const game = {
             if (this.sounds && this.sounds.backgroundMusic) {
                 this.sounds.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
             }
-            this.startNewWave();
-            requestAnimationFrame(this.boundUpdate);
+            this.setState('playing');  // Set state to 'playing' when starting the game
             startButton.remove();
         });
         document.body.appendChild(startButton);
+    },
+
+    setState(newState) {
+        this.state = newState;
+        switch (newState) {
+            case 'menu':
+                this.showMenu();
+                break;
+            case 'playing':
+                this.startGame();
+                break;
+            case 'paused':
+                this.pauseGame();
+                break;
+            case 'gameOver':
+                this.endGame();
+                break;
+        }
+    },
+
+    startGame() {
+        this.isGamePaused = false;
+        this.startNewWave();
+        requestAnimationFrame(this.boundUpdate);  // Start the update loop
     }
 };
 
