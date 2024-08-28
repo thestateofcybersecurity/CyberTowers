@@ -148,21 +148,30 @@ const game = {
     state: 'menu', // Can be 'menu', 'playing', 'paused', 'gameOver'
     imageCache: {},
     gridMap: new Map(),
-
+    threatTypes: threatTypes,
+    defenseTypes: defenseTypes,
+    
     preloadImages() {
         const imagesToLoad = [
-            ...Object.values(this.threatTypes).map(threat => threat.icon),
-            ...Object.values(this.defenseTypes).map(defense => defense.icon)
-        ];
+            ...Object.values(this.threatTypes || {}).map(threat => threat.icon),
+            ...Object.values(this.defenseTypes || {}).map(defense => defense.icon)
+        ].filter(Boolean);  // Filter out any undefined values
 
         const loadPromises = imagesToLoad.map(src => {
             return new Promise((resolve, reject) => {
+                if (!src) {
+                    resolve();  // Resolve immediately if src is undefined
+                    return;
+                }
                 const img = new Image();
                 img.onload = () => {
                     this.imageCache[src] = img;
                     resolve(img);
                 };
-                img.onerror = reject;
+                img.onerror = () => {
+                    console.error(`Failed to load image: ${src}`);
+                    resolve();  // Resolve even on error to continue loading other images
+                };
                 img.src = src;
             });
         });
@@ -898,24 +907,27 @@ const game = {
         }
     },
 
-        start() {
-            this.preloadImages()
-                .then(() => {
-                    this.initializeGrid();
-                    this.initializeEventListeners();
-                    this.updateUI();
-                    this.setState('menu');
-                })
-                .catch(error => {
-                    console.error("Failed to load game resources:", error);
-                    // Handle loading error (e.g., show error message to user)
-                });
+    start() {
+        this.threatTypes = threatTypes;
+        this.defenseTypes = defenseTypes;
+
+        this.preloadImages()
+            .then(() => {
+                this.initializeGrid();
+                this.initializeEventListeners();
+                this.updateUI();
+                this.setState('menu');
+            })
+            .catch(error => {
+                console.error("Failed to load game resources:", error);
+                // Handle loading error (e.g., show error message to user)
+            });
 
         // Bind the update method to the game object
         this.boundUpdate = this.update.bind(this);
-
+    
         this.updateUI();
-
+    
         // Add a start button
         const startButton = document.createElement('button');
         startButton.textContent = 'Start Game';
