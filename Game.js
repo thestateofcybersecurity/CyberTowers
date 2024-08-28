@@ -153,7 +153,8 @@ export class Game {
         }
 
         this.drawThreats();
-        this.updateAndDrawTowers(timestamp);
+        this.drawTowers();
+        this.drawProjectiles();
         this.updateAndDrawEffects();
 
         this.uiManager.updateUI();
@@ -284,6 +285,11 @@ export class Game {
     updateAndDrawTowers(timestamp) {
         this.towers.forEach(tower => {
             tower.update(timestamp, this.threats);
+        });
+    }
+
+    drawTowers() {
+        this.towers.forEach(tower => {
             tower.draw(this.ctx);
         });
     }
@@ -408,5 +414,9 @@ export class Game {
         this.effects.push({x, y, type, frame: 0});
     }
 
-    // Add other necessary game methods
+    drawProjectiles() {
+        this.projectiles.forEach(projectile => {
+            projectile.draw(this.ctx);
+        });
+    }
 }
