@@ -3,7 +3,7 @@ import { defenseTypes } from './constants.js';
 import { Projectile } from './Projectile.js';
 
 export class Tower {
-    constructor(type, x, y) {
+    constructor(type, position, level = 1) {
         const towerData = defenseTypes[type];
         this.type = type;
         this.x = x;
@@ -13,11 +13,13 @@ export class Tower {
         this.fireRate = towerData.fireRate;
         this.cost = towerData.cost;
         this.projectileColor = towerData.projectileColor;
-        this.level = 1;
         this.experience = 0;
         this.lastFired = 0;
         this.image = new Image();
         this.image.src = towerData.icon;
+        this.position = position;
+        this.level = level;
+        this.stats = TOWER_STATS[type][level];
     }
 
     update(timestamp, threats) {
@@ -74,6 +76,14 @@ export class Tower {
         const upgrades = defenseTypes[this.type].upgrades.find(u => u.level === this.level);
         if (upgrades) {
             Object.assign(this, upgrades);
+        }
+    }
+
+    upgrade() {
+            if (this.level < MAX_TOWER_LEVEL) {
+                this.level++;
+                this.stats = TOWER_STATS[this.type][this.level];
+            }
         }
     }
 
