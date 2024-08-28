@@ -1,9 +1,9 @@
 // Tower.js
-import { defenseTypes } from './constants.js';
+import { defenseTypes, MAX_TOWER_LEVEL, TOWER_STATS } from './constants.js';
 import { Projectile } from './Projectile.js';
 
 export class Tower {
-    constructor(type, position, level = 1) {
+    constructor(type, x, y, level = 1) {
         const towerData = defenseTypes[type];
         this.type = type;
         this.x = x;
@@ -17,7 +17,6 @@ export class Tower {
         this.lastFired = 0;
         this.image = new Image();
         this.image.src = towerData.icon;
-        this.position = position;
         this.level = level;
         this.stats = TOWER_STATS[type][level];
     }
@@ -41,7 +40,7 @@ export class Tower {
 
     fire(target) {
         const projectile = new Projectile(this.x, this.y, target, this.damage, this.projectileColor, this);
-        // Add projectile to game's projectiles array
+        return projectile; // Return the projectile instead of adding it directly to the game's array
     }
 
     draw(ctx) {
@@ -61,7 +60,7 @@ export class Tower {
 
     checkLevelUp() {
         const expForNextLevel = Math.pow(this.level, 2) * 100;
-        if (this.experience >= expForNextLevel) {
+        if (this.experience >= expForNextLevel && this.level < MAX_TOWER_LEVEL) {
             this.levelUp();
         }
     }
@@ -73,20 +72,14 @@ export class Tower {
     }
 
     upgradeStats() {
+        this.stats = TOWER_STATS[this.type][this.level];
         const upgrades = defenseTypes[this.type].upgrades.find(u => u.level === this.level);
         if (upgrades) {
             Object.assign(this, upgrades);
         }
     }
 
-    upgrade() {
-            if (this.level < MAX_TOWER_LEVEL) {
-                this.level++;
-                this.stats = TOWER_STATS[this.type][this.level];
-            }
-        }
-    }
-
-    static getCost(type)
+    static getCost(type) {
         return defenseTypes[type].cost;
+    }
 }
