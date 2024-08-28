@@ -195,13 +195,14 @@ export class Game {
             const reachedEnd = threat.move(this.path);
             if (reachedEnd) {
                 this.systemIntegrity -= threat.damage;
+                this.addVisualEffect('systemDamage');
                 this.checkGameOver();
                 return false;
             }
             return true;
         });
     }
-
+    
     updateTowers(timestamp) {
         this.towers.forEach(tower => {
             const newProjectile = tower.update(timestamp, this.threats);
@@ -224,9 +225,88 @@ export class Game {
         });
     }
     
+    addVisualEffect(type, x, y) {
+        switch (type) {
+            case 'explosion':
+                this.addExplosionEffect(x, y);
+                break;
+            case 'levelUp':
+                this.addLevelUpEffect(x, y);
+                break;
+            case 'systemDamage':
+                this.addSystemDamageEffect();
+                break;
+        }
+    }
+
+    addExplosionEffect(x, y) {
+        const effect = {
+            x, y, 
+            radius: 1,
+            maxRadius: 30,
+            growthRate: 2,
+            alpha: 1
+        };
+
+        const animate = () => {
+            this.ctx.beginPath();
+            this.ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(255, 0, 0, ${effect.alpha})`;
+            this.ctx.fill();
+
+            effect.radius += effect.growthRate;
+            effect.alpha -= 0.05;
+
+            if (effect.radius < effect.maxRadius && effect.alpha > 0) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+
+    addLevelUpEffect(x, y) {
+        const text = 'LEVEL UP!';
+        let fontSize = 20;
+        let alpha = 1;
+
+        const animate = () => {
+            this.ctx.font = `${fontSize}px Arial`;
+            this.ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
+            this.ctx.fillText(text, x, y);
+
+            fontSize++;
+            alpha -= 0.02;
+            y -= 1;
+
+            if (alpha > 0) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+
+    addSystemDamageEffect() {
+        let alpha = 0.5;
+        
+        const animate = () => {
+            this.ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            alpha -= 0.05;
+
+            if (alpha > 0) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+    
     handleProjectileImpact(projectile, threat) {
         const destroyed = threat.takeDamage(projectile.damage);
-        this.addEffect(threat.x, threat.y, 'explosion');
+        this.addVisualEffect('explosion', threat.x, threat.y);
         if (destroyed) {
             this.handleThreatDeath(threat, projectile.tower);
         }
