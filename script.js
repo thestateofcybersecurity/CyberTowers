@@ -443,7 +443,7 @@ const game = {
                     break;
             }
         }
-    }
+    },
     
     updateThreats() { // Changed from updateThreats
         this.threats.forEach(threat => {
