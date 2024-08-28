@@ -1,12 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+:root {
+    --primary-bg: #020E18;
+    --secondary-bg: #0A3C59;
+    --primary-text: #00FFFF;
+    --secondary-text: #FFFFFF;
+    --accent-color: #FF0000;
+    --border-glow: 0 0 10px #00FFFF;
+}
+
 body {
     font-family: 'Orbitron', sans-serif;
-    background-color: #020E18;
-    color: #00FFFF;
+    background-color: var(--primary-bg);
+    color: var(--primary-text);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 #gameContainer {
@@ -14,11 +27,97 @@ body {
     flex-direction: column;
     align-items: center;
     width: 800px;
-    height: 600px;
+    max-width: 100%;
     position: relative;
 }
 
-#menuContainer, #optionsContainer {
+#gameBoard {
+    border: 2px solid var(--primary-text);
+    box-shadow: var(--border-glow);
+    max-width: 100%;
+    height: auto;
+}
+
+#uiContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+#gameInfo {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 10px;
+    background-color: rgba(10, 60, 89, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    flex-wrap: wrap;
+}
+
+#gameInfo > div {
+    margin: 5px;
+}
+
+#towerSelection {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.towerButton {
+    margin: 5px;
+    padding: 10px;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--primary-text);
+    color: var(--primary-text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.towerButton:hover:not(:disabled) {
+    background-color: var(--primary-text);
+    color: var(--secondary-bg);
+}
+
+.towerButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.towerButton.selected {
+    background-color: var(--primary-text);
+    color: var(--secondary-bg);
+    font-weight: bold;
+}
+
+#pauseButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: var(--accent-color);
+    color: var(--secondary-text);
+    border: none;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    transition: all 0.3s ease;
+}
+
+#pauseButton:hover {
+    background-color: #CC0000;
+}
+
+#nextWaveInfo {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+/* Menu and Game Over Styles */
+#menuContainer, #gameOverContainer {
     position: absolute;
     top: 0;
     left: 0;
@@ -32,102 +131,41 @@ body {
     z-index: 10;
 }
 
-#gameInfo {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: 10px;
-    background-color: rgba(10, 60, 89, 0.7);
-    padding: 10px;
-    border-radius: 5px;
-}
-
-#gameBoard {
-    border: 2px solid #00FFFF;
-    box-shadow: 0 0 10px #00FFFF;
-}
-
-#controls {
-    margin-top: 10px;
-    width: 100%;
-}
-
-#towerSelection {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.towerButton {
-    margin: 5px;
-    padding: 10px;
-    background-color: #0A3C59;
-    border: 1px solid #00FFFF;
-    color: #00FFFF;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.towerButton:hover {
-    background-color: #00FFFF;
-    color: #0A3C59;
-}
-
-.towerButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.towerButton.selected {
-    background-color: #00FFFF;
-    color: #0A3C59;
-}
-
-#pauseButton {
-    margin-top: 10px;
-    padding: 10px 20px;
-    background-color: #FF0000;
-    color: #FFFFFF;
-    border: none;
-    cursor: pointer;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-#nextWaveInfo {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 0.9em;
-}
-
-/* Menu and Options Styles */
-#menuContainer button, #optionsContainer button {
+#menuContainer button, #gameOverContainer button {
     margin: 10px;
     padding: 15px 30px;
     font-size: 1.2em;
-    background-color: #0A3C59;
-    border: 2px solid #00FFFF;
-    color: #00FFFF;
+    background-color: var(--secondary-bg);
+    border: 2px solid var(--primary-text);
+    color: var(--primary-text);
     cursor: pointer;
     transition: all 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
 }
 
-#menuContainer button:hover, #optionsContainer button:hover {
-    background-color: #00FFFF;
-    color: #0A3C59;
+#menuContainer button:hover, #gameOverContainer button:hover {
+    background-color: var(--primary-text);
+    color: var(--secondary-bg);
+}
+
+/* Error Message Styles */
+#errorMessage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--accent-color);
+    color: var(--secondary-text);
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    z-index: 100;
 }
 
 /* Responsive Design */
 @media (max-width: 800px) {
     #gameContainer {
         width: 100%;
-        height: auto;
-    }
-
-    #gameBoard {
-        width: 100%;
-        height: auto;
     }
 
     #gameInfo {
