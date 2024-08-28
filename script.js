@@ -125,7 +125,7 @@ const defenseTypes = {
 const game = {
     systemIntegrity: 100,
     resources: 500,
-    enemies: [],
+    threats: [],
     towers: [],
     projectiles: [],
     effects: [],
@@ -285,14 +285,14 @@ const game = {
         }
     },
 
-    applySpecialAbilities(tower, enemy) {
+    applySpecialAbilities(tower, threat) { // Changed enemy to threat
         let damage = tower.damage;
 
         switch (tower.type.toLowerCase()) {
             case 'firewall':
                 if (tower.applyBurnEffect) {
-                    enemy.burningDuration = 3; // Apply burn for 3 seconds
-                    enemy.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
+                    threat.burningDuration = 3; // Apply burn for 3 seconds
+                    threat.burningDamage = tower.damage * 0.2; // 20% of tower's damage per second
                 }
                 break;
 
@@ -445,90 +445,78 @@ const game = {
         }
     }
     
-    updateEnemies() {
-        this.enemies.forEach(enemy => {
+    updateThreats() { // Changed from updateEnemies
+        this.threats.forEach(threat => {
             // Apply burning effect
-            if (enemy.burningDuration > 0) {
-                enemy.currentHealth -= enemy.burningDamage;
-                enemy.burningDuration--;
+            if (threat.burningDuration > 0) {
+                threat.currentHealth -= threat.burningDamage;
+                threat.burningDuration--;
             }
 
             // Apply slow effect
-            if (enemy.slowDuration > 0) {
-                enemy.speed *= enemy.slowFactor;
-                enemy.slowDuration--;
+            if (threat.slowDuration > 0) {
+                threat.speed *= threat.slowFactor;
+                threat.slowDuration--;
             } else {
-                enemy.speed = this.threatTypes[enemy.type].speed; // Reset speed when slow effect ends
+                threat.speed = this.threatTypes[threat.type].speed; // Reset speed when slow effect ends
             }
 
             // Apply confusion effect
-            if (enemy.confusedDuration > 0) {
-                if (Math.random() < 0.3) { // 30% chance to attack other enemies
-                    const nearbyEnemy = this.enemies.find(e => 
-                        e !== enemy && Math.hypot(e.x - enemy.x, e.y - enemy.y) < 50
+            if (threat.confusedDuration > 0) {
+                if (Math.random() < 0.3) { // 30% chance to attack other threats
+                    const nearbyThreat = this.threats.find(t => 
+                        t !== threat && Math.hypot(t.x - threat.x, t.y - threat.y) < 50
                     );
-                    if (nearbyEnemy) {
-                        nearbyEnemy.currentHealth -= enemy.damage;
+                    if (nearbyThreat) {
+                        nearbyThreat.currentHealth -= threat.damage;
                     }
                 }
-                enemy.confusedDuration--;
+                threat.confusedDuration--;
             }
 
-            // Move enemy
-            const reachedEnd = this.moveEnemyAlongPath(enemy);
+            // Move threat
+            const reachedEnd = this.moveThreatAlongPath(threat);
             if (reachedEnd) {
-                this.systemIntegrity -= enemy.damage;
-                this.enemies = this.enemies.filter(e => e !== enemy);
+                this.systemIntegrity -= threat.damage;
+                this.threats = this.threats.filter(t => t !== threat);
                 this.updateUI();
             }
         });
     },
 
-    spawnEnemy(waveMultiplier) {
+    spawnThreat(waveMultiplier) { // Changed from spawnEnemy
         const threatTypes = Object.keys(this.threatTypes);
-        
-        let threatType;
-        if (this.currentWave <= 5) {
-            // Early game threats
-            threatType = threatTypes[Math.floor(Math.random() * 2)]; // Virus, Worm
-        } else if (this.currentWave <= 10) {
-            // Mid game threats
-            threatType = threatTypes[Math.floor(Math.random() * 4)]; // Add Trojan, Ransomware
-        } else {
-            // Late game threats
-            threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
-        }
-    
+        let threatType = this.selectThreatType();
         const threat = this.threatTypes[threatType];
-        const enemy = {
+        const newThreat = {
             x: this.path[0].x,
             y: this.path[0].y,
             type: threatType,
             ...threat,
             currentHealth: threat.health * waveMultiplier,
-            maxHealth: threat.health * waveMultiplier, // Store the max health
+            maxHealth: threat.health * waveMultiplier,
             damage: threat.damage * waveMultiplier,
             reward: threat.reward * waveMultiplier,
             image: this.imageCache[threat.icon],
             pathIndex: 0
         };
-        this.enemies.push(enemy);
+        this.threats.push(newThreat);
     },
 
-    moveEnemyAlongPath(enemy) {
-        const targetPoint = this.path[enemy.pathIndex];
-        const dx = targetPoint.x - enemy.x;
-        const dy = targetPoint.y - enemy.y;
+    moveThreatAlongPath(threat) { // Changed from moveEnemyAlongPath
+        const targetPoint = this.path[threat.pathIndex];
+        const dx = targetPoint.x - threat.x;
+        const dy = targetPoint.y - threat.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < enemy.speed) {
-            enemy.pathIndex++;
-            if (enemy.pathIndex >= this.path.length) {
-                return true; // Enemy reached the end
+
+        if (distance < threat.speed) {
+            threat.pathIndex++;
+            if (threat.pathIndex >= this.path.length) {
+                return true; // Threat reached the end
             }
         } else {
-            enemy.x += (dx / distance) * enemy.speed;
-            enemy.y += (dy / distance) * enemy.speed;
+            threat.x += (dx / distance) * threat.speed;
+            threat.y += (dy / distance) * threat.speed;
         }
         return false;
     },
@@ -572,7 +560,7 @@ const game = {
     
         for (let i = 0; i < enemiesPerWave; i++) {
             const delay = i * 1000 / waveMultiplier; // Stagger enemy spawns
-            setTimeout(() => this.spawnEnemy(waveMultiplier), delay);
+            setTimeout(() => this.spawnThreat(waveMultiplier), delay);
         }
     },
 
@@ -639,13 +627,13 @@ const game = {
 
         // Spawn enemies
         if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.enemies.length < this.currentWave * 5) {
-            this.spawnEnemy();
+            this.spawnThreat();
             this.lastSpawnTime = timestamp;
         }
 
     // Update and draw enemies
     this.enemies = this.enemies.filter((enemy) => {
-        const reachedEnd = this.moveEnemyAlongPath(enemy);
+        const reachedEnd = this.moveThreatAlongPath(Threat);
         if (reachedEnd) {
             this.systemIntegrity -= enemy.damage;
             this.updateUI();
