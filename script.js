@@ -883,11 +883,27 @@ const game = {
         this.boundUpdate = this.update.bind(this);
         this.highScore = localStorage.getItem('highScore') || 0;
     
-        // Reset other necessary game state variables as needed
-        this.resetGrid();  // Clear any grid-based data
+        // Remove this line if `resetGrid` is not needed:
+        // this.resetGrid();  // Clear any grid-based data
+    
         this.updateUI();  // Reset the UI elements
     },
-    
+
+    resetGrid() {
+        this.grid = [];  // Assuming `this.grid` is used to store the grid data
+        for (let i = 0; i < this.gridRows; i++) {
+            this.grid[i] = [];
+            for (let j = 0; j < this.gridColumns; j++) {
+                this.grid[i][j] = {
+                    x: j * this.gridSize,
+                    y: i * this.gridSize,
+                    occupied: false,
+                    path: false
+                };
+            }
+        }
+    },
+        
     createButton(text, x, y, onClick, container) {
         const button = document.createElement('button');
         button.textContent = text;
