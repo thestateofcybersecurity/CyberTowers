@@ -176,6 +176,8 @@ const game = {
         if (!document.body.contains(canvas)) {
             this.gameContainer.appendChild(canvas);
         }
+        // Initially hide the options container
+        this.optionsContainer.style.display = 'none';
     },
     
     preloadImages() {
@@ -923,12 +925,19 @@ const game = {
         this.threats = [];
         this.towers = [];
         this.projectiles = [];
-
+        this.effects = [];
+        this.isWaveActive = false;
+        this.lastSpawnTime = 0;
+    
+        // Hide menu and options containers
         this.menuContainer.style.display = 'none';
         this.optionsContainer.style.display = 'none';
-
+    
+        // Reset and initialize game elements
         this.initializeGrid();
+        this.updateUI();
         this.startNewWave();
+        
         this.state = 'playing';
         requestAnimationFrame(this.boundUpdate);
     },
@@ -1507,8 +1516,9 @@ const game = {
                 this.initializeGrid();
                 this.initializeEventListeners();
                 this.updateUI();
-                this.showMenu();
+                this.showMenu(); // Ensure the menu is shown at the start
             })
+
             .catch(error => {
                 console.error("Failed to load game resources:", error);
                 // Handle loading error (e.g., show error message to user)
