@@ -493,9 +493,28 @@ const game = {
         });
     },
 
-    spawnThreat(waveMultiplier) { // Changed from spawnThreat
-        const threatTypes = Object.keys(this.threatTypes);
-        let threatType = this.selectThreatType();
+    
+    selectThreatType() {
+        const availableThreats = Object.keys(this.threatTypes);
+        let possibleThreats;
+
+        if (this.currentWave <= 5) {
+            // Early game: Only basic threats
+            possibleThreats = availableThreats.slice(0, 2);
+        } else if (this.currentWave <= 10) {
+            // Mid game: Introduce more complex threats
+            possibleThreats = availableThreats.slice(0, 4);
+        } else {
+            // Late game: All threats possible
+            possibleThreats = availableThreats;
+        }
+
+        // Randomly select a threat from the possible threats
+        return possibleThreats[Math.floor(Math.random() * possibleThreats.length)];
+    },
+
+    spawnThreat(waveMultiplier) {
+        const threatType = this.selectThreatType();
         const threat = this.threatTypes[threatType];
         const newThreat = {
             x: this.path[0].x,
@@ -620,7 +639,7 @@ const game = {
     },
     
     update(timestamp) {
-        if (this.isGamePaused) return;
+        if (this.state !== 'playing') return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.drawBackground();
@@ -636,7 +655,7 @@ const game = {
 
         // Spawn threats
         if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.threats.length < this.currentWave * 5) {
-            this.spawnThreat();
+            this.spawnThreat(1 + (this.currentWave - 1) * 0.1);
             this.lastSpawnTime = timestamp;
         }
 
