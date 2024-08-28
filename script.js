@@ -1258,6 +1258,7 @@ const game = {
 
         if (this.nextWaveInfo) {
             this.updateUIElement('nextWaveInfo', `Next Wave: ${this.nextWaveInfo.types.join(', ')}\nTotal Threats: ${this.nextWaveInfo.totalThreats}`);
+        }
     },
 
     getTowerTooltip(defenseType) {
