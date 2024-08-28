@@ -33,6 +33,28 @@ export class UIManager {
         });
     }
 
+    setupEventListeners() {
+        document.querySelectorAll('.towerButton').forEach(button => {
+            button.addEventListener('click', () => {
+                const towerType = button.getAttribute('data-tower');
+                this.game.selectTower(towerType);
+            });
+        });
+    
+        canvas.addEventListener('click', (event) => {
+            if (this.game.state === GAME_STATES.PLAYING) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                this.game.placeTower(this.game.selectedTowerType, x, y);
+            }
+        });
+    
+        document.getElementById('pauseButton').addEventListener('click', () => {
+            this.game.togglePause();
+        });
+    }
+
     updateUI() {
         this.updateScore();
         this.updateResources();
