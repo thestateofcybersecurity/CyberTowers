@@ -444,6 +444,7 @@ const game = {
             }
         }
     }
+    
     updateEnemies() {
         this.enemies.forEach(enemy => {
             // Apply burning effect
@@ -482,7 +483,7 @@ const game = {
             }
         });
     },
-    
+
     spawnEnemy(waveMultiplier) {
         const threatTypes = Object.keys(this.threatTypes);
         
@@ -628,6 +629,7 @@ const game = {
         this.drawBackground();
         this.drawGrid();
         this.drawPath();
+        this.updateEnemies();
 
         // Use object pooling for projectiles
         this.updateProjectiles(timestamp);
