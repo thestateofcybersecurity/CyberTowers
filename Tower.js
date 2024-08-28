@@ -16,6 +16,8 @@ export class Tower {
         this.level = 1;
         this.experience = 0;
         this.lastFired = 0;
+        this.image = new Image();
+        this.image.src = towerData.icon;
     }
 
     update(timestamp, threats) {
@@ -41,7 +43,13 @@ export class Tower {
     }
 
     draw(ctx) {
-        // Draw tower image
+        ctx.drawImage(this.image, this.x, this.y, 40, 40); // Assuming 40x40 size for towers
+        
+        // Optionally, draw range circle
+        ctx.beginPath();
+        ctx.arc(this.x + 20, this.y + 20, this.range, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.stroke();
     }
 
     addExperience(amount) {
