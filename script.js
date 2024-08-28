@@ -151,6 +151,7 @@ const game = {
     threatTypes: threatTypes,
     defenseTypes: defenseTypes,
     endless: false,
+    menuContainer: null,
     
     preloadImages() {
         const imagesToLoad = [
@@ -718,6 +719,13 @@ const game = {
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText('Cybersecurity Tower Defense', canvas.width / 2, 150);
+
+        // Create a container for menu buttons if it doesn't exist
+        if (!this.menuContainer) {
+            this.menuContainer = document.createElement('div');
+            this.menuContainer.id = 'menuContainer';
+            document.body.appendChild(this.menuContainer);
+        }
     
         this.createButton('Start Game', canvas.width / 2 - 60, 250, () => {
             this.startGame();
@@ -738,11 +746,8 @@ const game = {
         button.style.position = 'absolute';
         button.style.left = `${x}px`;
         button.style.top = `${y}px`;
-        button.addEventListener('click', () => {
-            document.body.removeChild(button);
-            onClick();
-        });
-        document.body.appendChild(button);
+        button.addEventListener('click', onClick);
+        this.menuContainer.appendChild(button);
     },
 
     startGame() {
@@ -751,7 +756,10 @@ const game = {
         this.systemIntegrity = 100;
         this.resources = 500;
 
-        document.querySelectorAll('button').forEach(button => document.body.removeChild(button));
+        if (this.menuContainer) {
+            document.body.removeChild(this.menuContainer);
+            this.menuContainer = null;
+        }
 
         this.initializeGrid();
         this.startNewWave();
