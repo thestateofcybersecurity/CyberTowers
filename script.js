@@ -145,7 +145,31 @@ const game = {
     gridColor: '#0A3C59',
     backgroundColor: '#020E18',
     pathColor: '#00FFFF',
+    state: 'menu', // Can be 'menu', 'playing', 'paused', 'gameOver'
+    imageCache: {},
+    gridMap: new Map(),
 
+    preloadImages() {
+        const imagesToLoad = [
+            ...Object.values(this.threatTypes).map(threat => threat.icon),
+            ...Object.values(this.defenseTypes).map(defense => defense.icon)
+        ];
+
+        const loadPromises = imagesToLoad.map(src => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    this.imageCache[src] = img;
+                    resolve(img);
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
+        });
+
+        return Promise.all(loadPromises);
+    },
+    
     path: [
         {x: 0, y: 300},
         {x: 200, y: 300},
@@ -224,19 +248,19 @@ const game = {
         });
     },
 
+
     initializeGrid() {
         for (let y = 0; y < canvas.height; y += this.gridSize) {
             for (let x = 0; x < canvas.width; x += this.gridSize) {
-                this.grid.push({x, y, occupied: false});
+                const key = `${x},${y}`;
+                this.gridMap.set(key, { x, y, occupied: false });
             }
         }
     },
 
     getGridCell(x, y) {
-        return this.grid.find(cell => 
-            x >= cell.x && x < cell.x + this.gridSize &&
-            y >= cell.y && y < cell.y + this.gridSize
-        );
+        const key = `${Math.floor(x / this.gridSize) * this.gridSize},${Math.floor(y / this.gridSize) * this.gridSize}`;
+        return this.gridMap.get(key);
     },
 
     placeTower(type, x, y) {
@@ -484,10 +508,9 @@ const game = {
             maxHealth: threat.health * waveMultiplier, // Store the max health
             damage: threat.damage * waveMultiplier,
             reward: threat.reward * waveMultiplier,
-            image: new Image(),
+            image: this.imageCache[threat.icon],
             pathIndex: 0
         };
-        enemy.image.src = threat.icon;
         this.enemies.push(enemy);
     },
 
@@ -570,7 +593,7 @@ const game = {
         const sound = this.sounds[soundName];
         if (sound) {
             sound.currentTime = 0;
-            sound.play();
+            sound.play().catch(e => console.log(`Failed to play sound: ${soundName}`, e));
         }
     },
 
@@ -579,6 +602,25 @@ const game = {
         this.sounds.backgroundMusic.play();
     },
 
+    showMenu() {
+        // Implement menu display logic
+    },
+
+    startGame() {
+        this.isGamePaused = false;
+        this.startNewWave();
+        requestAnimationFrame(this.boundUpdate);
+    },
+
+    pauseGame() {
+        this.isGamePaused = true;
+        // Implement pause logic (e.g., show pause menu)
+    },
+
+    endGame() {
+        // Implement game over logic
+    },
+    
     update(timestamp) {
         if (this.isGamePaused) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -586,6 +628,9 @@ const game = {
         this.drawBackground();
         this.drawGrid();
         this.drawPath();
+
+        // Use object pooling for projectiles
+        this.updateProjectiles(timestamp);
 
         // Update wave system
         this.updateWaveSystem(timestamp);
@@ -696,6 +741,85 @@ const game = {
         requestAnimationFrame(this.update.bind(this));
     },
 
+    updateProjectiles(timestamp) {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const projectile = this.projectiles[i];
+            const dx = projectile.targetX - projectile.x;
+            const dy = projectile.targetY - projectile.y;
+            const distance = Math.hypot(dx, dy);
+
+            if (distance < projectile.speed) {
+                this.handleProjectileImpact(projectile);
+                this.returnProjectileToPool(projectile);
+                this.projectiles.splice(i, 1);
+            } else {
+                projectile.x += (dx / distance) * projectile.speed;
+                projectile.y += (dy / distance) * projectile.speed;
+                this.drawProjectile(projectile);
+            }
+        }
+    },
+
+    projectilePool: [],
+
+    getProjectile() {
+        return this.projectilePool.pop() || {};
+    },
+
+    returnProjectileToPool(projectile) {
+        // Reset projectile properties
+        projectile.x = projectile.y = projectile.targetX = projectile.targetY = 0;
+        projectile.damage = projectile.speed = 0;
+        projectile.color = '';
+        projectile.tower = null;
+        this.projectilePool.push(projectile);
+    },
+
+    fireProjectile(tower, target, damage) {
+        const projectile = this.getProjectile();
+        Object.assign(projectile, {
+            x: tower.x,
+            y: tower.y,
+            targetX: target.x,
+            targetY: target.y,
+            damage: damage,
+            speed: 5,
+            color: tower.projectileColor,
+            tower: tower
+        });
+        this.projectiles.push(projectile);
+    },
+
+    handleProjectileImpact(projectile) {
+        const targetEnemy = this.findEnemyAtPosition(projectile.targetX, projectile.targetY);
+        if (targetEnemy) {
+            targetEnemy.currentHealth -= projectile.damage;
+            this.addEffect(projectile.targetX, projectile.targetY, 'explosion');
+            if (targetEnemy.currentHealth <= 0) {
+                this.handleEnemyDeath(targetEnemy, projectile.tower);
+            }
+        }
+    },
+
+    findEnemyAtPosition(x, y) {
+        return this.enemies.find(enemy => Math.hypot(enemy.x - x, enemy.y - y) < 15);
+    },
+
+    handleEnemyDeath(enemy, tower) {
+        this.resources += enemy.reward;
+        this.addExperienceToTower(tower, enemy.reward);
+        this.addPlayerExperience(enemy.reward);
+        this.enemies = this.enemies.filter(e => e !== enemy);
+        this.playSoundEffect('enemyDeath');
+    },
+
+    drawProjectile(projectile) {
+        ctx.beginPath();
+        ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = projectile.color;
+        ctx.fill();
+    },
+    
         selectTower(towerType) {
         this.selectedTowerType = towerType;
         // Update UI to show selected tower
@@ -725,6 +849,31 @@ const game = {
         });
     },
 
+    updateUIElement(id, value) {
+        const element = document.getElementById(id);
+        if (element && element.textContent !== value.toString()) {
+            element.textContent = value;
+        }
+    },
+
+    setState(newState) {
+        this.state = newState;
+        switch (newState) {
+            case 'menu':
+                this.showMenu();
+                break;
+            case 'playing':
+                this.startGame();
+                break;
+            case 'paused':
+                this.pauseGame();
+                break;
+            case 'gameOver':
+                this.endGame();
+                break;
+        }
+    },
+    
     getHealthBarColor(percentage) {
         if (percentage > 0.6) return 'green';
         if (percentage > 0.3) return 'yellow';
@@ -760,27 +909,17 @@ const game = {
     },
 
         start() {
-        this.threatTypes = threatTypes;
-        this.defenseTypes = defenseTypes;
-        this.initializeGrid();
-        this.startBackgroundMusic();
-
-        // Load images
-        Object.values(this.defenseTypes).forEach(type => {
-            const img = new Image();
-            img.src = type.icon;
-        });
-
-        Object.values(this.threatTypes).forEach(type => {
-            const img = new Image();
-            img.src = type.icon;
-        });
-
-         if (!this.playerProgressionLevels) {
-            console.error('playerProgressionLevels is not defined!');
-        }
-
-        this.initializeEventListeners();
+            this.preloadImages()
+                .then(() => {
+                    this.initializeGrid();
+                    this.initializeEventListeners();
+                    this.updateUI();
+                    this.setState('menu');
+                })
+                .catch(error => {
+                    console.error("Failed to load game resources:", error);
+                    // Handle loading error (e.g., show error message to user)
+                });
 
         // Bind the update method to the game object
         this.boundUpdate = this.update.bind(this);
