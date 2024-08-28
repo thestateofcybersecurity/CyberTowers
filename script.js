@@ -731,28 +731,13 @@ const game = {
         });
     },
 
-    start() {
-        this.threatTypes = threatTypes;
-        this.defenseTypes = defenseTypes;
-        this.initializeGrid();
-        this.startBackgroundMusic();
+    getHealthBarColor(percentage) {
+        if (percentage > 0.6) return 'green';
+        if (percentage > 0.3) return 'yellow';
+        return 'red';
+    },
 
-        // Load images
-        Object.values(this.defenseTypes).forEach(type => {
-            const img = new Image();
-            img.src = type.icon;
-        });
-
-        Object.values(this.threatTypes).forEach(type => {
-            const img = new Image();
-            img.src = type.icon;
-        });
-
-        // Ensure playerProgressionLevels is set
-        if (!this.playerProgressionLevels) {
-            console.error('playerProgressionLevels is not defined!');
-        }
-
+    initializeEventListeners() {
         // Add event listeners for tower selection
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
@@ -770,30 +755,53 @@ const game = {
         });
 
         // Add event listener for pause button
-        document.getElementById('pauseButton').addEventListener('click', () => {
-            this.togglePause();
+        const pauseButton = document.getElementById('pauseButton');
+        if (pauseButton) {
+            pauseButton.addEventListener('click', () => {
+                this.togglePause();
+            });
+        } else {
+            console.warn('Pause button not found in the DOM');
+        }
+    },
+
+        start() {
+        this.threatTypes = threatTypes;
+        this.defenseTypes = defenseTypes;
+        this.initializeGrid();
+        this.startBackgroundMusic();
+
+        // Load images
+        Object.values(this.defenseTypes).forEach(type => {
+            const img = new Image();
+            img.src = type.icon;
         });
+
+        Object.values(this.threatTypes).forEach(type => {
+            const img = new Image();
+            img.src = type.icon;
+        });
+
+         if (!this.playerProgressionLevels) {
+            console.error('playerProgressionLevels is not defined!');
+        }
+
+        this.initializeEventListeners();
 
         // Bind the update method to the game object
         this.boundUpdate = this.update.bind(this);
 
-        // Start the game loop
-        requestAnimationFrame(this.boundUpdate);
-
-        getHealthBarColor(percentage) {
-            if (percentage > 0.6) return 'green';
-            if (percentage > 0.3) return 'yellow';
-            return 'red';
-        },
-
         this.updateUI();
+
         // Add a start button
         const startButton = document.createElement('button');
         startButton.textContent = 'Start Game';
         startButton.addEventListener('click', () => {
-            this.sounds.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+            if (this.sounds && this.sounds.backgroundMusic) {
+                this.sounds.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+            }
             this.startNewWave();
-            requestAnimationFrame(this.update.bind(this));
+            requestAnimationFrame(this.boundUpdate);
             startButton.remove();
         });
         document.body.appendChild(startButton);
