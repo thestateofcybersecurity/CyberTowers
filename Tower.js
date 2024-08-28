@@ -87,7 +87,7 @@ export class Tower {
         }
     }
 
-    static getCost(type) {
+    getCost(type) {
         return defenseTypes[type].cost;
     }
 }
