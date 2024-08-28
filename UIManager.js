@@ -1,4 +1,6 @@
 // UIManager.js
+import { GAME_STATES, defenseTypes } from './constants.js';
+
 export class UIManager {
     constructor(game) {
         this.game = game;
@@ -6,20 +8,25 @@ export class UIManager {
     }
 
     initializeUI() {
-        this.createUIElements();
+        this.createTowerButtons();
         this.addEventListeners();
     }
 
-    createUIElements() {
-        // Create and append UI elements to the DOM
-        // This includes score, resources, wave info, tower selection buttons, etc.
+    createTowerButtons() {
+        const towerSelection = document.getElementById('towerSelection');
+        Object.keys(defenseTypes).forEach(towerType => {
+            const button = document.createElement('button');
+            button.textContent = towerType;
+            button.classList.add('towerButton');
+            button.dataset.tower = towerType;
+            towerSelection.appendChild(button);
+        });
     }
 
     addEventListeners() {
-        // Add event listeners to UI elements
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
-                const towerType = button.getAttribute('data-tower');
+                const towerType = button.dataset.tower;
                 this.game.selectedTowerType = towerType;
                 this.updateTowerSelection();
             });
@@ -31,6 +38,7 @@ export class UIManager {
         this.updateResources();
         this.updateWaveInfo();
         this.updateTowerButtons();
+        this.updateNextWaveInfo();
     }
 
     updateScore() {
@@ -46,43 +54,54 @@ export class UIManager {
     }
 
     updateTowerButtons() {
-        Object.keys(this.game.defenseTypes).forEach(defenseType => {
-            const button = document.querySelector(`[data-tower="${defenseType}"]`);
-            if (button) {
-                const isUnlocked = this.game.unlockedDefenses.includes(defenseType);
-                const isAffordable = this.game.resources >= this.game.defenseTypes[defenseType].cost;
-                button.disabled = !isUnlocked || !isAffordable;
-                button.classList.toggle('affordable', isAffordable);
-            }
+        document.querySelectorAll('.towerButton').forEach(button => {
+            const towerType = button.dataset.tower;
+            const isUnlocked = true; // Implement unlock logic if needed
+            const isAffordable = this.game.resources >= defenseTypes[towerType].cost;
+            button.disabled = !isUnlocked || !isAffordable;
+            button.classList.toggle('affordable', isAffordable);
         });
     }
 
     updateTowerSelection() {
         document.querySelectorAll('.towerButton').forEach(button => {
-            button.classList.remove('selected');
+            button.classList.toggle('selected', button.dataset.tower === this.game.selectedTowerType);
         });
-        const selectedButton = document.querySelector(`[data-tower="${this.game.selectedTowerType}"]`);
-        if (selectedButton) {
-            selectedButton.classList.add('selected');
+    }
+
+    updateNextWaveInfo() {
+        const nextWaveInfo = document.getElementById('nextWaveInfo');
+        if (this.game.nextWaveInfo) {
+            nextWaveInfo.textContent = `Next Wave: ${this.game.nextWaveInfo.types.join(', ')} - Total Threats: ${this.game.nextWaveInfo.totalThreats}`;
+        } else {
+            nextWaveInfo.textContent = '';
         }
     }
 
     showMenu() {
-        // Implement menu display logic
+        document.getElementById('menuContainer').style.display = 'flex';
+        document.getElementById('gameOverContainer').style.display = 'none';
+    }
+
+    hideMenu() {
+        document.getElementById('menuContainer').style.display = 'none';
     }
 
     showGameOver() {
-        // Implement game over screen logic
+        document.getElementById('gameOverContainer').style.display = 'flex';
+        document.getElementById('finalScore').textContent = this.game.currentWave;
+        document.getElementById('highScore').textContent = this.game.highScore;
+    }
+
+    updatePauseButton() {
+        const pauseButton = document.getElementById('pauseButton');
+        pauseButton.textContent = this.game.state === GAME_STATES.PAUSED ? 'Resume' : 'Pause';
     }
 
     showErrorMessage(message) {
         const errorDiv = document.createElement('div');
+        errorDiv.id = 'errorMessage';
         errorDiv.textContent = message;
-        errorDiv.style.color = 'red';
-        errorDiv.style.position = 'absolute';
-        errorDiv.style.top = '50%';
-        errorDiv.style.left = '50%';
-        errorDiv.style.transform = 'translate(-50%, -50%)';
         document.body.appendChild(errorDiv);
     }
 }
