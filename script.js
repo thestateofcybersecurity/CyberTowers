@@ -122,6 +122,13 @@ const defenseTypes = {
     }
 };
 
+const GAME_STATES = {
+    MENU: 'menu',
+    PLAYING: 'playing',
+    PAUSED: 'paused',
+    GAME_OVER: 'gameOver'
+};
+
 const game = {
     systemIntegrity: 100,
     resources: 500,
@@ -156,11 +163,13 @@ const game = {
     optionsContainer: null,
     highScore: 0,
     nextWaveInfo: null,
+    state: GAME_STATES.MENU,
 
     initializeDOM() {
-        this.gameContainer = document.getElementById('gameContainer') || document.createElement('div');
-        this.gameContainer.id = 'gameContainer';
-        if (!document.body.contains(this.gameContainer)) {
+        this.gameContainer = document.getElementById('gameContainer');
+        if (!this.gameContainer) {
+            this.gameContainer = document.createElement('div');
+            this.gameContainer.id = 'gameContainer';
             document.body.appendChild(this.gameContainer);
         }
 
@@ -172,10 +181,10 @@ const game = {
         this.optionsContainer.id = 'optionsContainer';
         this.gameContainer.appendChild(this.optionsContainer);
 
-        // Ensure canvas is in the DOM
-        if (!document.body.contains(canvas)) {
+        if (!this.gameContainer.contains(canvas)) {
             this.gameContainer.appendChild(canvas);
         }
+
         // Initially hide the options container
         this.optionsContainer.style.display = 'none';
     },
@@ -256,6 +265,23 @@ const game = {
         backgroundMusic: new Audio('./api/background_music.mp3'),
         towerShoot: new Audio('./api/tower_shoot.mp3'),
         threatDeath: new Audio('./api/threat_death.mp3')
+    },
+
+    audioManager: {
+        muted: false,
+        volume: 1,
+        mute() {
+            this.muted = true;
+            // Mute all audio
+        },
+        unmute() {
+            this.muted = false;
+            // Unmute all audio
+        },
+        setVolume(volume) {
+            this.volume = volume;
+            // Set volume for all audio
+        }
     },
 
     startBackgroundMusic() {
@@ -826,52 +852,22 @@ const game = {
         }
     },
 
-    showMenu() {
-        // Reset game logic
+      showMenu() {
         this.resetGameLogic();
-    
-        // Clear the screen
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.clearContainer(this.menuContainer);
         
-        // Display the title
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.font = '48px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText('Cybersecurity Tower Defense', canvas.width / 2, 150);
-    
-        // Create and display buttons
-        const startButton = document.createElement('button');
-        startButton.textContent = 'Start Game';
-        startButton.style.position = 'absolute';
-        startButton.style.left = `${canvas.width / 2 - 60}px`;
-        startButton.style.top = '250px';
-        startButton.addEventListener('click', () => {
-            document.body.removeChild(startButton);
-            document.body.removeChild(optionsButton);
-            document.body.removeChild(exitButton);
-            this.startGame();
-        });
-        document.body.appendChild(startButton);
-    
-        const optionsButton = document.createElement('button');
-        optionsButton.textContent = 'Options';
-        optionsButton.style.position = 'absolute';
-        optionsButton.style.left = `${canvas.width / 2 - 60}px`;
-        optionsButton.style.top = '320px';
-        optionsButton.addEventListener('click', () => {
-            this.showOptions();
-        });
-        document.body.appendChild(optionsButton);
-    
-        const exitButton = document.createElement('button');
-        exitButton.textContent = 'Exit';
-        exitButton.style.position = 'absolute';
-        exitButton.style.left = `${canvas.width / 2 - 60}px`;
-        exitButton.style.top = '390px';
-        exitButton.addEventListener('click', () => {
-            window.close(); // Close the browser window or exit the game
-        });
-        document.body.appendChild(exitButton);
+
+        this.createButton('Start Game', canvas.width / 2 - 60, 250, () => this.startGame(), this.menuContainer);
+        this.createButton('Options', canvas.width / 2 - 60, 320, () => this.showOptions(), this.menuContainer);
+        this.createButton('Exit', canvas.width / 2 - 60, 390, () => window.close(), this.menuContainer);
+
+        this.menuContainer.style.display = 'block';
+        this.optionsContainer.style.display = 'none';
     },
 
     // Function to reset game logic
@@ -881,14 +877,14 @@ const game = {
         this.resources = 500;
         this.towers = [];
         this.threats = [];
+        this.projectiles = [];
+        this.effects = [];
         this.isGamePaused = false;
-        this.boundUpdate = this.update.bind(this);
-        this.highScore = localStorage.getItem('highScore') || 0;
-    
-        // Remove this line if `resetGrid` is not needed:
-        // this.resetGrid();  // Clear any grid-based data
-    
-        this.updateUI();  // Reset the UI elements
+        this.isWaveActive = false;
+        this.lastSpawnTime = 0;
+        this.nextWaveInfo = null;
+        this.calculateNextWaveInfo();
+        this.updateUI();
     },
 
     resetGrid() {
@@ -917,28 +913,14 @@ const game = {
         return button;
     },
 
+
     startGame() {
-        this.isGamePaused = false;
-        this.currentWave = 1;
-        this.systemIntegrity = 100;
-        this.resources = 500;
-        this.threats = [];
-        this.towers = [];
-        this.projectiles = [];
-        this.effects = [];
-        this.isWaveActive = false;
-        this.lastSpawnTime = 0;
-    
-        // Hide menu and options containers
+        this.resetGameLogic();
+        this.state = 'playing';
         this.menuContainer.style.display = 'none';
         this.optionsContainer.style.display = 'none';
-    
-        // Reset and initialize game elements
         this.initializeGrid();
-        this.updateUI();
         this.startNewWave();
-        
-        this.state = 'playing';
         requestAnimationFrame(this.boundUpdate);
     },
     
@@ -1233,10 +1215,10 @@ const game = {
     },
     
     update(timestamp) {
-        if (this.state !== 'playing') return;
+        if (this.state !== GAME_STATES.PLAYING) return;
 
-        this.checkGameOver(); // Add this line to check for game over condition
-        if (this.state === 'gameOver') return; // Exit if game is over
+        this.checkGameOver();
+        if (this.state === 'gameOver') return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1256,7 +1238,7 @@ const game = {
         this.updateAndDrawTowers(timestamp);
         this.updateAndDrawEffects();
 
-        this.updateUI(); // Make sure UI is updated every frame
+        this.updateUI();
 
         requestAnimationFrame(this.boundUpdate);
     },
@@ -1458,18 +1440,26 @@ const game = {
     },
 
     setState(newState) {
+        if (!Object.values(GAME_STATES).includes(newState)) {
+            console.error(`Invalid game state: ${newState}`);
+            return;
+        }
         this.state = newState;
-        switch (newState) {
-            case 'menu':
+        this.handleStateChange();
+    },
+
+    handleStateChange() {
+        switch (this.state) {
+            case GAME_STATES.MENU:
                 this.showMenu();
                 break;
-            case 'playing':
+            case GAME_STATES.PLAYING:
                 this.startGame();
                 break;
-            case 'paused':
+            case GAME_STATES.PAUSED:
                 this.pauseGame();
                 break;
-            case 'gameOver':
+            case GAME_STATES.GAME_OVER:
                 this.endGame();
                 break;
         }
@@ -1500,9 +1490,7 @@ const game = {
 
         const pauseButton = document.getElementById('pauseButton');
         if (pauseButton) {
-            pauseButton.addEventListener('click', () => {
-                this.togglePause();
-            });
+            pauseButton.addEventListener('click', () => this.togglePause());
         } else {
             console.warn('Pause button not found in the DOM');
         }
@@ -1515,17 +1503,27 @@ const game = {
             .then(() => {
                 this.initializeGrid();
                 this.initializeEventListeners();
-                this.resetGameLogic(); // Add this line to ensure game state is properly reset
-                this.updateUI();
-                this.showMenu(); // Ensure the menu is shown at the start
+                this.resetGameLogic();
+                this.setState(GAME_STATES.MENU);
             })
-
             .catch(error => {
                 console.error("Failed to load game resources:", error);
-                // Handle loading error (e.g., show error message to user)
+                // Show error message to user
+                this.showErrorMessage("Failed to load game resources. Please refresh the page.");
             });
 
         this.boundUpdate = this.update.bind(this);
+    },
+
+    showErrorMessage(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.textContent = message;
+        errorDiv.style.color = 'red';
+        errorDiv.style.position = 'absolute';
+        errorDiv.style.top = '50%';
+        errorDiv.style.left = '50%';
+        errorDiv.style.transform = 'translate(-50%, -50%)';
+        this.gameContainer.appendChild(errorDiv);
     }
 };
 
