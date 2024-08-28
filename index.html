@@ -4,37 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cybersecurity Tower Defense</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="gameContainer">
-        <div id="menuContainer"></div>
-        <div id="optionsContainer"></div>
-        <div id="gameInfo">
-            <div id="score">System Integrity: <span id="scoreValue">100</span>%</div>
-            <div id="resources">Resources: <span id="resourcesValue">300</span> MB</div>
-            <div id="wave">Threat Wave: <span id="waveValue">1</span></div>
-            <div id="playerInfo">
-                <div>Player Level: <span id="playerLevel">1</span></div>
-                <div>Experience: <span id="playerExperience">0</span></div>
-            </div>
-            <div id="nextWaveInfo"></div>
-        </div>
         <canvas id="gameBoard"></canvas>
-        <div id="controls">
+        <div id="uiContainer">
+            <div id="gameInfo">
+                <div id="scoreContainer">System Integrity: <span id="scoreValue">100</span>%</div>
+                <div id="resourcesContainer">Resources: <span id="resourcesValue">500</span> MB</div>
+                <div id="waveContainer">Wave: <span id="waveValue">1</span></div>
+            </div>
             <div id="towerSelection">
-                <button id="firewallButton" class="towerButton" data-tower="firewall">Firewall (100 MB)</button>
-                <button id="antivirusButton" class="towerButton" data-tower="antivirus">Antivirus (200 MB)</button>
-                <button id="encryptionButton" class="towerButton" data-tower="encryption">Encryption (300 MB)</button>
-                <button id="idsButton" class="towerButton" data-tower="ids">IDS (350 MB)</button>
-                <button id="aiButton" class="towerButton" data-tower="ai">AI Defense (450 MB)</button>
-                <button id="socButton" class="towerButton" data-tower="soc">SOC (550 MB)</button>
-                <button id="honeypotButton" class="towerButton" data-tower="honeypot">Honey Pot (150 MB)</button>
+                <!-- Tower selection buttons will be added here dynamically -->
             </div>
             <button id="pauseButton">Pause</button>
+            <div id="nextWaveInfo"></div>
+        </div>
+        <div id="menuContainer" style="display: none;">
+            <h1>Cybersecurity Tower Defense</h1>
+            <button id="startButton">Start Game</button>
+            <button id="optionsButton">Options</button>
+        </div>
+        <div id="gameOverContainer" style="display: none;">
+            <h2>Game Over</h2>
+            <p>Final Score: <span id="finalScore"></span></p>
+            <p>High Score: <span id="highScore"></span></p>
+            <button id="restartButton">Restart Game</button>
+            <button id="menuButton">Return to Menu</button>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script type="module">
+        import { Game } from './Game.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const game = new Game();
+            game.start();
+
+            // Event listeners for menu buttons
+            document.getElementById('startButton').addEventListener('click', () => game.startGame());
+            document.getElementById('optionsButton').addEventListener('click', () => game.showOptions());
+            document.getElementById('restartButton').addEventListener('click', () => game.restartGame());
+            document.getElementById('menuButton').addEventListener('click', () => game.showMenu());
+            document.getElementById('pauseButton').addEventListener('click', () => game.togglePause());
+        });
+    </script>
 </body>
 </html>
