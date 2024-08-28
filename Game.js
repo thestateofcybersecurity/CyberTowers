@@ -7,6 +7,17 @@ import { UIManager } from './UIManager.js';
 import { AssetLoader } from './AssetLoader.js';
 import { GridManager } from './GridManager.js';
 import { threatTypes } from './constants.js';
+import { 
+    CANVAS_WIDTH, 
+    CANVAS_HEIGHT, 
+    GAME_STATES, 
+    WAVE_DURATION, 
+    BREAK_DURATION, 
+    STARTING_RESOURCES, 
+    STARTING_SYSTEM_INTEGRITY,
+    PATH,
+    PLAYER_LEVEL_THRESHOLDS
+} from './constants.js';
 
 export class Game {
     constructor() {
@@ -19,8 +30,8 @@ export class Game {
         this.projectiles = [];
         this.effects = [];
         this.state = GAME_STATES.MENU;
-        this.systemIntegrity = 100;
-        this.resources = 500;
+        this.systemIntegrity = STARTING_SYSTEM_INTEGRITY;
+        this.resources = STARTING_RESOURCES;
         this.currentWave = 0;
         this.isWaveActive = false;
         this.waveTimer = 0;
@@ -33,6 +44,9 @@ export class Game {
         this.gridManager = new GridManager(CANVAS_WIDTH, CANVAS_HEIGHT);
         this.boundUpdate = this.update.bind(this);
         this.highScore = 0;
+        this.waveDuration = WAVE_DURATION;
+        this.breakDuration = BREAK_DURATION;
+        this.path = PATH;
     }
 
     async start() {
@@ -74,8 +88,8 @@ export class Game {
     }
 
     resetGameLogic() {
-        this.systemIntegrity = 100;
-        this.resources = 500;
+        this.systemIntegrity = STARTING_SYSTEM_INTEGRITY;
+        this.resources = STARTING_RESOURCES;
         this.currentWave = 0;
         this.threats = [];
         this.towers = [];
@@ -316,9 +330,9 @@ export class Game {
         this.playerExperience += amount;
         const expForNextLevel = Math.pow(this.playerLevel, 2) * 100;
 
-        if (this.playerExperience >= expForNextLevel) {
+        while (this.playerLevel < PLAYER_LEVEL_THRESHOLDS.length && 
+            this.playerExperience >= PLAYER_LEVEL_THRESHOLDS[this.playerLevel]) {
             this.playerLevel++;
-            this.playerExperience -= expForNextLevel;
             this.unlockNewDefense();
             this.uiManager.showLevelUpMessage(this.playerLevel);
         }
