@@ -122,6 +122,12 @@ const defenseTypes = {
     }
 };
 
+const skillTree = {
+    towerAttackSpeed: { cost: 100, level: 0, maxLevel: 5, effect: () => this.towers.forEach(t => t.fireRate *= 0.9) },
+    towerRange: { cost: 150, level: 0, maxLevel: 5, effect: () => this.towers.forEach(t => t.range += 10) },
+    towerDamage: { cost: 200, level: 0, maxLevel: 5, effect: () => this.towers.forEach(t => t.damage += 5) }
+};
+
 const game = {
     systemIntegrity: 100,
     resources: 500,
@@ -290,8 +296,30 @@ const game = {
             tower.image.src = towerType.icon;
             this.towers.push(tower);
             cell.occupied = true;
+    
+            // Synergy bonus logic
+            this.applySynergyBonus(tower, cell);
+    
             this.updateUI();
         }
+    },
+    
+    applySynergyBonus(tower, cell) {
+        const adjacentCells = [
+            this.getGridCell(cell.x - this.gridSize, cell.y),
+            this.getGridCell(cell.x + this.gridSize, cell.y),
+            this.getGridCell(cell.x, cell.y - this.gridSize),
+            this.getGridCell(cell.x, cell.y + this.gridSize)
+        ];
+    
+        adjacentCells.forEach(adjacentCell => {
+            if (adjacentCell && adjacentCell.occupied) {
+                const adjacentTower = this.towers.find(t => t.x === adjacentCell.x && t.y === adjacentCell.y);
+                if (adjacentTower && (adjacentTower.type === 'firewall' || adjacentTower.type === 'antivirus')) {
+                    tower.damage += 5; // Example synergy bonus
+                }
+            }
+        });
     },
 
     applySpecialAbilities(tower, threat) { // Changed threat to threat
@@ -493,6 +521,30 @@ const game = {
         });
     },
 
+    upgradeSkill(skill) {
+        if (this.resources >= skillTree[skill].cost && skillTree[skill].level < skillTree[skill].maxLevel) {
+            this.resources -= skillTree[skill].cost;
+            skillTree[skill].level++;
+            skillTree[skill].effect();
+            this.updateUI();
+        }
+    },
+    
+    // Player abilities
+    useAbility(ability) {
+        if (ability === 'airstrike') {
+            this.threats = this.threats.filter(threat => {
+                if (Math.random() < 0.5) { // 50% chance to kill each threat
+                    this.handleThreatDeath(threat);
+                    return false;
+                }
+                return true;
+            });
+        } else if (ability === 'shield') {
+            this.towers.forEach(tower => tower.shielded = true);
+            setTimeout(() => this.towers.forEach(tower => tower.shielded = false), 5000); // 5 second shield
+        }
+    },
     
     selectThreatType() {
         const availableThreats = Object.keys(this.threatTypes);
@@ -531,12 +583,12 @@ const game = {
         this.threats.push(newThreat);
     },
 
-    moveThreatAlongPath(threat) { // Changed from moveThreatAlongPath
+    moveThreatAlongPath(threat) {
         const targetPoint = this.path[threat.pathIndex];
         const dx = targetPoint.x - threat.x;
         const dy = targetPoint.y - threat.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
+    
         if (distance < threat.speed) {
             threat.pathIndex++;
             if (threat.pathIndex >= this.path.length) {
@@ -546,7 +598,19 @@ const game = {
             threat.x += (dx / distance) * threat.speed;
             threat.y += (dy / distance) * threat.speed;
         }
+    
+        // Path influence logic
+        this.applyPathInfluence(threat);
+    
         return false;
+    },
+    
+    applyPathInfluence(threat) {
+        this.towers.forEach(tower => {
+            if (tower.type === 'encryption' && Math.hypot(threat.x - tower.x, threat.y - tower.y) < tower.range) {
+                threat.speed *= 0.9; // Slow down threats near Encryption towers
+            }
+        });
     },
 
     addEffect(x, y, type) {
@@ -592,18 +656,40 @@ const game = {
         }
     },
 
+    startEndlessMode() {
+        this.currentWave = 1;
+        this.systemIntegrity = 100;
+        this.resources = 500;
+        this.endless = true;
+        this.setState('playing');
+    },
+    
     endWave() {
+        if (this.endless) {
+            this.currentWave++;
+            this.resources += 100 * this.currentWave; // Increase resource gain in endless mode
+            this.updateUI();
+            setTimeout(() => this.startNewWave(), 3000); // Auto-start next wave after a short break
+        } else {
         this.isWaveActive = false;
         this.waveTimer = performance.now();
-        this.resources += 100 * this.currentWave; // Wave completion bonus
+        const waveBonus = this.systemIntegrity / 100 * 100 * this.currentWave; // Bonus based on system integrity
+        this.resources += waveBonus;
         this.updateUI();
     
-        // Introduce resource bonuses or tower upgrades based on wave completion
         if (this.currentWave % 5 === 0) {
             this.resources += this.resources * 0.1; // 10% resource bonus every 5 waves
-            // Optionally unlock a special upgrade or give a bonus
-            // e.g., Automatically level up a random tower
         }
+    },
+
+    // Add challenge modes
+    startChallengeMode(challenge) {
+        if (challenge === 'limitedResources') {
+            this.resources = 300; // Start with fewer resources
+        } else if (challenge === 'restrictedTowers') {
+            this.unlockedDefenses = ['firewall', 'antivirus']; // Restrict available towers
+        }
+        this.startGame();
     },
 
     playSoundEffect(soundName) {
@@ -620,22 +706,301 @@ const game = {
     },
 
     showMenu() {
-        // Implement menu display logic
+        // Clear the screen
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Display the title
+        ctx.font = '48px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText('Cybersecurity Tower Defense', canvas.width / 2, 150);
+    
+        // Create and display buttons
+        const startButton = document.createElement('button');
+        startButton.textContent = 'Start Game';
+        startButton.style.position = 'absolute';
+        startButton.style.left = `${canvas.width / 2 - 60}px`;
+        startButton.style.top = '250px';
+        startButton.addEventListener('click', () => {
+            document.body.removeChild(startButton);
+            this.startGame();
+        });
+        document.body.appendChild(startButton);
+    
+        const optionsButton = document.createElement('button');
+        optionsButton.textContent = 'Options';
+        optionsButton.style.position = 'absolute';
+        optionsButton.style.left = `${canvas.width / 2 - 60}px`;
+        optionsButton.style.top = '320px';
+        optionsButton.addEventListener('click', () => {
+            this.showOptions();
+        });
+        document.body.appendChild(optionsButton);
+    
+        const exitButton = document.createElement('button');
+        exitButton.textContent = 'Exit';
+        exitButton.style.position = 'absolute';
+        exitButton.style.left = `${canvas.width / 2 - 60}px`;
+        exitButton.style.top = '390px';
+        exitButton.addEventListener('click', () => {
+            window.close(); // Close the browser window or exit the game
+        });
+        document.body.appendChild(exitButton);
     },
 
     startGame() {
         this.isGamePaused = false;
+        this.currentWave = 1;
+        this.systemIntegrity = 100;
+        this.resources = 500;
+    
+        // Clear any existing UI elements from the menu
+        document.querySelectorAll('button').forEach(button => document.body.removeChild(button));
+    
+        // Initialize the grid, load the first wave, and start the game loop
+        this.initializeGrid();
         this.startNewWave();
-        requestAnimationFrame(this.boundUpdate);
+        requestAnimationFrame(this.boundUpdate); // Begin the game loop
     },
 
     pauseGame() {
         this.isGamePaused = true;
-        // Implement pause logic (e.g., show pause menu)
+        cancelAnimationFrame(this.boundUpdate); // Stop the game loop
+    
+        // Display the pause menu
+        const pauseMenu = document.createElement('div');
+        pauseMenu.id = 'pauseMenu';
+        pauseMenu.style.position = 'absolute';
+        pauseMenu.style.left = `${canvas.width / 2 - 100}px`;
+        pauseMenu.style.top = `${canvas.height / 2 - 50}px`;
+        pauseMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        pauseMenu.style.padding = '20px';
+        pauseMenu.style.borderRadius = '10px';
+        pauseMenu.style.textAlign = 'center';
+        pauseMenu.style.color = 'white';
+    
+        const resumeButton = document.createElement('button');
+        resumeButton.textContent = 'Resume';
+        resumeButton.style.marginBottom = '10px';
+        resumeButton.addEventListener('click', () => {
+            document.body.removeChild(pauseMenu);
+            this.isGamePaused = false;
+            requestAnimationFrame(this.boundUpdate); // Resume the game loop
+        });
+        pauseMenu.appendChild(resumeButton);
+    
+        const quitButton = document.createElement('button');
+        quitButton.textContent = 'Quit to Menu';
+        quitButton.addEventListener('click', () => {
+            document.body.removeChild(pauseMenu);
+            this.showMenu();
+        });
+        pauseMenu.appendChild(quitButton);
+    
+        document.body.appendChild(pauseMenu);
     },
 
     endGame() {
-        // Implement game over logic
+        cancelAnimationFrame(this.boundUpdate); // Stop the game loop
+    
+        // Clear the game area
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+        // Display the game over message
+        ctx.font = '48px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', canvas.width / 2, 150);
+        ctx.font = '24px Arial';
+        ctx.fillText(`Final Score: ${this.currentWave}`, canvas.width / 2, 200);
+    
+        // Create and display a button to return to the main menu
+        const menuButton = document.createElement('button');
+        menuButton.textContent = 'Return to Menu';
+        menuButton.style.position = 'absolute';
+        menuButton.style.left = `${canvas.width / 2 - 60}px`;
+        menuButton.style.top = '300px';
+        menuButton.addEventListener('click', () => {
+            document.body.removeChild(menuButton);
+            this.showMenu();
+        });
+        document.body.appendChild(menuButton);
+    },
+
+    saveGame() {
+        const saveData = {
+            currentWave: this.currentWave,
+            systemIntegrity: this.systemIntegrity,
+            resources: this.resources,
+            towers: this.towers,
+            threats: this.threats
+        };
+        localStorage.setItem('savedGame', JSON.stringify(saveData));
+    },
+    
+    loadGame() {
+        const savedGame = JSON.parse(localStorage.getItem('savedGame'));
+        if (savedGame) {
+            this.currentWave = savedGame.currentWave;
+            this.systemIntegrity = savedGame.systemIntegrity;
+            this.resources = savedGame.resources;
+            this.towers = savedGame.towers;
+            this.threats = savedGame.threats;
+            this.updateUI();
+            this.setState('playing');
+        }
+    },
+
+    showOptions() {
+        // Clear the screen
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Display the options title
+        ctx.font = '36px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText('Options', canvas.width / 2, 150);
+    
+        // Create volume control slider
+        const volumeLabel = document.createElement('label');
+        volumeLabel.textContent = 'Volume:';
+        volumeLabel.style.position = 'absolute';
+        volumeLabel.style.left = `${canvas.width / 2 - 80}px`;
+        volumeLabel.style.top = '220px';
+        volumeLabel.style.color = 'white';
+        document.body.appendChild(volumeLabel);
+    
+        const volumeSlider = document.createElement('input');
+        volumeSlider.type = 'range';
+        volumeSlider.min = '0';
+        volumeSlider.max = '100';
+        volumeSlider.value = this.sounds.backgroundMusic.volume * 100;
+        volumeSlider.style.position = 'absolute';
+        volumeSlider.style.left = `${canvas.width / 2 - 10}px`;
+        volumeSlider.style.top = '220px';
+        volumeSlider.addEventListener('input', (event) => {
+            const volume = event.target.value / 100;
+            this.sounds.backgroundMusic.volume = volume;
+            Object.keys(this.sounds).forEach(soundKey => {
+                this.sounds[soundKey].volume = volume;
+            });
+        });
+        document.body.appendChild(volumeSlider);
+    
+        // Create difficulty setting dropdown
+        const difficultyLabel = document.createElement('label');
+        difficultyLabel.textContent = 'Difficulty:';
+        difficultyLabel.style.position = 'absolute';
+        difficultyLabel.style.left = `${canvas.width / 2 - 80}px`;
+        difficultyLabel.style.top = '270px';
+        difficultyLabel.style.color = 'white';
+        document.body.appendChild(difficultyLabel);
+    
+        const difficultySelect = document.createElement('select');
+        difficultySelect.style.position = 'absolute';
+        difficultySelect.style.left = `${canvas.width / 2 - 10}px`;
+        difficultySelect.style.top = '270px';
+        const difficulties = ['Easy', 'Normal', 'Hard'];
+        difficulties.forEach(diff => {
+            const option = document.createElement('option');
+            option.value = diff.toLowerCase();
+            option.textContent = diff;
+            difficultySelect.appendChild(option);
+        });
+        difficultySelect.value = 'normal'; // Default to normal
+        difficultySelect.addEventListener('change', (event) => {
+            this.setDifficulty(event.target.value);
+        });
+        document.body.appendChild(difficultySelect);
+    
+        // Create graphics quality dropdown
+        const graphicsLabel = document.createElement('label');
+        graphicsLabel.textContent = 'Graphics Quality:';
+        graphicsLabel.style.position = 'absolute';
+        graphicsLabel.style.left = `${canvas.width / 2 - 140}px`;
+        graphicsLabel.style.top = '320px';
+        graphicsLabel.style.color = 'white';
+        document.body.appendChild(graphicsLabel);
+    
+        const graphicsSelect = document.createElement('select');
+        graphicsSelect.style.position = 'absolute';
+        graphicsSelect.style.left = `${canvas.width / 2 - 10}px`;
+        graphicsSelect.style.top = '320px';
+        const graphicsOptions = ['Low', 'Medium', 'High'];
+        graphicsOptions.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option.toLowerCase();
+            opt.textContent = option;
+            graphicsSelect.appendChild(opt);
+        });
+        graphicsSelect.value = 'high'; // Default to high
+        graphicsSelect.addEventListener('change', (event) => {
+            this.setGraphicsQuality(event.target.value);
+        });
+        document.body.appendChild(graphicsSelect);
+    
+        // Add a back button to return to the main menu
+        const backButton = document.createElement('button');
+        backButton.textContent = 'Back';
+        backButton.style.position = 'absolute';
+        backButton.style.left = `${canvas.width / 2 - 60}px`;
+        backButton.style.top = '390px';
+        backButton.addEventListener('click', () => {
+            // Remove all option controls before returning to the menu
+            document.body.removeChild(volumeLabel);
+            document.body.removeChild(volumeSlider);
+            document.body.removeChild(difficultyLabel);
+            document.body.removeChild(difficultySelect);
+            document.body.removeChild(graphicsLabel);
+            document.body.removeChild(graphicsSelect);
+            document.body.removeChild(backButton);
+            this.showMenu();
+        });
+        document.body.appendChild(backButton);
+    },
+    
+    // Supporting function to set graphics quality
+    setGraphicsQuality(level) {
+        switch (level) {
+            case 'low':
+                ctx.imageSmoothingEnabled = false;
+                break;
+            case 'medium':
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'medium';
+                break;
+            case 'high':
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                break;
+        }
+    },
+    
+    // Difficulty settings
+    setDifficulty(level) {
+        switch (level) {
+            case 'easy':
+                this.threatTypes = this.scaleThreats(0.8);
+                break;
+            case 'normal':
+                this.threatTypes = this.scaleThreats(1);
+                break;
+            case 'hard':
+                this.threatTypes = this.scaleThreats(1.2);
+                break;
+        }
+    },
+    
+    scaleThreats(multiplier) {
+        return Object.keys(this.threatTypes).reduce((scaledThreats, type) => {
+            const threat = this.threatTypes[type];
+            scaledThreats[type] = {
+                ...threat,
+                health: threat.health * multiplier,
+                damage: threat.damage * multiplier
+            };
+            return scaledThreats;
+        }, {});
     },
     
     update(timestamp) {
@@ -825,11 +1190,24 @@ const game = {
     },
 
     handleThreatDeath(threat, tower) {
-        this.resources += threat.reward;
-        this.addExperienceToTower(tower, threat.reward);
-        this.addPlayerExperience(threat.reward);
-        this.threats = this.threats.filter(e => e !== threat);
-        this.playSoundEffect('threatDeath');
+        if (Math.random() < 0.2) { // 20% chance to drop a resource crate
+            this.spawnResourceCrate(threat.x, threat.y);
+        }
+            this.resources += threat.reward;
+            this.addExperienceToTower(tower, threat.reward);
+            this.addPlayerExperience(threat.reward);
+            this.threats = this.threats.filter(e => e !== threat);
+            this.playSoundEffect('threatDeath');
+    },
+
+    spawnResourceCrate(x, y) {
+        const resourceCrate = {
+            x: x,
+            y: y,
+            amount: 50 + Math.floor(Math.random() * 50), // Random resource amount
+        };
+        this.resources += resourceCrate.amount; // Automatically collect for simplicity
+        this.updateUI();
     },
 
     drawProjectile(projectile) {
@@ -856,7 +1234,6 @@ const game = {
         document.getElementById('playerLevel').textContent = this.playerLevel;
         document.getElementById('playerExperience').textContent = this.playerExperience;
     
-        // Update tower buttons based on unlocked defenses and available resources
         Object.keys(this.defenseTypes).forEach(defenseType => {
             const button = document.querySelector(`[data-tower="${defenseType}"]`);
             if (button) {
@@ -864,8 +1241,21 @@ const game = {
                 const isAffordable = this.resources >= this.defenseTypes[defenseType].cost;
                 button.disabled = !isUnlocked || !isAffordable;
                 button.classList.toggle('affordable', isAffordable);
+                button.title = `Cost: ${this.defenseTypes[defenseType].cost} MB\nDamage: ${this.defenseTypes[defenseType].damage}\nRange: ${this.defenseTypes[defenseType].range}\nFire Rate: ${this.defenseTypes[defenseType].fireRate}ms\nSpecial: ${this.defenseTypes[defenseType].upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
             }
         });
+    
+        // Display next wave information
+        const nextWaveInfo = this.getNextWaveInfo();
+        document.getElementById('nextWaveInfo').textContent = `Next Wave: ${nextWaveInfo.types.join(', ')}\nTotal Threats: ${nextWaveInfo.totalThreats}`;
+    }
+    
+    getNextWaveInfo() {
+        const possibleThreats = this.selectThreatType(this.currentWave + 1);
+        return {
+            types: possibleThreats,
+            totalThreats: Math.min((this.currentWave + 1) * 2, 50)
+        };
     },
 
     updateUIElement(id, value) {
