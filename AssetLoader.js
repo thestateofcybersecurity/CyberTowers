@@ -4,14 +4,14 @@ import { threatTypes, defenseTypes } from './constants.js';
 export class AssetLoader {
     constructor() {
         this.images = {};
-        this.sounds = {};
+       // this.sounds = {};
     }
 
     async loadAssets() {
         const imagePromises = this.loadImages();
-        const soundPromises = this.loadSounds();
+        //const soundPromises = this.loadSounds();
         
-        await Promise.all([...imagePromises, ...soundPromises]);
+        await Promise.all([...imagePromises,]);
     }
 
     loadImages() {
@@ -35,33 +35,33 @@ export class AssetLoader {
         });
     }
 
-    loadSounds() {
-        const soundsToLoad = {
-            backgroundMusic: './api/background_music.mp3',
-            towerShoot: './api/tower_shoot.mp3',
-            threatDeath: './api/threat_death.mp3'
-        };
+    //loadSounds() {
+        //const soundsToLoad = {
+            //backgroundMusic: './api/background_music.mp3',
+            //towerShoot: './api/tower_shoot.mp3',
+            //threatDeath: './api/threat_death.mp3'
+        //};
 
-        return Object.entries(soundsToLoad).map(([key, src]) => this.loadSound(key, src));
-    }
+        //return Object.entries(soundsToLoad).map(([key, src]) => this.loadSound(key, src));
+    //}
 
-    loadSound(key, src) {
-        return new Promise((resolve, reject) => {
-            const audio = new Audio();
-            audio.oncanplaythrough = () => {
-                this.sounds[key] = audio;
-                resolve(audio);
-            };
-            audio.onerror = () => reject(new Error(`Failed to load sound: ${src}`));
-            audio.src = src;
-        });
-    }
+    //loadSound(key, src) {
+        //return new Promise((resolve, reject) => {
+            //const audio = new Audio();
+           // audio.oncanplaythrough = () => {
+                //this.sounds[key] = audio;
+                //resolve(audio);
+            //};
+            //audio.onerror = () => reject(new Error(`Failed to load sound: ${src}`));
+            //audio.src = src;
+       //});
+    //}
 
     getImage(key) {
         return this.images[key];
     }
 
-    getSound(key) {
-        return this.sounds[key];
-    }
+    //getSound(key) {
+        //return this.sounds[key];
+    //}
 }
