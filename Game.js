@@ -47,6 +47,18 @@ export class Game {
         this.breakDuration = BREAK_DURATION;
         this.path = PATH;
     }
+    initialize() {
+        this.assetLoader.loadAssets().then(() => {
+            this.gridManager.initializeGrid();
+            this.uiManager.initializeUI();
+            this.setState(GAME_STATES.MENU);
+        }).catch(error => {
+            console.error("Failed to load game resources:", error);
+            this.uiManager.showErrorMessage("Failed to load game resources. Please refresh the page.");
+        });
+    
+        this.boundUpdate = this.update.bind(this);
+    }
 
     async start() {
         try {
