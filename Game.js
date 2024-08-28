@@ -201,6 +201,16 @@ export class Game {
         });
     }
 
+    updateTowers(timestamp) {
+        this.towers.forEach(tower => {
+            const newProjectile = tower.update(timestamp, this.threats);
+            if (newProjectile) {
+                this.projectiles.push(newProjectile);
+            }
+        });
+    }
+        
+    // Update the updateProjectiles method:
     updateProjectiles(timestamp) {
         this.projectiles = this.projectiles.filter(projectile => {
             projectile.move();
@@ -209,15 +219,14 @@ export class Game {
                 this.handleProjectileImpact(projectile, hitThreat);
                 return false;
             }
-            projectile.draw(this.ctx);
             return true;
         });
     }
-
+    
     handleProjectileImpact(projectile, threat) {
-        threat.currentHealth -= projectile.damage;
+        const destroyed = threat.takeDamage(projectile.damage);
         this.addEffect(threat.x, threat.y, 'explosion');
-        if (threat.currentHealth <= 0) {
+        if (destroyed) {
             this.handleThreatDeath(threat, projectile.tower);
         }
     }
