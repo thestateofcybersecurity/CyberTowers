@@ -122,12 +122,6 @@ const defenseTypes = {
     }
 };
 
-const skillTree = {
-    towerAttackSpeed: { cost: 100, level: 0, maxLevel: 5, effect: () => this.towers.forEach(t => t.fireRate *= 0.9) },
-    towerRange: { cost: 150, level: 0, maxLevel: 5, effect: () => this.towers.forEach(t => t.range += 10) },
-    towerDamage: { cost: 200, level: 0, maxLevel: 5, effect: () => this.towers.forEach(t => t.damage += 5) }
-};
-
 const game = {
     systemIntegrity: 100,
     resources: 500,
@@ -183,6 +177,28 @@ const game = {
         });
 
         return Promise.all(loadPromises);
+    },
+
+    
+    skillTree: {
+        towerAttackSpeed: { 
+            cost: 100, 
+            level: 0, 
+            maxLevel: 5, 
+            effect: () => game.towers.forEach(t => t.fireRate *= 0.9) 
+        },
+        towerRange: { 
+            cost: 150, 
+            level: 0, 
+            maxLevel: 5, 
+            effect: () => game.towers.forEach(t => t.range += 10) 
+        },
+        towerDamage: { 
+            cost: 200, 
+            level: 0, 
+            maxLevel: 5, 
+            effect: () => game.towers.forEach(t => t.damage += 5) 
+        }
     },
     
     path: [
@@ -654,7 +670,7 @@ const game = {
             const delay = i * 1000 / waveMultiplier; // Stagger threat spawns
             setTimeout(() => this.spawnThreat(waveMultiplier), delay);
         }
-    }
+    },
 
     startEndlessMode() {
         this.currentWave = 1;
@@ -680,7 +696,7 @@ const game = {
         if (this.currentWave % 5 === 0) {
             this.resources += this.resources * 0.1; // 10% resource bonus every 5 waves
         }
-    },
+    }
 
     // Add challenge modes
     startChallengeMode(challenge) {
@@ -1248,7 +1264,7 @@ const game = {
         // Display next wave information
         const nextWaveInfo = this.getNextWaveInfo();
         document.getElementById('nextWaveInfo').textContent = `Next Wave: ${nextWaveInfo.types.join(', ')}\nTotal Threats: ${nextWaveInfo.totalThreats}`;
-    }
+    },
     
     getNextWaveInfo() {
         const possibleThreats = this.selectThreatType(this.currentWave + 1);
