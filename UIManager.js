@@ -104,4 +104,34 @@ export class UIManager {
         errorDiv.textContent = message;
         document.body.appendChild(errorDiv);
     }
+
+    updatePlayerInfo() {
+        document.getElementById('playerLevel').textContent = this.game.playerLevel;
+        document.getElementById('playerExperience').textContent = this.game.playerExperience;
+    }
+
+    showLevelUpMessage(level) {
+        const message = document.createElement('div');
+        message.textContent = `Level Up! You are now level ${level}`;
+        message.className = 'levelUpMessage';
+        document.body.appendChild(message);
+        setTimeout(() => document.body.removeChild(message), 3000);
+    }
+
+    showUnlockMessage(defense) {
+        const message = document.createElement('div');
+        message.textContent = `New defense unlocked: ${defense}`;
+        message.className = 'unlockMessage';
+        document.body.appendChild(message);
+        setTimeout(() => document.body.removeChild(message), 3000);
+    }
+
+    updateNextWaveInfo() {
+        const nextWaveInfo = document.getElementById('nextWaveInfo');
+        if (this.game.nextWaveInfo) {
+            nextWaveInfo.textContent = `Next Wave: ${this.game.nextWaveInfo.types.join(', ')} - Total Threats: ${this.game.nextWaveInfo.totalThreats}`;
+        } else {
+            nextWaveInfo.textContent = '';
+        }
+    }
 }
