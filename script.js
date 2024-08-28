@@ -142,7 +142,6 @@ const game = {
     waveDuration: 30000,
     breakDuration: 10000,
     isWaveActive: false,
-    isGamePaused: false,
     gridColor: '#0A3C59',
     backgroundColor: '#020E18',
     pathColor: '#00FFFF',
@@ -420,7 +419,7 @@ const game = {
                     break;
             }
         }
-
+    }
     updateEnemies() {
         this.enemies.forEach(enemy => {
             // Apply burning effect
@@ -689,7 +688,6 @@ const game = {
             ctx.fill();
 
             return true;
-            requestAnimationFrame(this.update.bind(this));
         });
 
         // Update and draw effects
