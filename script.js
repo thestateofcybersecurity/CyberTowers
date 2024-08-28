@@ -156,17 +156,24 @@ const game = {
     optionsContainer: null,
 
     initializeDOM() {
-        this.gameContainer = document.createElement('div');
+        this.gameContainer = document.getElementById('gameContainer') || document.createElement('div');
         this.gameContainer.id = 'gameContainer';
-        document.body.appendChild(this.gameContainer);
+        if (!document.body.contains(this.gameContainer)) {
+            document.body.appendChild(this.gameContainer);
+        }
 
-        this.menuContainer = document.createElement('div');
+        this.menuContainer = document.getElementById('menuContainer') || document.createElement('div');
         this.menuContainer.id = 'menuContainer';
         this.gameContainer.appendChild(this.menuContainer);
 
-        this.optionsContainer = document.createElement('div');
+        this.optionsContainer = document.getElementById('optionsContainer') || document.createElement('div');
         this.optionsContainer.id = 'optionsContainer';
         this.gameContainer.appendChild(this.optionsContainer);
+
+        // Ensure canvas is in the DOM
+        if (!document.body.contains(canvas)) {
+            this.gameContainer.appendChild(canvas);
+        }
     },
     
     preloadImages() {
@@ -759,15 +766,19 @@ const game = {
         this.currentWave = 1;
         this.systemIntegrity = 100;
         this.resources = 500;
+        this.threats = [];
+        this.towers = [];
+        this.projectiles = [];
 
         this.menuContainer.style.display = 'none';
         this.optionsContainer.style.display = 'none';
 
         this.initializeGrid();
         this.startNewWave();
+        this.state = 'playing';
         requestAnimationFrame(this.boundUpdate);
     },
-
+    
     pauseGame() {
         this.isGamePaused = true;
         cancelAnimationFrame(this.boundUpdate);
@@ -1133,8 +1144,8 @@ const game = {
 
     updateUIElement(id, value) {
         const element = document.getElementById(id);
-        if (element && element.textContent !== value.toString()) {
-            element.textContent = value;
+        if (element) {
+            element.textContent = value.toString();
         }
     },
 
@@ -1171,10 +1182,12 @@ const game = {
         });
 
         canvas.addEventListener('click', (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            this.placeTower(this.selectedTowerType, x, y);
+            if (this.state === 'playing') {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                this.placeTower(this.selectedTowerType, x, y);
+            }
         });
 
         const pauseButton = document.getElementById('pauseButton');
@@ -1186,7 +1199,7 @@ const game = {
             console.warn('Pause button not found in the DOM');
         }
     },
-
+    
     start() {
         this.initializeDOM();
         this.preloadImages()
