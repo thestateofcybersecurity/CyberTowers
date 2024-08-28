@@ -191,13 +191,14 @@ export class Game {
     }
 
     updateThreats(timestamp) {
-        this.threats.forEach((threat, index) => {
+        this.threats = this.threats.filter(threat => {
             const reachedEnd = threat.move(this.path);
             if (reachedEnd) {
                 this.systemIntegrity -= threat.damage;
-                this.threats.splice(index, 1);
                 this.checkGameOver();
+                return false;
             }
+            return true;
         });
     }
 
