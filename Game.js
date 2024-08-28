@@ -6,6 +6,7 @@ import { Projectile } from './Projectile.js';
 import { UIManager } from './UIManager.js';
 import { AssetLoader } from './AssetLoader.js';
 import { GridManager } from './GridManager.js';
+import { threatTypes } from './constants.js';
 
 export class Game {
     constructor() {
@@ -153,7 +154,14 @@ export class Game {
     }
 
     drawPath() {
-        // Implementation of drawPath method
+        this.ctx.strokeStyle = '#00FFFF';
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.path[0].x, this.path[0].y);
+        for (let i = 1; i < this.path.length; i++) {
+            this.ctx.lineTo(this.path[i].x, this.path[i].y);
+        }
+        this.ctx.stroke();
     }
 
     updateThreats(timestamp) {
@@ -196,39 +204,53 @@ export class Game {
         // Play sound effect
     }
 
-    updateWaveSystem(timestamp) {
-        if (!this.isWaveActive) {
-            if (timestamp - this.waveTimer > this.breakDuration) {
-                this.startNewWave();
-            }
-        } else {
-            if (timestamp - this.waveTimer > this.waveDuration || this.threats.length === 0) {
-                this.endWave();
-            }
-        }
-    }
-
     startNewWave() {
         this.currentWave++;
         this.isWaveActive = true;
         this.waveTimer = performance.now();
-        // Implement wave spawning logic
+        
+        const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
+        const threatsPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 threats per wave
+
+        for (let i = 0; i < threatsPerWave; i++) {
+            const delay = i * 1000 / waveMultiplier; // Stagger threat spawns
+            setTimeout(() => this.spawnThreat(waveMultiplier), delay);
+        }
+
+        this.calculateNextWaveInfo();
+        this.uiManager.updateUI();
     }
 
     endWave() {
         this.isWaveActive = false;
         this.waveTimer = performance.now();
-        // Implement end of wave logic
-    }
+        const waveBonus = Math.floor(this.systemIntegrity / 100 * 100 * this.currentWave); // Bonus based on system integrity
+        this.resources += waveBonus;
 
-    spawnThreat(waveMultiplier) {
-        const threatType = this.selectThreatType();
-        const newThreat = new Threat(threatType, this.path[0].x, this.path[0].y, waveMultiplier);
-        this.threats.push(newThreat);
+        if (this.currentWave % 5 === 0) {
+            this.resources += Math.floor(this.resources * 0.1); // 10% resource bonus every 5 waves
+        }
+
+        this.calculateNextWaveInfo();
+        this.uiManager.updateUI();
+        
+        // Start next wave after a delay
+        setTimeout(() => this.startNewWave(), 10000); // 10 seconds break between waves
     }
 
     selectThreatType() {
-        // Implementation of threat type selection logic
+        const availableThreats = Object.keys(threatTypes);
+        let possibleThreats;
+
+        if (this.currentWave <= 5) {
+            possibleThreats = availableThreats.slice(0, 2);
+        } else if (this.currentWave <= 10) {
+            possibleThreats = availableThreats.slice(0, 4);
+        } else {
+            possibleThreats = availableThreats;
+        }
+
+        return possibleThreats[Math.floor(Math.random() * possibleThreats.length)];
     }
 
     placeTower(type, x, y) {
@@ -253,14 +275,15 @@ export class Game {
         });
     }
 
-    addEffect(x, y, type) {
-        this.effects.push({ x, y, type, frame: 0 });
-    }
-
     updateAndDrawEffects() {
         this.effects = this.effects.filter(effect => {
             effect.frame++;
-            // Implement effect drawing logic
+            if (effect.type === 'explosion') {
+                this.ctx.beginPath();
+                this.ctx.arc(effect.x, effect.y, effect.frame, 0, Math.PI * 2);
+                this.ctx.fillStyle = `rgba(255, 0, 0, ${1 - effect.frame / 20})`;
+                this.ctx.fill();
+            }
             return effect.frame < 20;
         });
     }
@@ -291,7 +314,85 @@ export class Game {
 
     addPlayerExperience(amount) {
         this.playerExperience += amount;
-        // Implement player leveling logic
+        const expForNextLevel = Math.pow(this.playerLevel, 2) * 100;
+
+        if (this.playerExperience >= expForNextLevel) {
+            this.playerLevel++;
+            this.playerExperience -= expForNextLevel;
+            this.unlockNewDefense();
+            this.uiManager.showLevelUpMessage(this.playerLevel);
+        }
+
+        this.uiManager.updatePlayerInfo();
+    }
+
+    unlockNewDefense() {
+        const unlockedDefenses = Object.keys(defenseTypes);
+        if (this.playerLevel <= unlockedDefenses.length) {
+            const newDefense = unlockedDefenses[this.playerLevel - 1];
+            this.unlockedDefenses.push(newDefense);
+            this.uiManager.showUnlockMessage(newDefense);
+        }
+    }
+
+    calculateNextWaveInfo() {
+        const nextWave = this.currentWave + 1;
+        const possibleThreats = this.getThreatsForWave(nextWave);
+        const threatsPerWave = Math.min(nextWave * 2, 50); // Cap at 50 threats per wave
+
+        this.nextWaveInfo = {
+            types: possibleThreats,
+            totalThreats: threatsPerWave
+        };
+    }
+
+    getThreatsForWave(wave) {
+        const availableThreats = Object.keys(threatTypes);
+        let possibleThreats;
+
+        if (wave <= 5) {
+            possibleThreats = availableThreats.slice(0, 2);
+        } else if (wave <= 10) {
+            possibleThreats = availableThreats.slice(0, 4);
+        } else {
+            possibleThreats = availableThreats;
+        }
+
+        // Randomly select up to 3 threat types for variety
+        return possibleThreats
+            .sort(() => 0.5 - Math.random())
+            .slice(0, Math.min(3, possibleThreats.length));
+    }
+
+    spawnThreat(waveMultiplier) {
+        const threatType = this.selectThreatType();
+        const threatData = threatTypes[threatType];
+        const newThreat = new Threat(
+            threatType,
+            this.path[0].x,
+            this.path[0].y,
+            threatData.health * waveMultiplier,
+            threatData.speed,
+            threatData.damage * waveMultiplier,
+            threatData.reward * waveMultiplier
+        );
+        this.threats.push(newThreat);
+    }
+
+    updateWaveSystem(timestamp) {
+        if (!this.isWaveActive) {
+            if (timestamp - this.waveTimer > this.breakDuration) {
+                this.startNewWave();
+            }
+        } else {
+            if (timestamp - this.waveTimer > this.waveDuration || this.threats.length === 0) {
+                this.endWave();
+            }
+        }
+    }
+
+    addEffect(x, y, type) {
+        this.effects.push({x, y, type, frame: 0});
     }
 
     // Add other necessary game methods
