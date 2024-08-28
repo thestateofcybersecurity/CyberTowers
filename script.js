@@ -1515,6 +1515,7 @@ const game = {
             .then(() => {
                 this.initializeGrid();
                 this.initializeEventListeners();
+                this.resetGameLogic(); // Add this line to ensure game state is properly reset
                 this.updateUI();
                 this.showMenu(); // Ensure the menu is shown at the start
             })
