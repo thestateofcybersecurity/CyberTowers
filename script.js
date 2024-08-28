@@ -154,6 +154,7 @@ const game = {
     gameContainer: null,
     menuContainer: null,
     optionsContainer: null,
+    highScore: 0,
 
     initializeDOM() {
         this.gameContainer = document.getElementById('gameContainer') || document.createElement('div');
@@ -202,6 +203,20 @@ const game = {
         });
 
         return Promise.all(loadPromises);
+    },
+
+    updateHighScore() {
+        if (this.currentWave > this.highScore) {
+            this.highScore = this.currentWave;
+            localStorage.setItem('highScore', this.highScore);
+        }
+    },
+
+    loadHighScore() {
+        const savedHighScore = localStorage.getItem('highScore');
+        if (savedHighScore) {
+            this.highScore = parseInt(savedHighScore, 10);
+        }
     },
 
     skillTree: {
@@ -550,6 +565,7 @@ const game = {
             if (reachedEnd) {
                 this.systemIntegrity -= threat.damage;
                 this.threats = this.threats.filter(t => t !== threat);
+                this.checkGameOver(); // Check for game over after each threat reaches the end
                 this.updateUI();
             }
         });
@@ -826,19 +842,90 @@ const game = {
         this.showMenu();
     },
 
+    checkGameOver() {
+        if (this.systemIntegrity <= 0) {
+            this.systemIntegrity = 0; // Ensure it doesn't go below 0
+            this.state = 'gameOver';
+            this.endGame();
+        }
+    },
+
+    resetGame() {
+        this.systemIntegrity = 100;
+        this.resources = 500;
+        this.currentWave = 0;
+        this.threats = [];
+        this.towers = [];
+        this.projectiles = [];
+        this.effects = [];
+        this.isWaveActive = false;
+        this.lastSpawnTime = 0;
+        this.playerLevel = 1;
+        this.playerExperience = 0;
+        this.unlockedDefenses = ['firewall'];
+        this.selectedTowerType = 'firewall';
+        this.state = 'playing';
+    },
+    
     endGame() {
+        this.updateHighScore();
         cancelAnimationFrame(this.boundUpdate);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '48px Arial';
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.fillText('Game Over', canvas.width / 2, 150);
-        ctx.font = '24px Arial';
-        ctx.fillText(`Final Score: ${this.currentWave}`, canvas.width / 2, 200);
 
-        this.createButton('Return to Menu', canvas.width / 2 - 60, 300, () => {
+        // Draw background
+        ctx.fillStyle = 'rgba(2, 14, 24, 0.9)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Game Over text
+        ctx.font = '48px Orbitron';
+        ctx.fillStyle = '#FF0000';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 100);
+
+        // Scores
+        ctx.font = '24px Orbitron';
+        ctx.fillStyle = '#00FFFF';
+        ctx.fillText(`Final Score: Wave ${this.currentWave}`, canvas.width / 2, canvas.height / 2 - 30);
+        ctx.fillText(`High Score: Wave ${this.highScore}`, canvas.width / 2, canvas.height / 2 + 10);
+
+        // Create buttons
+        const buttonStyle = `
+            position: absolute;
+            width: 150px;
+            padding: 10px;
+            font-family: Orbitron, sans-serif;
+            font-size: 16px;
+            color: #00FFFF;
+            background-color: #0A3C59;
+            border: 2px solid #00FFFF;
+            cursor: pointer;
+        `;
+
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'Restart Game';
+        restartButton.style.cssText = buttonStyle;
+        restartButton.style.left = `${canvas.width / 2 - 160}px`;
+        restartButton.style.top = `${canvas.height / 2 + 50}px`;
+        restartButton.addEventListener('click', () => {
+            this.gameContainer.removeChild(restartButton);
+            this.gameContainer.removeChild(menuButton);
+            this.resetGame();
+            this.startGame();
+        });
+
+        const menuButton = document.createElement('button');
+        menuButton.textContent = 'Return to Menu';
+        menuButton.style.cssText = buttonStyle;
+        menuButton.style.left = `${canvas.width / 2 + 10}px`;
+        menuButton.style.top = `${canvas.height / 2 + 50}px`;
+        menuButton.addEventListener('click', () => {
+            this.gameContainer.removeChild(restartButton);
+            this.gameContainer.removeChild(menuButton);
             this.showMenu();
         });
+
+        this.gameContainer.appendChild(restartButton);
+        this.gameContainer.appendChild(menuButton);
     },
 
     saveGame() {
@@ -995,6 +1082,9 @@ const game = {
     update(timestamp) {
         if (this.state !== 'playing') return;
 
+        this.checkGameOver(); // Add this line to check for game over condition
+        if (this.state === 'gameOver') return; // Exit if game is over
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.drawBackground();
@@ -1012,6 +1102,8 @@ const game = {
         this.drawThreats();
         this.updateAndDrawTowers(timestamp);
         this.updateAndDrawEffects();
+
+        this.updateUI(); // Make sure UI is updated every frame
 
         requestAnimationFrame(this.boundUpdate);
     },
@@ -1235,6 +1327,7 @@ const game = {
     
     start() {
         this.initializeDOM();
+        this.loadHighScore();
         this.preloadImages()
             .then(() => {
                 this.initializeGrid();
