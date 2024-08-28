@@ -421,10 +421,6 @@ const game = {
             }
         }
 
-        // Update tower's appearance or any other relevant properties
-        this.updateTowerAppearance(tower);
-    },
-
     updateEnemies() {
         this.enemies.forEach(enemy => {
             // Apply burning effect
