@@ -150,6 +150,7 @@ const game = {
     gridMap: new Map(),
     threatTypes: threatTypes,
     defenseTypes: defenseTypes,
+    endless: false,
     
     preloadImages() {
         const imagesToLoad = [
@@ -179,7 +180,6 @@ const game = {
         return Promise.all(loadPromises);
     },
 
-    
     skillTree: {
         towerAttackSpeed: { 
             cost: 100, 
@@ -224,12 +224,11 @@ const game = {
     togglePause() {
         this.isGamePaused = !this.isGamePaused;
         if (this.isGamePaused) {
-            // Optionally, you can add code here to show a "Paused" message on the screen
             console.log("Game Paused");
+            this.pauseGame();
         } else {
             console.log("Game Resumed");
-            // If the game was paused, we need to restart the game loop
-            requestAnimationFrame(this.update.bind(this));
+            this.resumeGame();
         }
     },
 
@@ -307,15 +306,11 @@ const game = {
                 lastFired: 0,
                 level: 1,
                 experience: 0,
-                image: new Image()
+                image: this.imageCache[towerType.icon]
             };
-            tower.image.src = towerType.icon;
             this.towers.push(tower);
             cell.occupied = true;
-    
-            // Synergy bonus logic
             this.applySynergyBonus(tower, cell);
-    
             this.updateUI();
         }
     },
@@ -338,7 +333,7 @@ const game = {
         });
     },
 
-    applySpecialAbilities(tower, threat) { // Changed threat to threat
+    applySpecialAbilities(tower, threat) {
         let damage = tower.damage;
 
         switch (tower.type.toLowerCase()) {
@@ -441,7 +436,6 @@ const game = {
         const baseStats = this.defenseTypes[tower.type.toLowerCase()];
         const upgradeStats = baseStats.upgrades.find(upgrade => upgrade.level === tower.level) || {};
         
-        // Update basic stats
         Object.keys(upgradeStats).forEach(stat => {
             if (stat !== 'level' && stat !== 'special') {
                 tower[stat] = upgradeStats[stat];
@@ -498,7 +492,7 @@ const game = {
         }
     },
     
-    updateThreats() { // Changed from updateThreats
+    updateThreats() {
         this.threats.forEach(threat => {
             // Apply burning effect
             if (threat.burningDuration > 0) {
@@ -615,9 +609,7 @@ const game = {
             threat.y += (dy / distance) * threat.speed;
         }
     
-        // Path influence logic
         this.applyPathInfluence(threat);
-    
         return false;
     },
     
@@ -656,7 +648,7 @@ const game = {
                 this.endWave();
             }
         }
-    }
+    },
 
     startNewWave() {
         this.currentWave++;
@@ -670,14 +662,6 @@ const game = {
             const delay = i * 1000 / waveMultiplier; // Stagger threat spawns
             setTimeout(() => this.spawnThreat(waveMultiplier), delay);
         }
-    },
-
-    startEndlessMode() {
-        this.currentWave = 1;
-        this.systemIntegrity = 100;
-        this.resources = 500;
-        this.endless = true;
-        this.setState('playing');
     },
     
     endWave() {
@@ -699,6 +683,14 @@ const game = {
         }
     },
 
+    startEndlessMode() {
+        this.currentWave = 1;
+        this.systemIntegrity = 100;
+        this.resources = 500;
+        this.endless = true;
+        this.setState('playing');
+    },
+
     // Add challenge modes
     startChallengeMode(challenge) {
         if (challenge === 'limitedResources') {
@@ -717,11 +709,6 @@ const game = {
         }
     },
 
-    startBackgroundMusic() {
-        this.sounds.backgroundMusic.loop = true;
-        this.sounds.backgroundMusic.play();
-    },
-
     showMenu() {
         // Clear the screen
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -732,37 +719,30 @@ const game = {
         ctx.textAlign = 'center';
         ctx.fillText('Cybersecurity Tower Defense', canvas.width / 2, 150);
     
-        // Create and display buttons
-        const startButton = document.createElement('button');
-        startButton.textContent = 'Start Game';
-        startButton.style.position = 'absolute';
-        startButton.style.left = `${canvas.width / 2 - 60}px`;
-        startButton.style.top = '250px';
-        startButton.addEventListener('click', () => {
-            document.body.removeChild(startButton);
+        this.createButton('Start Game', canvas.width / 2 - 60, 250, () => {
             this.startGame();
         });
-        document.body.appendChild(startButton);
-    
-        const optionsButton = document.createElement('button');
-        optionsButton.textContent = 'Options';
-        optionsButton.style.position = 'absolute';
-        optionsButton.style.left = `${canvas.width / 2 - 60}px`;
-        optionsButton.style.top = '320px';
-        optionsButton.addEventListener('click', () => {
+
+        this.createButton('Options', canvas.width / 2 - 60, 320, () => {
             this.showOptions();
         });
-        document.body.appendChild(optionsButton);
-    
-        const exitButton = document.createElement('button');
-        exitButton.textContent = 'Exit';
-        exitButton.style.position = 'absolute';
-        exitButton.style.left = `${canvas.width / 2 - 60}px`;
-        exitButton.style.top = '390px';
-        exitButton.addEventListener('click', () => {
-            window.close(); // Close the browser window or exit the game
+
+        this.createButton('Exit', canvas.width / 2 - 60, 390, () => {
+            window.close();
         });
-        document.body.appendChild(exitButton);
+    },
+
+    createButton(text, x, y, onClick) {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.style.position = 'absolute';
+        button.style.left = `${x}px`;
+        button.style.top = `${y}px`;
+        button.addEventListener('click', () => {
+            document.body.removeChild(button);
+            onClick();
+        });
+        document.body.appendChild(button);
     },
 
     startGame() {
@@ -770,21 +750,23 @@ const game = {
         this.currentWave = 1;
         this.systemIntegrity = 100;
         this.resources = 500;
-    
-        // Clear any existing UI elements from the menu
+
         document.querySelectorAll('button').forEach(button => document.body.removeChild(button));
-    
-        // Initialize the grid, load the first wave, and start the game loop
+
         this.initializeGrid();
         this.startNewWave();
-        requestAnimationFrame(this.boundUpdate); // Begin the game loop
+        requestAnimationFrame(this.boundUpdate);
     },
 
     pauseGame() {
         this.isGamePaused = true;
-        cancelAnimationFrame(this.boundUpdate); // Stop the game loop
-    
-        // Display the pause menu
+        cancelAnimationFrame(this.boundUpdate);
+
+        const pauseMenu = this.createPauseMenu();
+        document.body.appendChild(pauseMenu);
+    },
+
+    createPauseMenu() {
         const pauseMenu = document.createElement('div');
         pauseMenu.id = 'pauseMenu';
         pauseMenu.style.position = 'absolute';
@@ -795,53 +777,47 @@ const game = {
         pauseMenu.style.borderRadius = '10px';
         pauseMenu.style.textAlign = 'center';
         pauseMenu.style.color = 'white';
-    
+
         const resumeButton = document.createElement('button');
         resumeButton.textContent = 'Resume';
         resumeButton.style.marginBottom = '10px';
-        resumeButton.addEventListener('click', () => {
-            document.body.removeChild(pauseMenu);
-            this.isGamePaused = false;
-            requestAnimationFrame(this.boundUpdate); // Resume the game loop
-        });
+        resumeButton.addEventListener('click', () => this.resumeGame());
         pauseMenu.appendChild(resumeButton);
-    
+
         const quitButton = document.createElement('button');
         quitButton.textContent = 'Quit to Menu';
-        quitButton.addEventListener('click', () => {
-            document.body.removeChild(pauseMenu);
-            this.showMenu();
-        });
+        quitButton.addEventListener('click', () => this.quitToMenu());
         pauseMenu.appendChild(quitButton);
-    
-        document.body.appendChild(pauseMenu);
+
+        return pauseMenu;
+    },
+
+    resumeGame() {
+        const pauseMenu = document.getElementById('pauseMenu');
+        if (pauseMenu) document.body.removeChild(pauseMenu);
+        this.isGamePaused = false;
+        requestAnimationFrame(this.boundUpdate);
+    },
+
+    quitToMenu() {
+        const pauseMenu = document.getElementById('pauseMenu');
+        if (pauseMenu) document.body.removeChild(pauseMenu);
+        this.showMenu();
     },
 
     endGame() {
-        cancelAnimationFrame(this.boundUpdate); // Stop the game loop
-    
-        // Clear the game area
+        cancelAnimationFrame(this.boundUpdate);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-        // Display the game over message
         ctx.font = '48px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText('Game Over', canvas.width / 2, 150);
         ctx.font = '24px Arial';
         ctx.fillText(`Final Score: ${this.currentWave}`, canvas.width / 2, 200);
-    
-        // Create and display a button to return to the main menu
-        const menuButton = document.createElement('button');
-        menuButton.textContent = 'Return to Menu';
-        menuButton.style.position = 'absolute';
-        menuButton.style.left = `${canvas.width / 2 - 60}px`;
-        menuButton.style.top = '300px';
-        menuButton.addEventListener('click', () => {
-            document.body.removeChild(menuButton);
+
+        this.createButton('Return to Menu', canvas.width / 2 - 60, 300, () => {
             this.showMenu();
         });
-        document.body.appendChild(menuButton);
     },
 
     saveGame() {
@@ -854,15 +830,11 @@ const game = {
         };
         localStorage.setItem('savedGame', JSON.stringify(saveData));
     },
-    
+
     loadGame() {
         const savedGame = JSON.parse(localStorage.getItem('savedGame'));
         if (savedGame) {
-            this.currentWave = savedGame.currentWave;
-            this.systemIntegrity = savedGame.systemIntegrity;
-            this.resources = savedGame.resources;
-            this.towers = savedGame.towers;
-            this.threats = savedGame.threats;
+            Object.assign(this, savedGame);
             this.updateUI();
             this.setState('playing');
         }
@@ -995,103 +967,76 @@ const game = {
     
     // Difficulty settings
     setDifficulty(level) {
-        switch (level) {
-            case 'easy':
-                this.threatTypes = this.scaleThreats(0.8);
-                break;
-            case 'normal':
-                this.threatTypes = this.scaleThreats(1);
-                break;
-            case 'hard':
-                this.threatTypes = this.scaleThreats(1.2);
-                break;
-        }
+        this.threatTypes = this.scaleThreats(level === 'easy' ? 0.8 : level === 'hard' ? 1.2 : 1);
     },
     
     scaleThreats(multiplier) {
-        return Object.keys(this.threatTypes).reduce((scaledThreats, type) => {
-            const threat = this.threatTypes[type];
-            scaledThreats[type] = {
-                ...threat,
-                health: threat.health * multiplier,
-                damage: threat.damage * multiplier
-            };
-            return scaledThreats;
-        }, {});
+        return Object.fromEntries(
+            Object.entries(this.threatTypes).map(([type, threat]) => [
+                type,
+                {
+                    ...threat,
+                    health: threat.health * multiplier,
+                    damage: threat.damage * multiplier
+                }
+            ])
+        );
     },
     
-    update(timestamp) {
+        update(timestamp) {
         if (this.state !== 'playing') return;
-        
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.drawBackground();
         this.drawGrid();
         this.drawPath();
         this.updateThreats();
-
-        // Use object pooling for projectiles
         this.updateProjectiles(timestamp);
-
-        // Update wave system
         this.updateWaveSystem(timestamp);
 
-        // Spawn threats
         if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.threats.length < this.currentWave * 5) {
             this.spawnThreat(1 + (this.currentWave - 1) * 0.1);
             this.lastSpawnTime = timestamp;
         }
 
-    // Update and draw threats
-    this.threats = this.threats.filter((threat) => {
-        const reachedEnd = this.moveThreatAlongPath(threat);
-        if (reachedEnd) {
-            this.systemIntegrity -= threat.damage;
-            this.updateUI();
-            return false; // Remove this threat from the array
-        } else {
-            // Draw threat
+        this.drawThreats();
+        this.updateAndDrawTowers(timestamp);
+        this.updateAndDrawProjectiles();
+        this.updateAndDrawEffects();
+
+        requestAnimationFrame(this.boundUpdate);
+    },
+
+    drawThreats() {
+        this.threats.forEach(threat => {
             if (!threat.invisible || threat.revealed) {
                 ctx.drawImage(threat.image, threat.x, threat.y, 30, 30);
-                
-                // Draw health bar
-                const healthPercentage = threat.currentHealth / threat.maxHealth;
-                const healthBarWidth = 30; // Same as threat width
-                const healthBarHeight = 5;
-                const healthBarY = threat.y - 10;
-    
-                // Health bar background
-                ctx.fillStyle = 'black';
-                ctx.fillRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
-    
-                // Health bar fill
-                ctx.fillStyle = this.getHealthBarColor(healthPercentage);
-                ctx.fillRect(threat.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
-    
-                // Optional: Add outline to health bar
-                ctx.strokeStyle = 'white';
-                ctx.strokeRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
+                this.drawHealthBar(threat);
             }
-            return true; // Keep this threat in the array
-        }
-    });
-        
-        // Update and draw towers
+        });
+    },
+
+    drawHealthBar(threat) {
+        const healthPercentage = threat.currentHealth / threat.maxHealth;
+        const healthBarWidth = 30;
+        const healthBarHeight = 5;
+        const healthBarY = threat.y - 10;
+
+        ctx.fillStyle = 'black';
+        ctx.fillRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
+        ctx.fillStyle = this.getHealthBarColor(healthPercentage);
+        ctx.fillRect(threat.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
+        ctx.strokeStyle = 'white';
+        ctx.strokeRect(threat.x, healthBarY, healthBarWidth, healthBarHeight);
+    },
+
+    updateAndDrawTowers(timestamp) {
         this.towers.forEach(tower => {
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = 'rgba(0, 255, 255, 0.7)';
             ctx.drawImage(tower.image, tower.x, tower.y, this.gridSize, this.gridSize);
-            ctx.shadowBlur = 0;
 
             if (timestamp - tower.lastFired > tower.fireRate) {
-                const target = this.threats.find(threat => {
-                    if (tower.applyRevealInvisible || !threat.invisible) {
-                        const distance = Math.hypot(threat.x - tower.x, threat.y - tower.y);
-                        return distance < tower.range;
-                    }
-                    return false;
-                });
-
+                const target = this.findTarget(tower);
                 if (target) {
                     const damage = this.applySpecialAbilities(tower, target);
                     this.fireProjectile(tower, target, damage);
@@ -1100,28 +1045,26 @@ const game = {
                 }
             }
         });
+    },
 
-        // Update and draw projectiles
-        this.projectiles = this.projectiles.filter((projectile) => {
+    findTarget(tower) {
+        return this.threats.find(threat => {
+            if (tower.applyRevealInvisible || !threat.invisible) {
+                const distance = Math.hypot(threat.x - tower.x, threat.y - tower.y);
+                return distance < tower.range;
+            }
+            return false;
+        });
+    },
+
+    updateAndDrawProjectiles() {
+        this.projectiles = this.projectiles.filter(projectile => {
             const dx = projectile.targetX - projectile.x;
             const dy = projectile.targetY - projectile.y;
             const distance = Math.hypot(dx, dy);
 
             if (distance < projectile.speed) {
-                const targetThreat = this.threats.find(threat => 
-                    Math.hypot(threat.x - projectile.targetX, threat.y - projectile.targetY) < 15
-                );
-                if (targetThreat) {
-                    targetThreat.currentHealth -= projectile.damage;
-                    this.addEffect(projectile.targetX, projectile.targetY, 'explosion');
-                    if (targetThreat.currentHealth <= 0) {
-                        this.resources += targetThreat.reward;
-                        this.addExperienceToTower(projectile.tower, targetThreat.reward);
-                        this.addPlayerExperience(targetThreat.reward);
-                        this.threats = this.threats.filter(e => e !== targetThreat);
-                        this.playSoundEffect('threatDeath');
-                    }
-                }
+                this.handleProjectileImpact(projectile);
                 return false;
             }
 
@@ -1135,60 +1078,6 @@ const game = {
 
             return true;
         });
-
-        // Update and draw effects
-        this.updateAndDrawEffects();
-
-        requestAnimationFrame(this.update.bind(this));
-    },
-
-    updateProjectiles(timestamp) {
-        for (let i = this.projectiles.length - 1; i >= 0; i--) {
-            const projectile = this.projectiles[i];
-            const dx = projectile.targetX - projectile.x;
-            const dy = projectile.targetY - projectile.y;
-            const distance = Math.hypot(dx, dy);
-
-            if (distance < projectile.speed) {
-                this.handleProjectileImpact(projectile);
-                this.returnProjectileToPool(projectile);
-                this.projectiles.splice(i, 1);
-            } else {
-                projectile.x += (dx / distance) * projectile.speed;
-                projectile.y += (dy / distance) * projectile.speed;
-                this.drawProjectile(projectile);
-            }
-        }
-    },
-
-    projectilePool: [],
-
-    getProjectile() {
-        return this.projectilePool.pop() || {};
-    },
-
-    returnProjectileToPool(projectile) {
-        // Reset projectile properties
-        projectile.x = projectile.y = projectile.targetX = projectile.targetY = 0;
-        projectile.damage = projectile.speed = 0;
-        projectile.color = '';
-        projectile.tower = null;
-        this.projectilePool.push(projectile);
-    },
-
-    fireProjectile(tower, target, damage) {
-        const projectile = this.getProjectile();
-        Object.assign(projectile, {
-            x: tower.x,
-            y: tower.y,
-            targetX: target.x,
-            targetY: target.y,
-            damage: damage,
-            speed: 5,
-            color: tower.projectileColor,
-            tower: tower
-        });
-        this.projectiles.push(projectile);
     },
 
     handleProjectileImpact(projectile) {
@@ -1202,19 +1091,16 @@ const game = {
         }
     },
 
-    findThreatAtPosition(x, y) {
-        return this.threats.find(threat => Math.hypot(threat.x - x, threat.y - y) < 15);
-    },
+handleThreatDeath(threat, tower) {
+        this.resources += threat.reward;
+        this.addExperienceToTower(tower, threat.reward);
+        this.addPlayerExperience(threat.reward);
+        this.threats = this.threats.filter(t => t !== threat);
+        this.playSoundEffect('threatDeath');
 
-    handleThreatDeath(threat, tower) {
         if (Math.random() < 0.2) { // 20% chance to drop a resource crate
             this.spawnResourceCrate(threat.x, threat.y);
         }
-            this.resources += threat.reward;
-            this.addExperienceToTower(tower, threat.reward);
-            this.addPlayerExperience(threat.reward);
-            this.threats = this.threats.filter(e => e !== threat);
-            this.playSoundEffect('threatDeath');
     },
 
     spawnResourceCrate(x, y) {
@@ -1227,30 +1113,28 @@ const game = {
         this.updateUI();
     },
 
-    drawProjectile(projectile) {
-        ctx.beginPath();
-        ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = projectile.color;
-        ctx.fill();
+    findThreatAtPosition(x, y) {
+        return this.threats.find(threat => Math.hypot(threat.x - x, threat.y - y) < 15);
     },
-    
-        selectTower(towerType) {
+
+    selectTower(towerType) {
         this.selectedTowerType = towerType;
-        // Update UI to show selected tower
         document.querySelectorAll('.towerButton').forEach(button => {
             button.classList.remove('selected');
         });
-        document.querySelector(`[data-tower="${towerType}"]`).classList.add('selected');
+        const selectedButton = document.querySelector(`[data-tower="${towerType}"]`);
+        if (selectedButton) {
+            selectedButton.classList.add('selected');
+        }
     },
 
-    // Update UI method to reflect wave, resources, and difficulty
     updateUI() {
-        document.getElementById('scoreValue').textContent = this.systemIntegrity;
-        document.getElementById('resourcesValue').textContent = this.resources;
-        document.getElementById('waveValue').textContent = this.currentWave;
-        document.getElementById('playerLevel').textContent = this.playerLevel;
-        document.getElementById('playerExperience').textContent = this.playerExperience;
-    
+        this.updateUIElement('scoreValue', this.systemIntegrity);
+        this.updateUIElement('resourcesValue', this.resources);
+        this.updateUIElement('waveValue', this.currentWave);
+        this.updateUIElement('playerLevel', this.playerLevel);
+        this.updateUIElement('playerExperience', this.playerExperience);
+
         Object.keys(this.defenseTypes).forEach(defenseType => {
             const button = document.querySelector(`[data-tower="${defenseType}"]`);
             if (button) {
@@ -1258,19 +1142,27 @@ const game = {
                 const isAffordable = this.resources >= this.defenseTypes[defenseType].cost;
                 button.disabled = !isUnlocked || !isAffordable;
                 button.classList.toggle('affordable', isAffordable);
-                button.title = `Cost: ${this.defenseTypes[defenseType].cost} MB\nDamage: ${this.defenseTypes[defenseType].damage}\nRange: ${this.defenseTypes[defenseType].range}\nFire Rate: ${this.defenseTypes[defenseType].fireRate}ms\nSpecial: ${this.defenseTypes[defenseType].upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
+                button.title = this.getTowerTooltip(defenseType);
             }
         });
-    
-        // Display next wave information
+
         const nextWaveInfo = this.getNextWaveInfo();
-        document.getElementById('nextWaveInfo').textContent = `Next Wave: ${nextWaveInfo.types.join(', ')}\nTotal Threats: ${nextWaveInfo.totalThreats}`;
+        this.updateUIElement('nextWaveInfo', `Next Wave: ${nextWaveInfo.types.join(', ')}\nTotal Threats: ${nextWaveInfo.totalThreats}`);
     },
-    
+
+    getTowerTooltip(defenseType) {
+        const tower = this.defenseTypes[defenseType];
+        return `Cost: ${tower.cost} MB
+Damage: ${tower.damage}
+Range: ${tower.range}
+Fire Rate: ${tower.fireRate}ms
+Special: ${tower.upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
+    },
+
     getNextWaveInfo() {
-        const possibleThreats = this.selectThreatType(this.currentWave + 1);
+        const possibleThreats = this.selectThreatType();
         return {
-            types: possibleThreats,
+            types: Array.isArray(possibleThreats) ? possibleThreats : [possibleThreats],
             totalThreats: Math.min((this.currentWave + 1) * 2, 50)
         };
     },
@@ -1299,7 +1191,7 @@ const game = {
                 break;
         }
     },
-    
+
     getHealthBarColor(percentage) {
         if (percentage > 0.6) return 'green';
         if (percentage > 0.3) return 'yellow';
@@ -1307,7 +1199,6 @@ const game = {
     },
 
     initializeEventListeners() {
-        // Add event listeners for tower selection
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
                 const towerType = button.getAttribute('data-tower');
@@ -1315,7 +1206,6 @@ const game = {
             });
         });
 
-        // Add event listener for tower placement
         canvas.addEventListener('click', (event) => {
             const rect = canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
@@ -1323,7 +1213,6 @@ const game = {
             this.placeTower(this.selectedTowerType, x, y);
         });
 
-        // Add event listener for pause button
         const pauseButton = document.getElementById('pauseButton');
         if (pauseButton) {
             pauseButton.addEventListener('click', () => {
@@ -1335,59 +1224,19 @@ const game = {
     },
 
     start() {
-        this.threatTypes = threatTypes;
-        this.defenseTypes = defenseTypes;
-
         this.preloadImages()
             .then(() => {
                 this.initializeGrid();
                 this.initializeEventListeners();
                 this.updateUI();
-                this.showMenu();  // Show the menu instead of setting state directly
+                this.showMenu();
             })
             .catch(error => {
                 console.error("Failed to load game resources:", error);
                 // Handle loading error (e.g., show error message to user)
             });
 
-        // Bind the update method to the game object
         this.boundUpdate = this.update.bind(this);
-
-        // Add a start button
-        const startButton = document.createElement('button');
-        startButton.textContent = 'Start Game';
-        startButton.addEventListener('click', () => {
-            if (this.sounds && this.sounds.backgroundMusic) {
-                this.sounds.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
-            }
-            this.setState('playing');  // Set state to 'playing' when starting the game
-            startButton.remove();
-        });
-        document.body.appendChild(startButton);
-    },
-
-    setState(newState) {
-        this.state = newState;
-        switch (newState) {
-            case 'menu':
-                this.showMenu();
-                break;
-            case 'playing':
-                this.startGame();
-                break;
-            case 'paused':
-                this.pauseGame();
-                break;
-            case 'gameOver':
-                this.endGame();
-                break;
-        }
-    },
-
-    startGame() {
-        this.isGamePaused = false;
-        this.startNewWave();
-        requestAnimationFrame(this.boundUpdate);  // Start the update loop
     }
 };
 
