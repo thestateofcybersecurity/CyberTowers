@@ -15,6 +15,8 @@ export const BREAK_DURATION = 10000; // 10 seconds
 export const STARTING_RESOURCES = 500;
 export const STARTING_SYSTEM_INTEGRITY = 100;
 
+export const MAX_TOWER_LEVEL = 5;
+
 export const threatTypes = {
     virus: { health: 45, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
     trojan: { health: 75, speed: 1, damage: 8, reward: 30, icon: './api/trojan.jpg' },
@@ -134,6 +136,58 @@ export const defenseTypes = {
     }
 };
 
+export const TOWER_STATS = {
+    firewall: {
+        1: { damage: 15, range: 120, fireRate: 500 },
+        2: { damage: 18, range: 130, fireRate: 500 },
+        3: { damage: 22, range: 130, fireRate: 450 },
+        4: { damage: 26, range: 140, fireRate: 450 },
+        5: { damage: 30, range: 140, fireRate: 400 }
+    },
+    antivirus: {
+        1: { damage: 25, range: 150, fireRate: 1200 },
+        2: { damage: 30, range: 160, fireRate: 1200 },
+        3: { damage: 35, range: 160, fireRate: 1100 },
+        4: { damage: 40, range: 170, fireRate: 1100 },
+        5: { damage: 45, range: 170, fireRate: 1000 }
+    },
+        encryption: { 
+        1: { damage: 35, range: 180, fireRate: 1500 },
+        2: { damage: 40, range: 190, fireRate: 1500 },
+        3: { damage: 45, range: 160, fireRate: 1400 },
+        4: { damage: 50, range: 200, fireRate: 1400 },
+        5: { damage: 55, range: 200, fireRate: 1300 }
+    },
+    ai: {
+        1: { damage: 50, range: 200, fireRate: 2000 },
+        2: { damage: 60, range: 220, fireRate: 2000 },
+        3: { damage: 70, range: 220, fireRate: 1800 },
+        4: { damage: 80, range: 240, fireRate: 1800 },
+        5: { damage: 90, range: 240, fireRate: 1600 }
+    },
+    ids: {
+        1: { damage: 30, range: 220, fireRate: 1300 },
+        2: { damage: 35, range: 240, fireRate: 1300 },
+        3: { damage: 40, range: 240, fireRate: 1200 },
+        4: { damage: 45, range: 260, fireRate: 1200 },
+        5: { damage: 50, range: 260, fireRate: 1100 }
+    },
+    soc: {
+        1: { damage: 45, range: 250, fireRate: 1800 },
+        2: { damage: 55, range: 270, fireRate: 1800 },
+        3: { damage: 65, range: 270, fireRate: 1700 },
+        4: { damage: 75, range: 290, fireRate: 1700 },
+        5: { damage: 85, range: 290, fireRate: 1600 }
+    },
+    honeypot: {
+        1: { damage: 5, range: 150, fireRate: 800 },
+        2: { damage: 5, range: 170, fireRate: 700 },
+        3: { damage: 10, range: 170, fireRate: 700 },
+        4: { damage: 10, range: 190, fireRate: 700 },
+        5: { damage: 15, range: 190, fireRate: 600 }
+    }
+};
+
 export const GRID_SIZE = 40;
 
 export const PATH = [
@@ -146,14 +200,12 @@ export const PATH = [
 ];
 
 export const PLAYER_LEVEL_THRESHOLDS = [
-    0,      // Level 1
-    100,    // Level 2
-    300,    // Level 3
-    600,    // Level 4
-    1000,   // Level 5
-    1500,   // Level 6
-    2100,   // Level 7
-    2800,   // Level 8
-    3600,   // Level 9
-    4500    // Level 10
+    0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500
 ];
+
+export const THREAT_EVOLUTION_FACTOR = {
+    health: 1.5,
+    speed: 1.2,
+    damage: 1.5,
+    reward: 2
+};
