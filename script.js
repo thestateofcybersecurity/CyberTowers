@@ -19,15 +19,15 @@ const defenseTypes = {
         cost: 100, 
         damage: 15, 
         range: 120, 
-        fireRate: 100, 
+        fireRate: 500, 
         icon: './api/firewall.jpg', 
         projectileColor: '#FF0000',
         maxLevel: 5,
         upgrades: [
             { level: 2, damage: 18, range: 130 },
-            { level: 3, damage: 22, fireRate: 90 },
+            { level: 3, damage: 22, fireRate: 450 },
             { level: 4, damage: 26, range: 140 },
-            { level: 5, damage: 30, fireRate: 80, special: 'Burn damage over time' }
+            { level: 5, damage: 30, fireRate: 400, special: 'Burn damage over time' }
         ]
     },
     antivirus: { 
@@ -155,6 +155,7 @@ const game = {
     menuContainer: null,
     optionsContainer: null,
     highScore: 0,
+    nextWaveInfo: null,
 
     initializeDOM() {
         this.gameContainer = document.getElementById('gameContainer') || document.createElement('div');
@@ -616,7 +617,8 @@ const game = {
     },
 
     spawnThreat(waveMultiplier) {
-        const threatType = this.selectThreatType();
+        const availableThreats = this.getThreatsForWave(this.currentWave);
+        const threatType = availableThreats[Math.floor(Math.random() * availableThreats.length)];
         const threat = this.threatTypes[threatType];
         const newThreat = {
             x: this.path[0].x,
@@ -694,14 +696,18 @@ const game = {
         this.currentWave++;
         this.isWaveActive = true;
         this.waveTimer = performance.now();
-    
+
         const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
         const threatsPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 threats per wave
-    
+
         for (let i = 0; i < threatsPerWave; i++) {
             const delay = i * 1000 / waveMultiplier; // Stagger threat spawns
             setTimeout(() => this.spawnThreat(waveMultiplier), delay);
         }
+
+        // Calculate info for the next wave
+        this.calculateNextWaveInfo();
+        this.updateUI();
     },
     
     endWave() {
@@ -720,7 +726,11 @@ const game = {
             if (this.currentWave % 5 === 0) {
                 this.resources += this.resources * 0.1; // 10% resource bonus every 5 waves
             }
-        }
+
+            // Calculate info for the next wave
+            this.calculateNextWaveInfo();
+            this.updateUI();
+            }
     },
 
     startEndlessMode() {
@@ -1246,8 +1256,8 @@ const game = {
             }
         });
 
-        const nextWaveInfo = this.getNextWaveInfo();
-        this.updateUIElement('nextWaveInfo', `Next Wave: ${nextWaveInfo.types.join(', ')}\nTotal Threats: ${nextWaveInfo.totalThreats}`);
+        if (this.nextWaveInfo) {
+            this.updateUIElement('nextWaveInfo', `Next Wave: ${this.nextWaveInfo.types.join(', ')}\nTotal Threats: ${this.nextWaveInfo.totalThreats}`);
     },
 
     getTowerTooltip(defenseType) {
@@ -1259,6 +1269,35 @@ const game = {
                 Special: ${tower.upgrades.map(u => u.special || '').filter(Boolean).join(', ')}`;
     },
 
+    calculateNextWaveInfo() {
+        const nextWave = this.currentWave + 1;
+        const possibleThreats = this.getThreatsForWave(nextWave);
+        const threatsPerWave = Math.min(nextWave * 2, 50); // Cap at 50 threats per wave
+        
+        this.nextWaveInfo = {
+            types: possibleThreats,
+            totalThreats: threatsPerWave
+        };
+    },
+
+    getThreatsForWave(wave) {
+        const availableThreats = Object.keys(this.threatTypes);
+        let possibleThreats;
+
+        if (wave <= 5) {
+            possibleThreats = availableThreats.slice(0, 2);
+        } else if (wave <= 10) {
+            possibleThreats = availableThreats.slice(0, 4);
+        } else {
+            possibleThreats = availableThreats;
+        }
+
+        // Randomly select up to 3 threat types for variety
+        return possibleThreats
+            .sort(() => 0.5 - Math.random())
+            .slice(0, Math.min(3, possibleThreats.length));
+    },
+    
     getNextWaveInfo() {
         const possibleThreats = this.selectThreatType();
         return {
