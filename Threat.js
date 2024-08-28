@@ -15,6 +15,9 @@ export class Threat {
         this.invisible = threatData.invisible || false;
         this.evolves = threatData.evolves || false;
         this.pathIndex = 0;
+        this.revealed = false;
+        this.image = new Image();
+        this.image.src = threatData.icon;
     }
 
     move(path) {
@@ -35,28 +38,51 @@ export class Threat {
 
     draw(ctx) {
         if (!this.invisible || this.revealed) {
-            // Draw threat image
+            ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30); // Adjust size as needed
             this.drawHealthBar(ctx);
         }
     }
 
     drawHealthBar(ctx) {
         const healthPercentage = this.currentHealth / this.maxHealth;
-        const healthBarWidth = 25;
-        const healthBarHeight = 3;
-        const healthBarY = this.y - 5;
+        const healthBarWidth = 30; // Increased for better visibility
+        const healthBarHeight = 4; // Increased for better visibility
+        const healthBarY = this.y - 20; // Moved up slightly
 
-        ctx.fillStyle = 'black';
-        ctx.fillRect(this.x, healthBarY, healthBarWidth, healthBarHeight);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent background
+        ctx.fillRect(this.x - healthBarWidth / 2, healthBarY, healthBarWidth, healthBarHeight);
         ctx.fillStyle = this.getHealthBarColor(healthPercentage);
-        ctx.fillRect(this.x, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
+        ctx.fillRect(this.x - healthBarWidth / 2, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
         ctx.strokeStyle = 'white';
-        ctx.strokeRect(this.x, healthBarY, healthBarWidth, healthBarHeight);
+        ctx.strokeRect(this.x - healthBarWidth / 2, healthBarY, healthBarWidth, healthBarHeight);
     }
 
     getHealthBarColor(percentage) {
-        if (percentage > 0.6) return 'green';
+        if (percentage > 0.6) return 'lime';
         if (percentage > 0.3) return 'yellow';
         return 'red';
+    }
+
+    takeDamage(amount) {
+        this.currentHealth -= amount;
+        if (this.currentHealth <= 0) {
+            this.currentHealth = 0;
+            return true; // Threat is destroyed
+        }
+        return false;
+    }
+
+    reveal() {
+        this.revealed = true;
+    }
+
+    evolve(waveMultiplier) {
+        if (this.evolves) {
+            this.maxHealth *= 1.5;
+            this.currentHealth = this.maxHealth;
+            this.speed *= 1.2;
+            this.damage *= 1.5;
+            this.reward *= 2;
+        }
     }
 }
