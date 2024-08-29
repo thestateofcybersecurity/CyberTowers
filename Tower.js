@@ -46,7 +46,7 @@ export class Tower {
         const currentTime = timestamp || performance.now();
         const timeSinceLastFire = currentTime - this.lastFiredTime;
         console.log(`Time since last fire: ${timeSinceLastFire.toFixed(2)}ms, Fire rate: ${this.fireRate}ms`);
-
+    
         if (timeSinceLastFire >= this.fireRate) {
             const target = this.findTarget(this.game.threats);
             if (target) {
