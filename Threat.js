@@ -1,4 +1,3 @@
-// Threat.js
 import { THREAT_EVOLUTION_FACTOR } from './constants.js';
 
 export class Threat {
@@ -15,6 +14,15 @@ export class Threat {
         this.invisible = type === 'rootkit';
         this.evolves = type === 'apt';
         this.revealed = false;
+        this.image = new Image();
+        this.image.src = `./api/${type}.jpg`; // Ensure this path is correct
+        this.imageLoaded = false;
+        this.image.onload = () => {
+            this.imageLoaded = true;
+        };
+        this.image.onerror = () => {
+            console.error(`Failed to load image for threat type: ${type}`);
+        };
     }
 
     move(path) {
@@ -63,7 +71,15 @@ export class Threat {
 
     draw(ctx) {
         if (!this.invisible || this.revealed) {
-            ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30); // Adjust size as needed
+            if (this.imageLoaded) {
+                ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30);
+            } else {
+                // Fallback drawing if image is not loaded
+                ctx.fillStyle = 'red';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
             this.drawHealthBar(ctx);
         }
     }
