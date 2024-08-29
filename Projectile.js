@@ -1,12 +1,13 @@
 export class Projectile {
-    constructor(tower, target) {
-        this.tower = tower;
+    constructor(x, y, target, damage, speed, towerType, towerLevel, tower) {
+        this.x = x;
+        this.y = y;
         this.target = target;
-        this.x = tower.x;
-        this.y = tower.y;
-        this.speed = tower.projectileSpeed || 5;
-        this.damage = tower.damage;
-        this.color = tower.projectileColor || '#FFFFFF';
+        this.damage = damage;
+        this.speed = speed;
+        this.towerType = towerType;
+        this.towerLevel = towerLevel;
+        this.tower = tower;
     }
 
     move() {
