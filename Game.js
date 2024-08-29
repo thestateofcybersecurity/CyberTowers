@@ -460,7 +460,6 @@ export class Game {
         return possibleThreats[Math.floor(Math.random() * possibleThreats.length)];
     }
 
-
     placeTower(type, x, y) {
         console.log(`Attempting to place tower of type ${type} at (${x}, ${y})`);
         const cell = this.gridManager.getGridCell(x, y);
@@ -476,6 +475,11 @@ export class Game {
             return;
         }
     
+        if (this.gridManager.isCellOnPath(cell)) {
+            this.uiManager.showErrorMessage("Cannot place tower on the path");
+            return;
+        }
+    
         if (!this.isDefenseUnlocked(type)) {
             this.uiManager.showErrorMessage("Defense not unlocked yet");
             return;
@@ -486,13 +490,13 @@ export class Game {
             return;
         }
     
-        const newTower = new Tower(type, x, y, 1, this);
+        const newTower = new Tower(type, cell.x, cell.y, 1, this);
         this.towers.push(newTower);
         this.resources -= towerCost;
         cell.occupied = true;
-        this.gridManager.updateGrid(x, y, true);
+        this.gridManager.updateGrid(cell.x, cell.y, true);
         this.uiManager.updateUI();
-        console.log(`Tower placed at (${x}, ${y})`);
+        console.log(`Tower placed at (${cell.x}, ${cell.y})`);
     }
     
     canAffordTower(type) {
