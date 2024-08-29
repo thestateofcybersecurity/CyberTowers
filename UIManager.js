@@ -8,39 +8,40 @@ export class UIManager {
     }
 
     initializeUI() {
+        this.createMenuButtons(); // Add this line to create menu buttons
         this.createTowerButtons();
-        this.createMenuButtons();
-        this.setupEventListeners();
-    }
-
-    createTowerButtons() {
-        const towerSelection = document.getElementById('towerSelection');
-        Object.keys(defenseTypes).forEach(towerType => {
-            const button = document.createElement('button');
-            button.textContent = towerType;
-            button.classList.add('towerButton');
-            button.dataset.tower = towerType;
-            towerSelection.appendChild(button);
-        });
+        this.addEventListeners();
     }
 
     createMenuButtons() {
         const menuContainer = document.getElementById('menuContainer');
-        const buttons = [
-            { text: 'Start New Game', action: () => this.game.startGame() },
-            { text: 'Load Game', action: () => this.loadGame() },
-            { text: 'Options', action: () => this.game.showOptions() }
-        ];
+        menuContainer.innerHTML = ''; // Clear existing content
 
-        buttons.forEach(({text, action}) => {
-            const button = document.createElement('button');
-            button.textContent = text;
-            button.addEventListener('click', action);
-            menuContainer.appendChild(button);
+        const startButton = document.createElement('button');
+        startButton.textContent = 'Start New Game';
+        startButton.addEventListener('click', () => this.game.startGame());
+
+        const loadButton = document.createElement('button');
+        loadButton.textContent = 'Load Game';
+        loadButton.addEventListener('click', () => {
+            if (this.game.loadGame()) {
+                this.game.setState(GAME_STATES.PLAYING);
+                this.hideMenu();
+            } else {
+                alert('No saved game found!');
+            }
         });
+
+        const optionsButton = document.createElement('button');
+        optionsButton.textContent = 'Options';
+        optionsButton.addEventListener('click', () => this.game.showOptions());
+
+        menuContainer.appendChild(startButton);
+        menuContainer.appendChild(loadButton);
+        menuContainer.appendChild(optionsButton);
     }
 
-    setupEventListeners() {
+addEventListeners() {
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
                 const towerType = button.dataset.tower;
@@ -50,11 +51,11 @@ export class UIManager {
         });
 
         this.game.canvas.addEventListener('click', (event) => {
+            const rect = this.game.canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
             if (this.game.state === GAME_STATES.PLAYING) {
-                const rect = this.game.canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-                
                 const clickedTower = this.game.towers.find(tower => 
                     x >= tower.x && x <= tower.x + 40 && y >= tower.y && y <= tower.y + 40
                 );
@@ -63,7 +64,6 @@ export class UIManager {
                     this.showTowerUpgradeMenu(clickedTower);
                 } else {
                     this.game.placeTower(this.game.selectedTowerType, x, y);
-                    this.removeTowerUpgradeMenu();
                 }
             }
         });
@@ -71,7 +71,7 @@ export class UIManager {
         document.getElementById('pauseButton').addEventListener('click', () => {
             this.game.togglePause();
         });
-
+    }
         // Close upgrade menu when clicking outside
         document.addEventListener('click', (event) => {
             if (!event.target.closest('#towerUpgradeMenu') && !event.target.closest('.towerButton')) {
