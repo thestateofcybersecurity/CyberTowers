@@ -209,7 +209,12 @@ export class UIManager {
 
     updatePauseButton() {
         const pauseButton = document.getElementById('pauseButton');
-        pauseButton.textContent = this.game.state === GAME_STATES.PAUSED ? 'Resume' : 'Pause';
+        if (pauseButton) {
+            pauseButton.textContent = this.game.state === GAME_STATES.PAUSED ? 'Resume' : 'Pause';
+            console.log('Pause button updated. Text:', pauseButton.textContent);
+        } else {
+            console.error('Pause button not found');
+        }
     }
 
     showErrorMessage(message) {
