@@ -206,9 +206,19 @@ export class Game {
     
         // Handle wave system
         this.updateWaveSystem(timestamp);
+
+        if (timestamp % 1000 < 16) { // Log roughly every second
+            this.logThreatHealth();
+        }
     
         // Request next frame
         requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    logThreatHealth() {
+        this.threats.forEach((threat, index) => {
+            console.log(`Threat ${index} (${threat.type}): Health ${threat.currentHealth}/${threat.maxHealth}`);
+        });
     }
 
     showOptions() {
@@ -428,7 +438,7 @@ export class Game {
         tower.addExperience(threat.reward);
         this.addPlayerExperience(threat.reward);
         this.threats = this.threats.filter(t => t !== threat);
-        // Play sound effect
+        console.log(`Threat destroyed. Remaining threats: ${this.threats.length}`);
     }
 
     startNewWave() {
@@ -673,23 +683,24 @@ export class Game {
         const threatType = this.selectThreatType();
         if (threatTypes[threatType]) {
             const threatData = threatTypes[threatType];
+            const health = Math.round(threatData.health * waveMultiplier);
             const newThreat = new Threat(
                 threatType,
                 this.path[0].x,
                 this.path[0].y,
-                threatData.health * waveMultiplier,
+                health,
                 threatData.speed,
-                threatData.damage * waveMultiplier,
-                threatData.reward * waveMultiplier,
+                Math.round(threatData.damage * waveMultiplier),
+                Math.round(threatData.reward * waveMultiplier),
                 this
             );
             this.threats.push(newThreat);
-            console.log(`Spawned ${threatType} threat at (${newThreat.x}, ${newThreat.y})`);
+            console.log(`Spawned ${threatType} threat with ${health} health at (${newThreat.x}, ${newThreat.y})`);
         } else {
             console.error(`Invalid threat type: ${threatType}`);
         }
     }
-
+    
     updateWaveSystem(timestamp) {
         if (!this.isWaveActive) {
             if (timestamp - this.waveTimer > this.breakDuration) {
