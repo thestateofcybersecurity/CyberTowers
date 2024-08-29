@@ -45,6 +45,37 @@ export class UIManager {
         });
     }
 
+    showPauseMenu() {
+        const pauseMenu = document.createElement('div');
+        pauseMenu.id = 'pauseMenu';
+        pauseMenu.style.position = 'absolute';
+        pauseMenu.style.left = `${canvas.width / 2 - 100}px`;
+        pauseMenu.style.top = `${canvas.height / 2 - 50}px`;
+        pauseMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        pauseMenu.style.padding = '20px';
+        pauseMenu.style.borderRadius = '10px';
+        pauseMenu.style.textAlign = 'center';
+        pauseMenu.style.color = 'white';
+
+        const resumeButton = document.createElement('button');
+        resumeButton.textContent = 'Resume';
+        resumeButton.style.marginBottom = '10px';
+        resumeButton.addEventListener('click', () => this.game.togglePause());
+        pauseMenu.appendChild(resumeButton);
+
+        const quitButton = document.createElement('button');
+        quitButton.textContent = 'Quit to Menu';
+        quitButton.addEventListener('click', () => this.game.setState(GAME_STATES.MENU));
+        pauseMenu.appendChild(quitButton);
+
+        document.body.appendChild(pauseMenu);
+    }
+
+    hidePauseMenu() {
+        const pauseMenu = document.getElementById('pauseMenu');
+        if (pauseMenu) document.body.removeChild(pauseMenu);
+    }
+
     setupEventListeners() {
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
@@ -137,12 +168,11 @@ export class UIManager {
     }
 
     updateUI() {
-        this.updateScore();
-        this.updateResources();
-        this.updateWaveInfo();
-        this.updateTowerButtons();
-        this.updateNextWaveInfo();
-        this.updatePlayerInfo();
+        document.getElementById('scoreValue').textContent = Math.floor(this.game.systemIntegrity); 
+        document.getElementById('resourcesValue').textContent = Math.floor(this.game.resources);  
+        document.getElementById('waveValue').textContent = this.game.currentWave;
+        document.getElementById('playerLevel').textContent = this.game.playerLevel;
+        document.getElementById('playerExperience').textContent = this.game.playerExperience;
     }
 
     updateScore() {
