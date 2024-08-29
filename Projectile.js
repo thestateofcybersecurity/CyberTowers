@@ -6,8 +6,8 @@ export class Projectile {
             return;
         }
     
-        this.x = x;
-        this.y = y;
+        this.x = Number(x);
+        this.y = Number(y);
         this.target = target;
         this.damage = Number(damage);
         this.speed = Number(speed);
