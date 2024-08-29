@@ -6,10 +6,13 @@ export class Threat {
         this.x = x;
         this.y = y;
         this.maxHealth = health;
-        this.currentHealth = health;
-        this.speed = speed;
-        this.damage = damage;
-        this.reward = reward;
+        this.position = position;
+        this.path = path;
+        this.currentHealth = type.health;
+        this.speed = type.speed;
+        this.damage = type.damage;
+        this.reward = type.reward;
+        this.icon = type.icon;
         this.pathIndex = 0;
         this.invisible = type === 'rootkit';
         this.evolves = type === 'apt';
@@ -18,7 +21,7 @@ export class Threat {
         this.image.src = `./api/${type}.jpg`;
         this.imageLoaded = false;
         this.image.onload = () => {
-            this.imageLoaded = true;
+        this.imageLoaded = true;
         };
         this.image.onerror = () => {
             console.error(`Failed to load image for threat type: ${type}`);
@@ -26,38 +29,40 @@ export class Threat {
     }
 
     move(path) {
-        const targetPoint = path[this.pathIndex];
-        const dx = targetPoint.x - this.x;
-        const dy = targetPoint.y - this.y;
-        const distance = Math.hypot(dx, dy);
+        const targetPoint = this.path[this.pathIndex];
+        const dx = targetPoint.x - this.position.x;
+        const dy = targetPoint.y - this.position.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < this.speed) {
             this.pathIndex++;
-            if (this.pathIndex >= path.length) {
-                return true; // Reached the end
+            if (this.pathIndex >= this.path.length) {
+                this.reachEnd();
             }
         } else {
-            this.x += (dx / distance) * this.speed;
-            this.y += (dy / distance) * this.speed;
+            this.position.x += (dx / distance) * this.speed;
+            this.position.y += (dy / distance) * this.speed;
         }
-
-        if (this.evolves && Math.random() < 0.001) {
-            this.evolve();
-        }
-
-        return false; // Not reached the end
     }
 
-    takeDamage(amount) {
-        if (this.invisible && !this.revealed) {
-            amount *= 0.5;
-        }
-        this.currentHealth -= amount;
+    takeDamage(damage) {
+        this.currentHealth -= damage;
         if (this.currentHealth <= 0) {
-            this.currentHealth = 0;
-            return true; // Threat is destroyed
+            this.die();
         }
-        return false;
+    }
+
+    die() {
+        this.game.threats = this.game.threats.filter(threat => threat !== this);
+        this.game.resources += this.reward;
+    }
+
+    reachEnd() {
+        this.game.systemIntegrity -= this.damage;
+        this.game.threats = this.game.threats.filter(threat => threat !== this);
+        if (this.game.systemIntegrity <= 0) {
+            this.game.setState(GAME_STATES.GAME_OVER);
+        }
     }
 
     evolve() {
