@@ -41,10 +41,11 @@
     <script type="module">
         import { Game } from './Game.js';
         
+        let game;
+
         document.addEventListener('DOMContentLoaded', () => {
-            const game = new Game();
+            game = new Game();
             game.initialize(); // Make sure this method exists and calls uiManager.showMenu()
-        }
 
             // Event listeners for menu buttons
             document.getElementById('startButton').addEventListener('click', () => game.startGame());
