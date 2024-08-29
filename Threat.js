@@ -86,18 +86,22 @@ export class Threat {
     }
 
     draw(ctx) {
-        if (this.invisible && !this.revealed) return;
-
+        if (this.invisible && !this.revealed) {
+            console.log(`Skipping draw for invisible threat: ${this.type}`);
+            return;
+        }
+    
         if (this.imageLoaded) {
+            console.log(`Drawing ${this.type} threat image at (${this.x}, ${this.y})`);
             ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30);
         } else {
-            // Fallback drawing if image is not loaded
+            console.log(`Drawing fallback for ${this.type} threat at (${this.x}, ${this.y})`);
             ctx.fillStyle = 'red';
             ctx.beginPath();
             ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
             ctx.fill();
         }
-
+    
         this.drawHealthBar(ctx);
     }
 
