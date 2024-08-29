@@ -134,7 +134,6 @@ export class Tower {
             const projectile = new Projectile(this.x, this.y, target, this.damage, this.projectileColor, this);
             this.applySpecialAbility(target);
             return projectile;
-        }
     }
 
     draw(ctx) {
