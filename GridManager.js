@@ -14,14 +14,16 @@ export class GridManager {
                 this.gridMap.set(key, { x, y, occupied: false });
             }
         }
-        console.log("Grid initialized"); // Debug log
+        console.log(`Grid initialized with ${this.gridMap.size} cells`);
     }
 
     getGridCell(x, y) {
         const gridX = Math.floor(x / this.cellSize) * this.cellSize;
         const gridY = Math.floor(y / this.cellSize) * this.cellSize;
         const key = `${gridX},${gridY}`;
-        return this.gridMap.get(key);
+        const cell = this.gridMap.get(key);
+        console.log(`Requested cell at (${x}, ${y}), Grid coordinates: (${gridX}, ${gridY}), Cell found: ${cell ? 'Yes' : 'No'}`);
+        return cell;
     }
 
     updateGrid(x, y, occupied) {
