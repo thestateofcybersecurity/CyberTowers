@@ -526,14 +526,14 @@ export class Game {
     }
 
     placeTower(type, x, y) {
-       console.log(`Attempting to place tower of type ${type} at mouse position (${x}, ${y})`);
-        const cell = this.gridManager.getGridCell(mouseX, mouseY);
+        console.log(`Attempting to place tower of type ${type} at mouse position (${x}, ${y})`);
+        const cell = this.gridManager.getGridCell(x, y);
         if (!cell) {
             console.error("Invalid grid location");
             this.uiManager.showErrorMessage("Invalid grid location");
             return;
         }
-
+    
         const towerCost = Tower.getCost(type);
     
         console.log(`Corresponding grid cell: (${cell.x}, ${cell.y})`);
@@ -559,7 +559,7 @@ export class Game {
             return;
         }
     
-        const newTower = new Tower(type, towerX, towerY, 1, this);
+        const newTower = new Tower(type, cell.x, cell.y, 1, this);
         this.towers.push(newTower);
         this.resources -= towerCost;
         cell.occupied = true;
