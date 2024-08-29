@@ -245,4 +245,19 @@ export class UIManager {
             return false;
         }
     }
+
+    showErrorMessage(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.textContent = message;
+        errorDiv.style.position = 'absolute';
+        errorDiv.style.top = '10px';
+        errorDiv.style.left = '50%';
+        errorDiv.style.transform = 'translateX(-50%)';
+        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.borderRadius = '5px';
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 3000);
+    }
 }
