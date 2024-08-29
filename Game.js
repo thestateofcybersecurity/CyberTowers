@@ -547,15 +547,16 @@ export class Game {
             return;
         }
     
-        const newTower = new Tower(type, cell.x, cell.y, 1, this);
+        const towerX = cell.x + this.gridManager.cellSize / 2;
+        const towerY = cell.y + this.gridManager.cellSize / 2;
+        const newTower = new Tower(type, towerX, towerY, 1, this);
         this.towers.push(newTower);
         this.resources -= towerCost;
         cell.occupied = true;
         this.gridManager.updateGrid(cell.x, cell.y, true);
         this.uiManager.updateUI();
     
-        console.log(`Tower placed at grid position (${cell.x}, ${cell.y})`);
-        console.log(`Tower center: (${cell.x + this.gridManager.cellSize / 2}, ${cell.y + this.gridManager.cellSize / 2})`);
+        console.log(`Tower placed at position (${towerX}, ${towerY})`);
         console.log(`Tower type: ${type}, Range: ${newTower.range}`);
     }
     
