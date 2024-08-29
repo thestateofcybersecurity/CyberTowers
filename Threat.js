@@ -35,12 +35,15 @@ export class Threat {
         if (distance < this.speed) {
             this.pathIndex++;
             if (this.pathIndex >= path.length) {
+                console.log(`Threat reached end of path at (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`);
                 return this.reachEnd();
             }
         } else {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
         }
+
+        console.log(`Threat moved to (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`);
         return false;
     }
 
