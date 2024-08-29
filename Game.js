@@ -334,9 +334,9 @@ export class Game {
     }
 
     updateTowers(timestamp) {
-        console.log(`Updating ${this.towers.length} towers`);
+        console.log(`Updating ${this.towers.length} towers at timestamp ${timestamp}`);
         this.towers.forEach(tower => {
-            tower.update(timestamp, this.threats);
+            tower.update(timestamp);
         });
     }
 
