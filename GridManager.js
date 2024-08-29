@@ -21,9 +21,7 @@ export class GridManager {
         const gridX = Math.floor(x / this.cellSize) * this.cellSize;
         const gridY = Math.floor(y / this.cellSize) * this.cellSize;
         const key = `${gridX},${gridY}`;
-        const cell = this.gridMap.get(key);
-        console.log(`Requested cell at (${x}, ${y}), Grid coordinates: (${gridX}, ${gridY}), Cell found: ${cell ? 'Yes' : 'No'}`);
-        return cell;
+        return this.gridMap.get(key);
     }
 
     updateGrid(x, y, occupied) {
@@ -31,16 +29,17 @@ export class GridManager {
         const cell = this.gridMap.get(key);
         if (cell) {
             cell.occupied = occupied;
-            console.log(`Grid updated at (${x}, ${y}), occupied: ${occupied}`); // Debug log
         } else {
-            console.log(`Invalid cell at (${x}, ${y})`); // Debug log
+            console.warn(`Invalid cell at (${x}, ${y})`);
         }
     }
-    
+
     isCellOnPath(cell) {
-        const tolerance = 20; // Adjust this value as needed
+        const tolerance = this.cellSize / 2;
         return this.game.path.some(segment => 
-            this.distanceToSegment(cell.x, cell.y, segment.start.x, segment.start.y, segment.end.x, segment.end.y) < tolerance
+            this.distanceToSegment(cell.x + this.cellSize / 2, cell.y + this.cellSize / 2, 
+                                   segment.start.x, segment.start.y, 
+                                   segment.end.x, segment.end.y) < tolerance
         );
     }
 
