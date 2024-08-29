@@ -56,11 +56,21 @@ export class Tower {
     findTarget(threats) {
         console.log(`Tower at (${this.x}, ${this.y}) searching for target. Range: ${this.range}`);
         return threats.find(threat => {
-            const dx = threat.x - this.x;
-            const dy = threat.y - this.y;
+            // Calculate the center of the tower
+            const towerCenterX = this.x + this.game.gridManager.cellSize / 2;
+            const towerCenterY = this.y + this.game.gridManager.cellSize / 2;
+
+            // Calculate the distance from the center of the tower to the threat
+            const dx = threat.x - towerCenterX;
+            const dy = threat.y - towerCenterY;
             const distance = Math.sqrt(dx * dx + dy * dy);
             const inRange = distance <= this.range;
-            console.log(`Threat ${threat.type} at (${threat.x}, ${threat.y}). Distance: ${distance.toFixed(2)}, In range: ${inRange}`);
+
+            console.log(`Threat ${threat.type} at (${threat.x.toFixed(2)}, ${threat.y.toFixed(2)})`);
+            console.log(`Tower center: (${towerCenterX.toFixed(2)}, ${towerCenterY.toFixed(2)})`);
+            console.log(`dx: ${dx.toFixed(2)}, dy: ${dy.toFixed(2)}`);
+            console.log(`Distance: ${distance.toFixed(2)}, In range: ${inRange}`);
+
             return inRange;
         });
     }
