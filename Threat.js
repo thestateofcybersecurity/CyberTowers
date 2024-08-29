@@ -86,17 +86,19 @@ export class Threat {
     }
 
     draw(ctx) {
-        if (!this.invisible || this.revealed) {
-            if (this.imageLoaded) {
-                ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30);
-            } else {
-                ctx.fillStyle = 'red';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            this.drawHealthBar(ctx);
+        if (this.invisible && !this.revealed) return;
+
+        if (this.imageLoaded) {
+            ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30);
+        } else {
+            // Fallback drawing if image is not loaded
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+            ctx.fill();
         }
+
+        this.drawHealthBar(ctx);
     }
 
     drawHealthBar(ctx) {
