@@ -222,25 +222,6 @@ export class Tower {
             randomThreat.takeDamage(target.damage);
         }
     }
-
-    setPosition(x, y) {
-        const newX = Number(x);
-        const newY = Number(y);
-        if (isNaN(newX) || isNaN(newY)) {
-            console.error(`Invalid tower coordinates: x=${x}, y=${y}`);
-            return;
-        }
-        this._x = newX;
-        this._y = newY;
-    }
-
-    get x() {
-        return this._x;
-    }
-
-    get y() {
-        return this._y;
-    }
     
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
