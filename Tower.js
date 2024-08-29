@@ -74,12 +74,12 @@ export class Tower {
 
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
-        
-        const projectileX = Number(this.x) + (Number(this.game.gridManager.cellSize) / 2);
-        const projectileY = Number(this.y) + (Number(this.game.gridManager.cellSize) / 2);
-        
+    
+        const projectileX = this.x + (this.game.gridManager.cellSize / 2);
+        const projectileY = this.y + (this.game.gridManager.cellSize / 2);
+    
         console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
-        
+    
         const projectile = new Projectile(
             projectileX,
             projectileY,
@@ -90,7 +90,7 @@ export class Tower {
             this.level,
             this
         );
-        
+    
         if (!projectile.toRemove) {
             this.game.projectiles.push(projectile);
             this.lastFiredTime = currentTime;
