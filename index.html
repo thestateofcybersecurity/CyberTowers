@@ -8,39 +8,28 @@
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameBoard"></canvas>
+        <canvas id="gameBoard" width="800" height="600"></canvas>
         <div id="uiContainer">
-            <div id="gameInfo">
-                <div id="scoreContainer">
-                    System Integrity: <span id="scoreValue">100</span>%
-                </div>
-                <div id="resourcesContainer">
-                    Resources: <span id="resourcesValue">500</span> MB
-                </div>
-                <div id="waveContainer">
-                    Wave: <span id="waveValue">1</span>
-                </div>
-            </div>
-            <div id="towerSelection"></div>
-            <button id="pauseButton">Pause</button>
-            <div id="nextWaveInfo"></div>
-            <div id="playerInfo">
-                Level: <span id="playerLevel">1</span> XP: <span id="playerExperience">0</span>
-            </div>
+            <div id="score">System Integrity: <span id="scoreValue">100</span></div>
+            <div id="resources">Resources: <span id="resourcesValue">500</span></div>
+            <div id="wave">Wave: <span id="waveValue">1</span></div>
+            <div id="level">Level: <span id="playerLevel">1</span></div>
+            <div id="experience">Experience: <span id="playerExperience">0</span></div>
+            <!-- Other UI elements as needed -->
         </div>
-        <div id="menuContainer" style="display: none;">
-            <h1>Cybersecurity Tower Defense</h1>
-            <button id="startGameBtn">Start Game</button>
-            <button id="optionsBtn">Options</button>
-        </div>
-        <div id="gameOverContainer" style="display: none;">
-            <h2>Game Over</h2>
-            <p>Final Score: <span id="finalScore"></span></p>
-            <p>High Score: <span id="highScore"></span></p>
-            <button id="restartGameBtn">Restart Game</button>
-            <button id="returnToMenuBtn">Return to Menu</button>
-        </div>
+        <!-- Include buttons and menus here -->
     </div>
-    <script type="module" src="Game.js"></script>
+    <script src="constants.js"></script>
+    <script src="AssetLoader.js"></script>
+    <script src="GridManager.js"></script>
+    <script src="UIManager.js"></script>
+    <script src="Projectile.js"></script>
+    <script src="Threat.js"></script>
+    <script src="Tower.js"></script>
+    <script src="Game.js"></script>
+    <script>
+        const game = new Game();
+        game.start();
+    </script>
 </body>
 </html>
