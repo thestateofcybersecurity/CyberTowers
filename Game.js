@@ -51,6 +51,8 @@ export class Game {
         this.nextWaveInfo = null;
         this.imageCache = {};
         this.gridSize = GRID_SIZE;
+        this.initialDelay = 10000; // 10 seconds delay, adjust as needed
+        this.initialDelayTimer = null;
         this.canvas.addEventListener('mousemove', (event) => {
         const rect = this.canvas.getBoundingClientRect();
         this.lastMouseX = event.clientX - rect.left;
@@ -178,6 +180,10 @@ export class Game {
         this.selectedTowerType = 'firewall';
         this.unlockedDefenses = ['firewall'];
         this.gridManager.resetGrid();
+        if (this.initialDelayTimer) {
+            clearTimeout(this.initialDelayTimer);
+            this.initialDelayTimer = null;
+        }
     }
 
     startGame() {
@@ -187,6 +193,26 @@ export class Game {
         this.uiManager.hideGameOver();
         this.setState(GAME_STATES.PLAYING);
         this.startAutosave();
+        
+        const updateCountdown = () => {
+            const remaining = this.initialDelay - (Date.now() - startTime);
+            if (remaining > 0) {
+                this.uiManager.showCountdown(remaining);
+                requestAnimationFrame(updateCountdown);
+            } else {
+                this.uiManager.hideCountdown();
+            }
+        };
+    
+        const startTime = Date.now();
+        updateCountdown();
+    
+        // Set the initial delay
+        this.initialDelayTimer = setTimeout(() => {
+            this.startNewWave();
+            this.initialDelayTimer = null;
+        }, this.initialDelay);
+    
         this.gameLoop();
     }
 
@@ -783,6 +809,11 @@ export class Game {
     }
     
     updateWaveSystem(timestamp) {
+        if (this.initialDelayTimer) {
+            // Don't start waves until the initial delay is over
+            return;
+        }
+    
         if (!this.isWaveActive) {
             if (timestamp - this.waveTimer > this.breakDuration) {
                 this.startNewWave();
