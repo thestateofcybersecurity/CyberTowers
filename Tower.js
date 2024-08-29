@@ -12,30 +12,33 @@ export class Tower {
             Last Fired: ${this.lastFired}
         `);
     }
-    constructor(type, x, y, level = 1, game) {
-        const towerData = defenseTypes[type];
+    constructor(type, x, y, level, game) {
         this.type = type;
-        this.x = x;
-        this.y = y;
-        this.level = level;
-        this.damage = towerData.damage;
-        this.range = towerData.range;
-        this.fireRate = towerData.fireRate;
-        this.projectileSpeed = towerData.projectileSpeed || 5;
+        this.x = Number(x);
+        this.y = Number(y);
+        this.level = Number(level);
+        this.game = game;
+
+        const towerData = defenseTypes[type];
+        if (!towerData) {
+            console.error(`Invalid tower type: ${type}`);
+            return;
+        }
+
+        this.damage = Number(towerData.damage);
+        this.range = Number(towerData.range);
+        this.fireRate = Number(towerData.fireRate);
+        this.projectileSpeed = Number(towerData.projectileSpeed || 5);
         this.projectileColor = towerData.projectileColor || '#FFFFFF';
-        this.specialAbilities = {};
-        this.cost = towerData.cost;
+        this.cost = Number(towerData.cost);
         this.experience = 0;
-        this.lastFired = 0;
+        this.lastFiredTime = 0;
+
         this.image = new Image();
         this.image.src = towerData.icon;
-        this.stats = TOWER_STATS[type][level];
-        this.game = game;
-        this.lastFiredTime = 0;
-        this.hasLoggedDraw = false;
-        this.checkProperties();
 
-        console.log(`Tower created: ${type} at (${x}, ${y})`); // Debug log
+        console.log(`Tower created: ${type} at (${this.x}, ${this.y})`);
+        console.log(`Tower properties: damage=${this.damage}, range=${this.range}, fireRate=${this.fireRate}, projectileSpeed=${this.projectileSpeed}`);
     }
 
     update(timestamp) {
@@ -57,26 +60,33 @@ export class Tower {
         }
     }
 
-    findTarget(threats) {
-        console.log(`Tower at (${this.x}, ${this.y}) searching for target. Range: ${this.range}`);
-        return threats.find(threat => {
-            // Calculate the center of the tower
-            const towerCenterX = this.x + this.game.gridManager.cellSize / 2;
-            const towerCenterY = this.y + this.game.gridManager.cellSize / 2;
-
-            // Calculate the distance from the center of the tower to the threat
-            const dx = threat.x - towerCenterX;
-            const dy = threat.y - towerCenterY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const inRange = distance <= this.range;
-
-            console.log(`Threat ${threat.type} at (${threat.x.toFixed(2)}, ${threat.y.toFixed(2)})`);
-            console.log(`Tower center: (${towerCenterX.toFixed(2)}, ${towerCenterY.toFixed(2)})`);
-            console.log(`dx: ${dx.toFixed(2)}, dy: ${dy.toFixed(2)}`);
-            console.log(`Distance: ${distance.toFixed(2)}, In range: ${inRange}`);
-
-            return inRange;
-        });
+    fire(target, currentTime) {
+        console.log(`Tower firing at ${target.type}`);
+        
+        // Ensure these are numbers
+        const projectileX = Number(this.x) + (Number(this.game.gridManager.cellSize) / 2);
+        const projectileY = Number(this.y) + (Number(this.game.gridManager.cellSize) / 2);
+        
+        console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
+        
+        const projectile = new Projectile(
+            projectileX,
+            projectileY,
+            target,
+            this.damage,
+            this.projectileSpeed || 5, // Provide a default speed if it's not set
+            this.type,
+            this.level,
+            this
+        );
+        
+        if (!projectile.toRemove) {
+            this.game.projectiles.push(projectile);
+            this.lastFiredTime = currentTime;
+            console.log(`Projectile created with damage: ${this.damage}. Total projectiles: ${this.game.projectiles.length}`);
+        } else {
+            console.error('Failed to create valid projectile');
+        }
     }
 
     canFire(timestamp) {
