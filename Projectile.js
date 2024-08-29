@@ -1,21 +1,28 @@
 export class Projectile {
     constructor(x, y, target, damage, speed, towerType, towerLevel, tower) {
-        this.x = x;
-        this.y = y;
+        this.x = Number(x);
+        this.y = Number(y);
         this.target = target;
-        this.damage = damage;
-        this.speed = speed;
+        this.damage = Number(damage);
+        this.speed = Number(speed);
         this.towerType = towerType;
         this.towerLevel = towerLevel;
         this.tower = tower;
         this.toRemove = false; // Flag to mark projectile for removal
-        console.log(`New projectile created at (${this.x.toFixed(2)}, ${this.y.toFixed(2)}) targeting ${this.target.type}`);
+
+        if (isNaN(this.x) || isNaN(this.y)) {
+            console.error(`Invalid coordinates for projectile: x=${x}, y=${y}`);
+            this.toRemove = true;
+        } else {
+            console.log(`New projectile created at (${this.x.toFixed(2)}, ${this.y.toFixed(2)}) targeting ${this.target ? this.target.type : 'unknown'}`);
+        }
     }
 
     move() {
-        if (!this.target || this.target.currentHealth <= 0) {
+        if (this.toRemove || !this.target || this.target.currentHealth <= 0) {
             console.log('Projectile target is no longer valid. Marking for removal.');
-            return true; // Mark for removal
+            this.toRemove = true;
+            return;
         }
 
         const dx = this.target.x - this.x;
@@ -26,19 +33,22 @@ export class Projectile {
             this.x = this.target.x;
             this.y = this.target.y;
             console.log(`Projectile reached target at (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`);
-            return true; // Mark for removal, we've hit the target
+            this.hitTarget();
         } else {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
             console.log(`Projectile moved to (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`);
-            return false;
         }
     }
 
     hitTarget() {
-        this.target.takeDamage(this.damage);
-        this.tower.game.projectiles = this.tower.game.projectiles.filter(p => p !== this);
-        this.tower.game.addVisualEffect('explosion', this.x, this.y);
+        if (this.target && typeof this.target.takeDamage === 'function') {
+            this.target.takeDamage(this.damage);
+            this.tower.game.addVisualEffect('explosion', this.x, this.y);
+        } else {
+            console.error('Invalid target or takeDamage is not a function');
+        }
+        this.toRemove = true;
     }
 
     checkCollision(threats) {
