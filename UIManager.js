@@ -112,13 +112,22 @@ export class UIManager {
     }
 
     updateUI() {
-        document.getElementById('scoreValue').textContent = Math.floor(this.game.systemIntegrity);
-        document.getElementById('resourcesValue').textContent = Math.floor(this.game.resources);
-        document.getElementById('waveValue').textContent = this.game.currentWave;
-        document.getElementById('playerLevel').textContent = this.game.playerLevel;
-        document.getElementById('playerExperience').textContent = this.game.playerExperience;
+        this.updateElement('scoreValue', Math.floor(this.game.systemIntegrity));
+        this.updateElement('resourcesValue', Math.floor(this.game.resources));
+        this.updateElement('waveValue', this.game.currentWave);
+        this.updateElement('playerLevel', this.game.playerLevel);
+        this.updateElement('playerExperience', this.game.playerExperience);
         this.updateTowerButtons();
         this.updateNextWaveInfo();
+    }
+
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        } else {
+            console.warn(`Element with id '${id}' not found`);
+        }
     }
 
     updateTowerButtons() {
@@ -139,10 +148,14 @@ export class UIManager {
 
     updateNextWaveInfo() {
         const nextWaveInfo = document.getElementById('nextWaveInfo');
-        if (this.game.nextWaveInfo) {
-            nextWaveInfo.textContent = `Next Wave: ${this.game.nextWaveInfo.types.join(', ')} - Total Threats: ${this.game.nextWaveInfo.totalThreats}`;
+        if (nextWaveInfo) {
+            if (this.game.nextWaveInfo) {
+                nextWaveInfo.textContent = `Next Wave: ${this.game.nextWaveInfo.types.join(', ')} - Total Threats: ${this.game.nextWaveInfo.totalThreats}`;
+            } else {
+                nextWaveInfo.textContent = '';
+            }
         } else {
-            nextWaveInfo.textContent = '';
+            console.warn('nextWaveInfo element not found');
         }
     }
 
