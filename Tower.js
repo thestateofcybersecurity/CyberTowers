@@ -45,8 +45,10 @@ export class Tower {
     }
 
     fire(target) {
-        this.lastFired = performance.now();
-        return new Projectile(this, target);
+        const projectile = new Projectile(this, target);
+        this.game.projectiles.push(projectile);
+        this.lastFiredTime = performance.now();
+        return projectile;
     }
 
     levelUp() {
