@@ -514,7 +514,7 @@ export class Game {
     }
 
     placeTower(type, x, y) {
-        console.log(`Attempting to place tower of type ${type} at mouse position (${x}, ${y})`);
+       console.log(`Attempting to place tower of type ${type} at mouse position (${x}, ${y})`);
         const cell = this.gridManager.getGridCell(x, y);
         const towerCost = Tower.getCost(type);
     
@@ -556,7 +556,7 @@ export class Game {
         this.gridManager.updateGrid(cell.x, cell.y, true);
         this.uiManager.updateUI();
     
-        console.log(`Tower placed at position (${towerX}, ${towerY})`);
+        console.log(`Tower placed at position (${newTower.x}, ${newTower.y})`);
         console.log(`Tower type: ${type}, Range: ${newTower.range}`);
     }
     
