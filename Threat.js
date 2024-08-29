@@ -59,10 +59,14 @@ export class Threat {
     }
 
     reachEnd() {
-        this.game.systemIntegrity -= this.damage;
-        this.game.threats = this.game.threats.filter(threat => threat !== this);
-        if (this.game.systemIntegrity <= 0) {
-            this.game.setState(this.game.GAME_STATES.GAME_OVER);
+        if (this.game) {
+            this.game.systemIntegrity -= this.damage;
+            this.game.threats = this.game.threats.filter(threat => threat !== this);
+            if (this.game.systemIntegrity <= 0) {
+                this.game.setState(this.game.GAME_STATES.GAME_OVER);
+            }
+        } else {
+            console.error('Game instance not set for this threat');
         }
         return true;
     }
