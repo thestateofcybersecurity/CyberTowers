@@ -237,6 +237,13 @@ export class UIManager {
         }
     }
 
+    hideGameOver() {
+        const gameOverContainer = document.getElementById('gameOverContainer');
+        if (gameOverContainer) {
+            gameOverContainer.style.display = 'none';
+        }
+    }
+
     handleRestartClick = () => {
         console.log('Restart button clicked');
         this.game.restartGame();
