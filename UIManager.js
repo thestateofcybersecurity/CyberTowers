@@ -112,11 +112,10 @@ export class UIManager {
     }
 
     updateUI() {
-        this.updateElement('scoreValue', Math.floor(this.game.systemIntegrity));
-        this.updateElement('resourcesValue', Math.floor(this.game.resources));
-        this.updateElement('waveValue', this.game.currentWave);
-        this.updateElement('playerLevel', this.game.playerLevel);
-        this.updateElement('playerExperience', this.game.playerExperience);
+        this.updateScore();
+        this.updateResources();
+        this.updateWaveInfo();
+        this.updatePlayerInfo();
         this.updateTowerButtons();
         this.updateNextWaveInfo();
     }
@@ -127,6 +126,20 @@ export class UIManager {
             element.textContent = value;
         } else {
             console.warn(`Element with id '${id}' not found`);
+        }
+    }
+
+    updateScore() {
+        const scoreElement = document.getElementById('scoreValue');
+        if (scoreElement) {
+            scoreElement.textContent = Math.floor(this.game.systemIntegrity);
+        }
+    }
+
+    updateResources() {
+        const resourcesElement = document.getElementById('resourcesValue');
+        if (resourcesElement) {
+            resourcesElement.textContent = Math.floor(this.game.resources);
         }
     }
 
@@ -146,6 +159,24 @@ export class UIManager {
         });
     }
 
+    updateWaveInfo() {
+        const waveElement = document.getElementById('waveValue');
+        if (waveElement) {
+            waveElement.textContent = this.game.currentWave;
+        }
+    }
+
+    updatePlayerInfo() {
+        const levelElement = document.getElementById('playerLevel');
+        const experienceElement = document.getElementById('playerExperience');
+        if (levelElement) {
+            levelElement.textContent = this.game.playerLevel;
+        }
+        if (experienceElement) {
+            experienceElement.textContent = this.game.playerExperience;
+        }
+    }
+
     updateNextWaveInfo() {
         const nextWaveInfo = document.getElementById('nextWaveInfo');
         if (nextWaveInfo) {
@@ -154,8 +185,6 @@ export class UIManager {
             } else {
                 nextWaveInfo.textContent = '';
             }
-        } else {
-            console.warn('nextWaveInfo element not found');
         }
     }
 
