@@ -36,11 +36,6 @@ export class UIManager {
 
     createTowerButtons() {
         const towerSelection = document.getElementById('towerSelection');
-        if (!towerSelection) {
-            console.error('Tower selection container not found');
-            return;
-        }
-
         Object.keys(defenseTypes).forEach(towerType => {
             const button = document.createElement('button');
             button.textContent = towerType;
