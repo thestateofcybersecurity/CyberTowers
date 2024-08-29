@@ -206,11 +206,11 @@ export const PATH = [
 ];
 
 export const PLAYER_LEVEL_THRESHOLDS = [
-    0, 600, 1200, 2000, 3000, 4200, 5400, 7200, 9000, 15000
+    0, 300, 1000, 2000, 3000, 4200, 5400, 7200, 9000, 15000
 ];
 
 export const THREAT_EVOLUTION_FACTOR = {
-    health: 1.3,  // More gradual health increase
+    health: 1.2,  // More gradual health increase
     speed: 1.1,   // Slight increase in speed
     damage: 1.3,  // Gradual increase in damage
     reward: 1.5   // Slight increase in rewards
