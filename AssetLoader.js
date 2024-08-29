@@ -27,13 +27,23 @@ export class AssetLoader {
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
-                this.images[src] = img;
+                this.imageCache[src] = img;
                 resolve(img);
             };
-            img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+            img.onerror = () => {
+                console.error(`Failed to load image: ${src}. Using fallback image.`);
+                const fallbackSrc = './api/fallback.jpg'; // Assuming a fallback image is available
+                const fallbackImg = new Image();
+                fallbackImg.onload = () => {
+                    this.imageCache[src] = fallbackImg;
+                    resolve(fallbackImg);
+                };
+                fallbackImg.src = fallbackSrc;
+            };
             img.src = src;
         });
     }
+
 
     //loadSounds() {
         //const soundsToLoad = {
@@ -64,4 +74,7 @@ export class AssetLoader {
     //getSound(key) {
         //return this.sounds[key];
     //}
+    loadAssets(assets) {
+        return Promise.all(assets.map(src => this.loadImage(src)));
+    }
 }
