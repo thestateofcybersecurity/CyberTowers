@@ -43,7 +43,8 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             const game = new Game();
-            game.start();
+            game.initialize(); // Make sure this method exists and calls uiManager.showMenu()
+        });
 
             // Event listeners for menu buttons
             document.getElementById('startButton').addEventListener('click', () => game.startGame());
