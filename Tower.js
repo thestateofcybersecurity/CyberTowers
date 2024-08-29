@@ -18,13 +18,13 @@ export class Tower {
         this.y = Number(y);
         this.level = Number(level);
         this.game = game;
-
+    
         const towerData = defenseTypes[type];
         if (!towerData) {
             console.error(`Invalid tower type: ${type}`);
             return;
         }
-
+    
         this.damage = Number(towerData.damage);
         this.range = Number(towerData.range);
         this.fireRate = Number(towerData.fireRate);
@@ -33,10 +33,10 @@ export class Tower {
         this.cost = Number(towerData.cost);
         this.experience = 0;
         this.lastFiredTime = 0;
-
+    
         this.image = new Image();
         this.image.src = towerData.icon;
-
+    
         console.log(`Tower created: ${type} at (${this.x}, ${this.y})`);
         console.log(`Tower properties: damage=${this.damage}, range=${this.range}, fireRate=${this.fireRate}, projectileSpeed=${this.projectileSpeed}`);
     }
@@ -75,9 +75,12 @@ export class Tower {
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
     
-        const projectileX = this.x + (this.game.gridManager.cellSize / 2);
-        const projectileY = this.y + (this.game.gridManager.cellSize / 2);
+        const cellSize = this.game.gridManager.cellSize;
+        const projectileX = this.x + (cellSize / 2);
+        const projectileY = this.y + (cellSize / 2);
     
+        console.log(`Tower position: (${this.x}, ${this.y})`);
+        console.log(`Cell size: ${cellSize}`);
         console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
     
         const projectile = new Projectile(
