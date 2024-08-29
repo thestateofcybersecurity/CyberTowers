@@ -60,17 +60,67 @@ export class Game {
         this.boundUpdate = this.update.bind(this);
     }
 
-    async start() {
-        try {
-            await this.assetLoader.loadAssets();
-            this.initializeEventListeners();
-            this.resetGameLogic();
-            this.setState(GAME_STATES.MENU);
-            this.uiManager.showMenu();
-        } catch (error) {
-            console.error("Failed to load game resources:", error);
-            this.uiManager.showErrorMessage("Failed to load game resources. Please refresh the page.");
+    saveGame() {
+        const gameState = {
+            systemIntegrity: this.systemIntegrity,
+            resources: this.resources,
+            currentWave: this.currentWave,
+            playerLevel: this.playerLevel,
+            playerExperience: this.playerExperience,
+            towers: this.towers.map(tower => ({
+                type: tower.type,
+                x: tower.x,
+                y: tower.y,
+                level: tower.level,
+                experience: tower.experience
+            })),
+            highScore: this.highScore
+        };
+
+        localStorage.setItem('gameState', JSON.stringify(gameState));
+    }
+
+    loadGame() {
+        const savedState = localStorage.getItem('gameState');
+        if (savedState) {
+            const gameState = JSON.parse(savedState);
+            
+            this.systemIntegrity = gameState.systemIntegrity;
+            this.resources = gameState.resources;
+            this.currentWave = gameState.currentWave;
+            this.playerLevel = gameState.playerLevel;
+            this.playerExperience = gameState.playerExperience;
+            
+            this.towers = gameState.towers.map(towerData => 
+                new Tower(towerData.type, towerData.x, towerData.y, towerData.level)
+            );
+            this.towers.forEach(tower => {
+                tower.experience = gameState.towers.find(t => t.x === tower.x && t.y === tower.y).experience;
+            });
+
+            this.highScore = gameState.highScore;
+
+            this.uiManager.updateUI();
+            return true;
         }
+        return false;
+    }
+
+    // Add autosave functionality
+    autosave() {
+        setInterval(() => this.saveGame(), 60000); // Autosave every minute
+    }
+
+    // Update the start method to include loading and autosaving
+    async start() {
+        await this.assetLoader.loadAssets();
+        const loaded = this.loadGame();
+        if (!loaded) {
+            this.resetGameLogic();
+        }
+        this.setState(GAME_STATES.PLAYING);
+        this.autosave();
+        requestAnimationFrame(this.boundUpdate);
     }
 
     initializeEventListeners() {
