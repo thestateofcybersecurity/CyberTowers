@@ -31,7 +31,7 @@ export const threatTypes = {
 
 export const defenseTypes = {
     firewall: { 
-        cost: 200, 
+        cost: 150, 
         damage: 15, 
         range: 200, 
         fireRate: 600, 
