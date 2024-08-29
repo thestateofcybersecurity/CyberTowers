@@ -13,25 +13,27 @@ export class Tower {
             Last Fired: ${this.lastFired}
         `);
     }
-    constructor(type, x, y, level, game) {
+     constructor(type, x, y, level, game) {
         this.type = type;
-        this._x = 0;
-        this._y = 0;
-        this.setPosition(x, y);
-        this.level = Number(level);
         this.game = game;
-    
-        if (isNaN(this.x) || isNaN(this.y)) {
+        this.level = Number(level);
+        
+        // Center the tower in its grid cell
+        const cellSize = this.game.gridManager.cellSize;
+        this._x = x + cellSize / 2;
+        this._y = y + cellSize / 2;
+
+        if (isNaN(this._x) || isNaN(this._y)) {
             console.error(`Invalid tower coordinates: x=${x}, y=${y}`);
             return;
         }
-    
+
         const towerData = defenseTypes[type];
         if (!towerData) {
             console.error(`Invalid tower type: ${type}`);
             return;
         }
-    
+
         this.damage = Number(towerData.damage);
         this.range = Number(towerData.range);
         this.fireRate = Number(towerData.fireRate);
@@ -40,13 +42,16 @@ export class Tower {
         this.cost = Number(towerData.cost);
         this.experience = 0;
         this.lastFiredTime = 0;
-    
+
         this.image = new Image();
         this.image.src = towerData.icon;
-    
+
         console.log(`Tower created: ${type} at (${this._x}, ${this._y})`);
         console.log(`Tower properties: damage=${this.damage}, range=${this.range}, fireRate=${this.fireRate}, projectileSpeed=${this.projectileSpeed}`);
     }
+
+    get x() { return this._x; }
+    get y() { return this._y; }
 
     update(timestamp) {
         console.log(`Updating tower at (${this.x}, ${this.y}), type: ${this.type}`);
@@ -70,8 +75,8 @@ export class Tower {
     findTarget(threats) {
         console.log(`Tower at (${this.x}, ${this.y}) searching for target. Range: ${this.range}`);
         return threats.find(threat => {
-            const dx = threat.x - (this.x + this.game.gridManager.cellSize / 2);
-            const dy = threat.y - (this.y + this.game.gridManager.cellSize / 2);
+            const dx = threat.x - this.x;
+            const dy = threat.y - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             const inRange = distance <= this.range;
             console.log(`Threat ${threat.type} at (${threat.x.toFixed(2)}, ${threat.y.toFixed(2)}). Distance: ${distance.toFixed(2)}, In range: ${inRange}`);
@@ -81,22 +86,12 @@ export class Tower {
 
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
-    
-        // Ensure x and y are numbers
-        const projectileX = Number(this.x);
-        const projectileY = Number(this.y);
-    
-        console.log(`Tower position: (${projectileX}, ${projectileY})`);
-        console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
-    
-        if (isNaN(projectileX) || isNaN(projectileY)) {
-            console.error(`Invalid tower coordinates: x=${this.x}, y=${this.y}`);
-            return;
-        }
-    
+        console.log(`Tower position: (${this.x}, ${this.y})`);
+        console.log(`Projectile start position: (${this.x}, ${this.y})`);
+
         const projectile = new Projectile(
-            projectileX,
-            projectileY,
+            this.x,
+            this.y,
             target,
             this.damage,
             this.projectileSpeed,
@@ -104,7 +99,7 @@ export class Tower {
             this.level,
             this
         );
-    
+
         if (!projectile.toRemove) {
             this.game.projectiles.push(projectile);
             this.lastFiredTime = currentTime;
