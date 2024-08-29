@@ -33,112 +33,112 @@ export const defenseTypes = {
     firewall: { 
         cost: 100, 
         damage: 15, 
-        range: 200, // Increased from 120
+        range: 400, 
         fireRate: 500, 
         icon: './api/firewall.jpg', 
         projectileColor: '#FF0000',
         maxLevel: 5,
         requiredLevel: 1,
         upgrades: [
-            { level: 2, damage: 18, range: 220 },
+            { level: 2, damage: 18, range: 420 },
             { level: 3, damage: 22, fireRate: 450 },
-            { level: 4, damage: 26, range: 240 },
+            { level: 4, damage: 26, range: 440 },
             { level: 5, damage: 30, fireRate: 400, special: 'Burn damage over time' }
         ]
     },
     antivirus: { 
         cost: 200, 
         damage: 25, 
-        range: 250, // Increased from 150
+        range: 450, 
         fireRate: 1200, 
         icon: './api/antivirus.jpg', 
         projectileColor: '#00FF00',
         maxLevel: 5,
         requiredLevel: 2,
         upgrades: [
-            { level: 2, damage: 30, range: 270 },
+            { level: 2, damage: 30, range: 470 },
             { level: 3, damage: 35, fireRate: 1100 },
-            { level: 4, damage: 40, range: 290 },
+            { level: 4, damage: 40, range: 490 },
             { level: 5, damage: 45, fireRate: 1000, special: 'Chain reaction damage' }
         ]
     },
     encryption: { 
         cost: 300, 
         damage: 35, 
-        range: 300, // Increased from 180
+        range: 500, 
         fireRate: 1500, 
         icon: './api/encryption.jpg', 
         projectileColor: '#0000FF',
         maxLevel: 5,
         requiredLevel: 3,
         upgrades: [
-            { level: 2, damage: 40, range: 320 },
+            { level: 2, damage: 40, range: 520 },
             { level: 3, damage: 45, fireRate: 1400 },
-            { level: 4, damage: 50, range: 340 },
+            { level: 4, damage: 50, range: 540 },
             { level: 5, damage: 55, fireRate: 1300, special: 'Slow down threats' }
         ]
     },
     ai: { 
         cost: 450, 
         damage: 50, 
-        range: 350, // Increased from 200
+        range: 550, 
         fireRate: 2000, 
         icon: './api/ai.jpg', 
         projectileColor: '#FFFF00',
         maxLevel: 5,
         requiredLevel: 4,
         upgrades: [
-            { level: 2, damage: 60, range: 370 },
+            { level: 2, damage: 60, range: 570 },
             { level: 3, damage: 70, fireRate: 1800 },
-            { level: 4, damage: 80, range: 390 },
+            { level: 4, damage: 80, range: 590 },
             { level: 5, damage: 90, fireRate: 1600, special: 'Adaptive damage increase' }
         ]
     },
     ids: { 
         cost: 350, 
         damage: 30, 
-        range: 400, // Increased from 220
+        range: 600, 
         fireRate: 1300, 
         icon: './api/ids.jpg', 
         projectileColor: '#800080',
         maxLevel: 5,
         requiredLevel: 5,
         upgrades: [
-            { level: 2, damage: 35, range: 420 },
+            { level: 2, damage: 35, range: 620 },
             { level: 3, damage: 40, fireRate: 1200 },
-            { level: 4, damage: 45, range: 440 },
+            { level: 4, damage: 45, range: 640 },
             { level: 5, damage: 50, fireRate: 1100, special: 'Reveal invisible threats' }
         ]
     },
     soc: { 
         cost: 550, 
         damage: 45, 
-        range: 450, // Increased from 250
+        range: 650, 
         fireRate: 1800, 
         icon: './api/soc.jpg', 
         projectileColor: '#FFA500',
         maxLevel: 5,
         requiredLevel: 6,
         upgrades: [
-            { level: 2, damage: 55, range: 470 },
+            { level: 2, damage: 55, range: 670 },
             { level: 3, damage: 65, fireRate: 1700 },
-            { level: 4, damage: 75, range: 490 },
+            { level: 4, damage: 75, range: 690 },
             { level: 5, damage: 85, fireRate: 1600, special: 'Coordinated attack boost' }
         ]
     },
     honeypot: { 
         cost: 150, 
         damage: 5, 
-        range: 300, // Increased from 150
+        range: 500, 
         fireRate: 800, 
         icon: './api/honeypot.jpg', 
         projectileColor: '#FFD700',
         maxLevel: 5,
         requiredLevel: 7,
         upgrades: [
-            { level: 2, range: 320, special: 'Attract threats in range' },
+            { level: 2, range: 520, special: 'Attract threats in range' },
             { level: 3, damage: 10, fireRate: 700 },
-            { level: 4, range: 340, special: 'Slow threats in range' },
+            { level: 4, range: 540, special: 'Slow threats in range' },
             { level: 5, damage: 15, fireRate: 600, special: 'Confuse threats, making them attack each other' }
         ]
     }
@@ -146,53 +146,53 @@ export const defenseTypes = {
 
 export const TOWER_STATS = {
     firewall: {
-        1: { damage: 10, range: 200, fireRate: 600 },
-        2: { damage: 12, range: 220, fireRate: 600 },
-        3: { damage: 14, range: 240, fireRate: 550 },
-        4: { damage: 16, range: 260, fireRate: 550 },
-        5: { damage: 18, range: 280, fireRate: 500 }
+        1: { damage: 10, range: 400, fireRate: 600 },
+        2: { damage: 12, range: 420, fireRate: 600 },
+        3: { damage: 14, range: 440, fireRate: 550 },
+        4: { damage: 16, range: 460, fireRate: 550 },
+        5: { damage: 18, range: 480, fireRate: 500 }
     },
     antivirus: {
-        1: { damage: 20, range: 250, fireRate: 1300 },
-        2: { damage: 24, range: 270, fireRate: 1300 },
-        3: { damage: 28, range: 290, fireRate: 1200 },
-        4: { damage: 32, range: 310, fireRate: 1200 },
-        5: { damage: 36, range: 330, fireRate: 1100 }
+        1: { damage: 20, range: 450, fireRate: 1300 },
+        2: { damage: 24, range: 470, fireRate: 1300 },
+        3: { damage: 28, range: 490, fireRate: 1200 },
+        4: { damage: 32, range: 510, fireRate: 1200 },
+        5: { damage: 36, range: 530, fireRate: 1100 }
     },
     encryption: { 
-        1: { damage: 30, range: 300, fireRate: 1700 },
-        2: { damage: 34, range: 320, fireRate: 1700 },
-        3: { damage: 38, range: 340, fireRate: 1600 },
-        4: { damage: 42, range: 360, fireRate: 1600 },
-        5: { damage: 46, range: 380, fireRate: 1500 }
+        1: { damage: 30, range: 500, fireRate: 1700 },
+        2: { damage: 34, range: 520, fireRate: 1700 },
+        3: { damage: 38, range: 540, fireRate: 1600 },
+        4: { damage: 42, range: 560, fireRate: 1600 },
+        5: { damage: 46, range: 580, fireRate: 1500 }
     },
     ai: {
-        1: { damage: 40, range: 350, fireRate: 2200 },
-        2: { damage: 46, range: 370, fireRate: 2200 },
-        3: { damage: 52, range: 390, fireRate: 2000 },
-        4: { damage: 58, range: 410, fireRate: 2000 },
-        5: { damage: 64, range: 430, fireRate: 1800 }
+        1: { damage: 40, range: 550, fireRate: 2200 },
+        2: { damage: 46, range: 570, fireRate: 2200 },
+        3: { damage: 52, range: 590, fireRate: 2000 },
+        4: { damage: 58, range: 610, fireRate: 2000 },
+        5: { damage: 64, range: 630, fireRate: 1800 }
     },
     ids: {
-        1: { damage: 24, range: 400, fireRate: 1500 },
-        2: { damage: 28, range: 420, fireRate: 1500 },
-        3: { damage: 32, range: 440, fireRate: 1400 },
-        4: { damage: 36, range: 460, fireRate: 1400 },
-        5: { damage: 40, range: 480, fireRate: 1300 }
+        1: { damage: 24, range: 600, fireRate: 1500 },
+        2: { damage: 28, range: 620, fireRate: 1500 },
+        3: { damage: 32, range: 640, fireRate: 1400 },
+        4: { damage: 36, range: 660, fireRate: 1400 },
+        5: { damage: 40, range: 680, fireRate: 1300 }
     },
     soc: {
-        1: { damage: 36, range: 450, fireRate: 2000 },
-        2: { damage: 42, range: 470, fireRate: 2000 },
-        3: { damage: 48, range: 490, fireRate: 1900 },
-        4: { damage: 54, range: 510, fireRate: 1900 },
-        5: { damage: 60, range: 530, fireRate: 1800 }
+        1: { damage: 36, range: 650, fireRate: 2000 },
+        2: { damage: 42, range: 670, fireRate: 2000 },
+        3: { damage: 48, range: 690, fireRate: 1900 },
+        4: { damage: 54, range: 710, fireRate: 1900 },
+        5: { damage: 60, range: 730, fireRate: 1800 }
     },
     honeypot: {
-        1: { damage: 3, range: 300, fireRate: 900 },
-        2: { damage: 3, range: 320, fireRate: 900 },
-        3: { damage: 6, range: 340, fireRate: 800 },
-        4: { damage: 6, range: 360, fireRate: 800 },
-        5: { damage: 9, range: 380, fireRate: 700 }
+        1: { damage: 3, range: 500, fireRate: 900 },
+        2: { damage: 3, range: 520, fireRate: 900 },
+        3: { damage: 6, range: 540, fireRate: 800 },
+        4: { damage: 6, range: 560, fireRate: 800 },
+        5: { damage: 9, range: 580, fireRate: 700 }
     }
 };
 
