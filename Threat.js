@@ -45,8 +45,9 @@ export class Threat {
     }
 
     takeDamage(damage) {
+        console.log(`${this.type} taking ${damage} damage. Current health: ${this.currentHealth}/${this.maxHealth}`);
         this.currentHealth = Math.max(0, this.currentHealth - damage);
-        console.log(`${this.type} took ${damage} damage. Current health: ${this.currentHealth}/${this.maxHealth}`);
+        console.log(`${this.type} after damage. New health: ${this.currentHealth}/${this.maxHealth}`);
         
         if (this.currentHealth <= 0) {
             console.log(`${this.type} destroyed!`);
