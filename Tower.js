@@ -22,6 +22,7 @@ export class Tower {
         this.stats = TOWER_STATS[type][level];
         this.game = game;
         this.lastFiredTime = 0;
+        console.log(`Tower created: ${type} at (${x}, ${y})`); // Debug log
     }
 
     update(timestamp, threats) {
@@ -187,11 +188,13 @@ export class Tower {
     }
 
     draw(ctx) {
-        ctx.drawImage(this.image, this.x, this.y, 40, 40);
-        ctx.beginPath();
-        ctx.arc(this.x + 20, this.y + 20, this.range, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.stroke();
+        if (this.image.complete) {
+            ctx.drawImage(this.image, this.x, this.y, this.game.gridManager.cellSize, this.game.gridManager.cellSize);
+        } else {
+            ctx.fillStyle = 'gray';
+            ctx.fillRect(this.x, this.y, this.game.gridManager.cellSize, this.game.gridManager.cellSize);
+        }
+        console.log(`Tower drawn at (${this.x}, ${this.y})`); // Debug log
     }
 
     levelUp() {
