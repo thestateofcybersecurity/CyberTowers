@@ -63,10 +63,10 @@ export class Threat {
             this.game.systemIntegrity -= this.damage;
             this.game.threats = this.game.threats.filter(threat => threat !== this);
             if (this.game.systemIntegrity <= 0) {
-                this.game.setState(this.game.GAME_STATES.GAME_OVER);
+                this.game.setState(GAME_STATES.GAME_OVER);
             }
         } else {
-            console.error('Game instance not set for this threat');
+            console.error("Game instance not set for this threat");
         }
         return true;
     }
