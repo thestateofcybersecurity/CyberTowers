@@ -5,8 +5,8 @@ export class Threat {
         this.type = type;
         this.x = x;
         this.y = y;
-        this.health = health;
         this.maxHealth = health;
+        this.currentHealth = health;
         this.speed = speed;
         this.damage = damage;
         this.reward = reward;
@@ -15,7 +15,7 @@ export class Threat {
         this.evolves = type === 'apt';
         this.revealed = false;
         this.image = new Image();
-        this.image.src = `./api/${type}.jpg`; // Ensure this path is correct
+        this.image.src = `./api/${type}.jpg`;
         this.imageLoaded = false;
         this.image.onload = () => {
             this.imageLoaded = true;
@@ -33,25 +33,28 @@ export class Threat {
 
         if (distance < this.speed) {
             this.pathIndex++;
-            return this.pathIndex >= path.length;
+            if (this.pathIndex >= path.length) {
+                return true; // Reached the end
+            }
         } else {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
-            return false;
         }
-        if (this.evolves && Math.random() < 0.001) { // 0.1% chance to evolve each move
+
+        if (this.evolves && Math.random() < 0.001) {
             this.evolve();
         }
 
-        return reachedEnd;
+        return false; // Not reached the end
     }
 
     takeDamage(amount) {
         if (this.invisible && !this.revealed) {
-            amount *= 0.5; // Invisible threats take half damage unless revealed
+            amount *= 0.5;
         }
-        this.health -= amount;
-        if (this.health <= 0) {
+        this.currentHealth -= amount;
+        if (this.currentHealth <= 0) {
+            this.currentHealth = 0;
             return true; // Threat is destroyed
         }
         return false;
