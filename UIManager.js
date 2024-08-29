@@ -81,7 +81,7 @@ export class UIManager {
                     this.showTowerUpgradeMenu(clickedTower);
                 }
             });
-        }
+        )}
     }
 
     createMenuButtons() {
