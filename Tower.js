@@ -21,6 +21,7 @@ export class Tower {
         this.image.src = towerData.icon;
         this.stats = TOWER_STATS[type][level];
         this.game = game;
+        this.lastFiredTime = 0;
     }
 
     update(timestamp, threats) {
