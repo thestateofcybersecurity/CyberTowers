@@ -54,11 +54,13 @@ export class Tower {
     }
 
     findTarget(threats) {
-        console.log(`Searching for target among ${threats.length} threats`);
+        console.log(`Tower at (${this.x}, ${this.y}) searching for target. Range: ${this.range}`);
         return threats.find(threat => {
-            const distance = Math.hypot(threat.x - this.x, threat.y - this.y);
+            const dx = threat.x - this.x;
+            const dy = threat.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
             const inRange = distance <= this.range;
-            console.log(`Threat ${threat.type} at distance ${distance}, in range: ${inRange}`);
+            console.log(`Threat ${threat.type} at (${threat.x}, ${threat.y}). Distance: ${distance.toFixed(2)}, In range: ${inRange}`);
             return inRange;
         });
     }
