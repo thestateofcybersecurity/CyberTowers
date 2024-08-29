@@ -13,6 +13,16 @@ export class UIManager {
         this.createErrorMessageElement();
     }
 
+    draw(ctx) {
+        // Draw UI elements here
+        // For example:
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Resources: ${this.game.resources}`, 10, 30);
+        ctx.fillText(`Wave: ${this.game.currentWave}`, 10, 60);
+        ctx.fillText(`System Integrity: ${this.game.systemIntegrity}`, 10, 90);
+    }
+
     createMenuButtons() {
         const menuContainer = document.getElementById('menuContainer');
         if (!menuContainer) {
