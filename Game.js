@@ -548,12 +548,11 @@ export class Game {
     
         const newTower = new Tower(type, cell.x, cell.y, 1, this);
         this.towers.push(newTower);
-        console.log(`Tower placed at (${cell.x}, ${cell.y}), range: ${newTower.range}`);
         this.resources -= towerCost;
         cell.occupied = true;
         this.gridManager.updateGrid(cell.x, cell.y, true);
         this.uiManager.updateUI();
-        console.log(`Tower placed at (${cell.x}, ${cell.y})`);
+        console.log(`Tower placed at (${cell.x}, ${cell.y}). Type: ${type}, Range: ${newTower.range}`);
     }
     
     canAffordTower(type) {
@@ -601,6 +600,8 @@ export class Game {
         // Draw path
         this.drawPath();
 
+        this.drawTowerRanges();
+
         // Draw towers
         this.towers.forEach(tower => tower.draw(this.ctx));
 
@@ -612,6 +613,17 @@ export class Game {
 
         // Draw UI
         this.uiManager.draw(this.ctx);
+    }
+
+    drawTowerRanges() {
+        this.ctx.globalAlpha = 0.2;
+        this.towers.forEach(tower => {
+            this.ctx.beginPath();
+            this.ctx.arc(tower.x + this.gridManager.cellSize / 2, tower.y + this.gridManager.cellSize / 2, tower.range, 0, Math.PI * 2);
+            this.ctx.fillStyle = 'yellow';
+            this.ctx.fill();
+        });
+        this.ctx.globalAlpha = 1;
     }
 
     checkGameOver() {
