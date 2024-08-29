@@ -84,6 +84,33 @@ export class UIManager {
         }
     }
 
+    createMenuButtons() {
+        const menuContainer = document.getElementById('menuContainer');
+        
+        const startButton = document.createElement('button');
+        startButton.textContent = 'Start New Game';
+        startButton.addEventListener('click', () => this.game.startGame());
+        
+        const loadButton = document.createElement('button');
+        loadButton.textContent = 'Load Game';
+        loadButton.addEventListener('click', () => {
+            if (this.game.loadGame()) {
+                this.game.setState(GAME_STATES.PLAYING);
+                this.hideMenu();
+            } else {
+                alert('No saved game found!');
+            }
+        });
+        
+        const optionsButton = document.createElement('button');
+        optionsButton.textContent = 'Options';
+        optionsButton.addEventListener('click', () => this.game.showOptions());
+        
+        menuContainer.appendChild(startButton);
+        menuContainer.appendChild(loadButton);
+        menuContainer.appendChild(optionsButton);
+    }
+                                                          
     setupEventListeners() {
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
