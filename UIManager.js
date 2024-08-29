@@ -236,18 +236,38 @@ export class UIManager {
     }
 
     loadGame() {
-        if (this.game.loadGame()) {
-            this.game.setState(GAME_STATES.PLAYING);
-            this.hideMenu();
-            return true;
-        } else {
-            this.showErrorMessage('No saved game found!');
-            return false;
+        try {
+            const savedState = localStorage.getItem('gameState');
+            if (savedState) {
+                const gameState = JSON.parse(savedState);
+                this.game.systemIntegrity = gameState.systemIntegrity;
+                this.game.resources = gameState.resources;
+                this.game.currentWave = gameState.currentWave;
+                this.game.playerLevel = gameState.playerLevel;
+                this.game.playerExperience = gameState.playerExperience;
+
+                this.game.towers = gameState.towers.map(towerData => 
+                    new Tower(towerData.type, towerData.x, towerData.y, towerData.level, this.game)
+                );
+                this.game.towers.forEach(tower => {
+                    tower.experience = gameState.towers.find(t => t.x === tower.x && t.y === tower.y).experience;
+                });
+
+                this.game.highScore = gameState.highScore;
+
+                this.updateUI();
+                return true;
+            }
+        } catch (error) {
+            console.error('Error loading game:', error);
+            this.showErrorMessage('Failed to load the game. Starting a new game.');
         }
+        return false;
     }
 
     showErrorMessage(message) {
         const errorDiv = document.createElement('div');
+        errorDiv.id = 'errorMessage';
         errorDiv.textContent = message;
         errorDiv.style.position = 'absolute';
         errorDiv.style.top = '10px';
