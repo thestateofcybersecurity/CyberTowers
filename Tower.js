@@ -49,9 +49,19 @@ export class Tower {
     }
 
     fire(target) {
-        const projectile = new Projectile(this, target);
+        const projectile = new Projectile(
+            this.x + this.game.gridManager.cellSize / 2,
+            this.y + this.game.gridManager.cellSize / 2,
+            target,
+            this.damage,
+            this.projectileSpeed,
+            this.type,
+            this.level,
+            this
+        );
         this.game.projectiles.push(projectile);
         this.lastFiredTime = performance.now();
+        console.log(`Tower fired projectile with damage: ${this.damage}`);
         return projectile;
     }
 
