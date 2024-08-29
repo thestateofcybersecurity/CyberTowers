@@ -38,18 +38,22 @@ export class Tower {
         console.log(`Tower created: ${type} at (${x}, ${y})`); // Debug log
     }
 
-    update(timestamp, threats) {
+    update(timestamp) {
         console.log(`Updating tower at (${this.x}, ${this.y}), type: ${this.type}`);
-        if (timestamp - this.lastFired >= this.fireRate) {
-            const target = this.findTarget(threats);
+        const currentTime = timestamp || performance.now();
+        const timeSinceLastFire = currentTime - this.lastFiredTime;
+        console.log(`Time since last fire: ${timeSinceLastFire.toFixed(2)}ms, Fire rate: ${this.fireRate}ms`);
+
+        if (timeSinceLastFire >= this.fireRate) {
+            const target = this.findTarget(this.game.threats);
             if (target) {
-                console.log(`Tower found target: ${target.type} at (${target.x}, ${target.y})`);
-                this.fire(target);
+                console.log(`Tower found target: ${target.type} at (${target.x.toFixed(2)}, ${target.y.toFixed(2)})`);
+                this.fire(target, currentTime);
             } else {
                 console.log('No target found for tower');
             }
         } else {
-            console.log(`Tower cooldown: ${this.fireRate - (timestamp - this.lastFired)}ms remaining`);
+            console.log(`Tower cooldown: ${(this.fireRate - timeSinceLastFire).toFixed(2)}ms remaining`);
         }
     }
 
@@ -79,7 +83,7 @@ export class Tower {
         return timestamp - this.lastFired >= this.fireRate;
     }
 
-    fire(target) {
+    fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
         const projectile = new Projectile(
             this.x + this.game.gridManager.cellSize / 2,
@@ -92,8 +96,8 @@ export class Tower {
             this
         );
         this.game.projectiles.push(projectile);
-        this.lastFired = performance.now();
-        console.log(`Projectile created with damage: ${this.damage}`);
+        this.lastFiredTime = currentTime;
+        console.log(`Projectile created with damage: ${this.damage}. Total projectiles: ${this.game.projectiles.length}`);
     }
 
     levelUp() {
