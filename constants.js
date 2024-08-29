@@ -37,6 +37,7 @@ export const defenseTypes = {
         icon: './api/firewall.jpg', 
         projectileColor: '#FF0000',
         maxLevel: 5,
+        requiredLevel: 1,
         upgrades: [
             { level: 2, damage: 18, range: 130 },
             { level: 3, damage: 22, fireRate: 450 },
@@ -52,6 +53,7 @@ export const defenseTypes = {
         icon: './api/antivirus.jpg', 
         projectileColor: '#00FF00',
         maxLevel: 5,
+        requiredLevel: 2,
         upgrades: [
             { level: 2, damage: 30, range: 160 },
             { level: 3, damage: 35, fireRate: 1100 },
@@ -67,6 +69,7 @@ export const defenseTypes = {
         icon: './api/encryption.jpg', 
         projectileColor: '#0000FF',
         maxLevel: 5,
+        requiredLevel: 3,
         upgrades: [
             { level: 2, damage: 40, range: 190 },
             { level: 3, damage: 45, fireRate: 1400 },
@@ -82,6 +85,7 @@ export const defenseTypes = {
         icon: './api/ai.jpg', 
         projectileColor: '#FFFF00',
         maxLevel: 5,
+        requiredLevel: 4,
         upgrades: [
             { level: 2, damage: 60, range: 220 },
             { level: 3, damage: 70, fireRate: 1800 },
@@ -97,6 +101,7 @@ export const defenseTypes = {
         icon: './api/ids.jpg', 
         projectileColor: '#800080',
         maxLevel: 5,
+        requiredLevel: 5,
         upgrades: [
             { level: 2, damage: 35, range: 240 },
             { level: 3, damage: 40, fireRate: 1200 },
@@ -112,6 +117,7 @@ export const defenseTypes = {
         icon: './api/soc.jpg', 
         projectileColor: '#FFA500',
         maxLevel: 5,
+        requiredLevel: 6,
         upgrades: [
             { level: 2, damage: 55, range: 270 },
             { level: 3, damage: 65, fireRate: 1700 },
@@ -127,6 +133,7 @@ export const defenseTypes = {
         icon: './api/honeypot.jpg', 
         projectileColor: '#FFD700',
         maxLevel: 5,
+        requiredLevel: 7,
         upgrades: [
             { level: 2, range: 170, special: 'Attract threats in range' },
             { level: 3, damage: 10, fireRate: 700 },
