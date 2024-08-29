@@ -1,4 +1,3 @@
-// Tower.js
 import { defenseTypes, MAX_TOWER_LEVEL, TOWER_STATS } from './constants.js';
 import { Projectile } from './Projectile.js';
 
@@ -8,32 +7,28 @@ export class Tower {
         this.type = type;
         this.x = x;
         this.y = y;
-        this.position = position;
-        this.level = 1;
-        this.damage = type.damage;
-        this.range = type.range;
-        this.fireRate = type.fireRate;
-        this.projectileSpeed = type.projectileSpeed || 5;
-        this.projectileColor = type.projectileColor || '#FFFFFF';
+        this.level = level;
+        this.damage = towerData.damage;
+        this.range = towerData.range;
+        this.fireRate = towerData.fireRate;
+        this.projectileSpeed = towerData.projectileSpeed || 5;
+        this.projectileColor = towerData.projectileColor || '#FFFFFF';
         this.specialAbilities = {};
         this.cost = towerData.cost;
         this.experience = 0;
         this.lastFired = 0;
         this.image = new Image();
         this.image.src = towerData.icon;
-        this.level = level;
         this.stats = TOWER_STATS[type][level];
         this.game = game;
     }
 
     update(timestamp, threats) {
-        if (this.level < MAX_TOWER_LEVEL) {
-            this.level++;
-            this.damage += this.type.upgrades[this.level - 1].damage || 0;
-            this.range += this.type.upgrades[this.level - 1].range || 0;
-            this.fireRate = this.type.upgrades[this.level - 1].fireRate || this.fireRate;
-            if (this.type.upgrades[this.level - 1].special) {
-                this.applySpecialAbility(this.type.upgrades[this.level - 1].special);
+        if (timestamp - this.lastFired >= this.fireRate) {
+            const target = this.findTarget(threats);
+            if (target) {
+                this.fire(target);
+                this.lastFired = timestamp;
             }
         }
     }
@@ -45,11 +40,28 @@ export class Tower {
         });
     }
 
-    getUpgradeCost() {
-        if (this.level >= MAX_TOWER_LEVEL) {
-            return Infinity; // Cannot upgrade beyond max level
+    fire(target) {
+        const projectile = new Projectile(this, target);
+        this.game.projectiles.push(projectile);
+    }
+
+    levelUp() {
+        if (this.level < MAX_TOWER_LEVEL) {
+            this.level++;
+            this.updateStats();
+            if (this.level === MAX_TOWER_LEVEL) {
+                this.applySpecialAbility();
+            }
         }
-        return Math.floor(this.cost * Math.pow(1.5, this.level)); // 50% increase per level
+    }
+
+    updateStats() {
+        if (TOWER_STATS[this.type] && TOWER_STATS[this.type][this.level]) {
+            this.stats = TOWER_STATS[this.type][this.level];
+            this.damage = this.stats.damage;
+            this.range = this.stats.range;
+            this.fireRate = this.stats.fireRate;
+        }
     }
 
     applySpecialAbility(target) {
@@ -148,14 +160,11 @@ export class Tower {
         this.game.projectiles.push(projectile);
     }
 
-    draw(ctx) {
-        ctx.drawImage(this.image, this.x, this.y, 40, 40); // Assuming 40x40 size for towers
-        
-        // Optionally, draw range circle
-        ctx.beginPath();
-        ctx.arc(this.x + 20, this.y + 20, this.range, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.stroke();
+    getUpgradeCost() {
+        if (this.level >= MAX_TOWER_LEVEL) {
+            return Infinity;
+        }
+        return Math.floor(this.cost * Math.pow(1.5, this.level));
     }
 
     addExperience(amount) {
@@ -168,6 +177,14 @@ export class Tower {
         if (this.experience >= expForNextLevel && this.level < MAX_TOWER_LEVEL) {
             this.levelUp();
         }
+    }
+
+    draw(ctx) {
+        ctx.drawImage(this.image, this.x, this.y, 40, 40);
+        ctx.beginPath();
+        ctx.arc(this.x + 20, this.y + 20, this.range, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.stroke();
     }
 
     levelUp() {
