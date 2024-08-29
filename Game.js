@@ -222,6 +222,7 @@ export class Game {
         }
         this.uiManager.updatePauseButton();
     }
+    
     update(timestamp) {
         if (this.state !== GAME_STATES.PLAYING) return;
 
@@ -252,7 +253,7 @@ export class Game {
 
         requestAnimationFrame(this.boundUpdate);
     }
-
+    
     drawProjectiles() {
         this.projectiles.forEach(projectile => {
             if (projectile && typeof projectile.draw === 'function') {
@@ -463,15 +464,17 @@ export class Game {
 
     placeTower(type, x, y) {
         const cell = this.gridManager.getGridCell(x, y);
-        if (cell && !cell.occupied && this.canAffordTower(type)) {
+        if (cell && !cell.occupied && this.canAffordTower(type) && this.isDefenseUnlocked(type)) {
             const newTower = new Tower(type, cell.x, cell.y);
             this.towers.push(newTower);
             this.resources -= newTower.cost;
             cell.occupied = true;
             this.uiManager.updateUI();
+        } else if (!this.isDefenseUnlocked(type)) {
+            this.uiManager.showErrorMessage("This defense type is not unlocked yet!");
         }
     }
-
+    
     canAffordTower(type) {
         return this.resources >= Tower.getCost(type);
     }
