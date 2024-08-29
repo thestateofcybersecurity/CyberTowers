@@ -60,43 +60,23 @@ export class Tower {
         }
     }
 
+    findTarget(threats) {
+        console.log(`Tower at (${this.x}, ${this.y}) searching for target. Range: ${this.range}`);
+        return threats.find(threat => {
+            const dx = threat.x - (this.x + this.game.gridManager.cellSize / 2);
+            const dy = threat.y - (this.y + this.game.gridManager.cellSize / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const inRange = distance <= this.range;
+            console.log(`Threat ${threat.type} at (${threat.x.toFixed(2)}, ${threat.y.toFixed(2)}). Distance: ${distance.toFixed(2)}, In range: ${inRange}`);
+            return inRange;
+        });
+    }
+
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
         
-        // Ensure these are numbers
         const projectileX = Number(this.x) + (Number(this.game.gridManager.cellSize) / 2);
         const projectileY = Number(this.y) + (Number(this.game.gridManager.cellSize) / 2);
-        
-        console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
-        
-        const projectile = new Projectile(
-            projectileX,
-            projectileY,
-            target,
-            this.damage,
-            this.projectileSpeed || 5, // Provide a default speed if it's not set
-            this.type,
-            this.level,
-            this
-        );
-        
-        if (!projectile.toRemove) {
-            this.game.projectiles.push(projectile);
-            this.lastFiredTime = currentTime;
-            console.log(`Projectile created with damage: ${this.damage}. Total projectiles: ${this.game.projectiles.length}`);
-        } else {
-            console.error('Failed to create valid projectile');
-        }
-    }
-
-    canFire(timestamp) {
-        return timestamp - this.lastFired >= this.fireRate;
-    }
-
-    fire(target, currentTime) {
-        console.log(`Tower firing at ${target.type}`);
-        const projectileX = this.x + (this.game.gridManager.cellSize / 2);
-        const projectileY = this.y + (this.game.gridManager.cellSize / 2);
         
         console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
         
@@ -118,6 +98,10 @@ export class Tower {
         } else {
             console.error('Failed to create valid projectile');
         }
+    }
+
+    canFire(timestamp) {
+        return timestamp - this.lastFired >= this.fireRate;
     }
 
     levelUp() {
@@ -255,17 +239,11 @@ export class Tower {
     }
 
     draw(ctx) {
-        const cellSize = this.game.gridManager.cellSize;
         if (this.image.complete) {
-            ctx.drawImage(this.image, this.x, this.y, cellSize, cellSize);
+            ctx.drawImage(this.image, this.x, this.y, this.game.gridManager.cellSize, this.game.gridManager.cellSize);
         } else {
             ctx.fillStyle = 'gray';
-            ctx.fillRect(this.x, this.y, cellSize, cellSize);
-        }
-        
-        if (!this.hasLoggedDraw) {
-            console.log(`Tower drawn at (${this.x}, ${this.y})`);
-            this.hasLoggedDraw = true;
+            ctx.fillRect(this.x, this.y, this.game.gridManager.cellSize, this.game.gridManager.cellSize);
         }
     }
 
