@@ -552,8 +552,8 @@ export class Game {
             return;
         }
     
-        const towerX = cell.x + this.gridManager.cellSize / 2;
-        const towerY = cell.y + this.gridManager.cellSize / 2;
+        const towerX = cell.x + this.gridManager.cellSize;
+        const towerY = cell.y + this.gridManager.cellSize;
         const newTower = new Tower(type, towerX, towerY, 1, this);
         this.towers.push(newTower);
         this.resources -= towerCost;
