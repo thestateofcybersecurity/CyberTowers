@@ -16,6 +16,7 @@ export const STARTING_RESOURCES = 500;
 export const STARTING_SYSTEM_INTEGRITY = 100;
 
 export const MAX_TOWER_LEVEL = 5;
+export const GRID_SIZE = 40;
 
 export const threatTypes = {
     virus: { health: 45, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
@@ -194,8 +195,6 @@ export const TOWER_STATS = {
         5: { damage: 15, range: 190, fireRate: 600 }
     }
 };
-
-export const GRID_SIZE = 40;
 
 export const PATH = [
     {x: 0, y: 300},
