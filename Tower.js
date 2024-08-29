@@ -20,9 +20,10 @@ export class Tower {
         
         // Center the tower in its grid cell
         const cellSize = this.game.gridManager.cellSize;
-        this._x = x + cellSize / 2;
-        this._y = y + cellSize / 2;
-
+        // Ensure the tower is placed at the center of the cell
+        this._x = Math.floor(x / cellSize) * cellSize + cellSize / 2;
+        this._y = Math.floor(y / cellSize) * cellSize + cellSize / 2;
+    
         if (isNaN(this._x) || isNaN(this._y)) {
             console.error(`Invalid tower coordinates: x=${x}, y=${y}`);
             return;
@@ -275,11 +276,14 @@ export class Tower {
 
     draw(ctx) {
         const cellSize = this.game.gridManager.cellSize;
+        const drawX = this.x - cellSize / 2;  // Calculate the top-left corner for drawing
+        const drawY = this.y - cellSize / 2;
+    
         if (this.image.complete) {
-            ctx.drawImage(this.image, this.x, this.y, cellSize, cellSize);
+            ctx.drawImage(this.image, drawX, drawY, cellSize, cellSize);
         } else {
             ctx.fillStyle = 'gray';
-            ctx.fillRect(this.x, this.y, cellSize, cellSize);
+            ctx.fillRect(drawX, drawY, cellSize, cellSize);
         }
     
         // Draw tower level
@@ -287,7 +291,7 @@ export class Tower {
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.level.toString(), this.x + cellSize / 2, this.y + cellSize / 2);
+        ctx.fillText(this.level.toString(), this.x, this.y);
     }
 
     levelUp() {
