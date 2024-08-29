@@ -1,4 +1,4 @@
-import { THREAT_EVOLUTION_FACTOR } from './constants.js';
+import { GAME_STATES } from './constants.js';
 
 export class Threat {
     constructor(type, x, y, health, speed, damage, reward, game) {
