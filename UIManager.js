@@ -248,6 +248,22 @@ export class UIManager {
         this.game.restartGame();
     }
 
+    showCountdown(remainingTime) {
+        const seconds = Math.ceil(remainingTime / 1000);
+        const countdownElement = document.getElementById('countdown');
+        if (countdownElement) {
+            countdownElement.textContent = `First wave starts in: ${seconds}s`;
+            countdownElement.style.display = 'block';
+        }
+    }
+
+    hideCountdown() {
+        const countdownElement = document.getElementById('countdown');
+        if (countdownElement) {
+            countdownElement.style.display = 'none';
+        }
+    }
+
     updatePauseButton() {
         const pauseButton = document.getElementById('pauseButton');
         if (pauseButton) {
