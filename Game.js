@@ -1,4 +1,3 @@
-// Game.js
 import { Threat } from './Threat.js';
 import { Tower } from './Tower.js';
 import { Projectile } from './Projectile.js';
@@ -40,7 +39,7 @@ export class Game {
         this.selectedTowerType = 'firewall';
         this.uiManager = new UIManager(this);
         this.assetLoader = new AssetLoader();
-        this.gridManager = new GridManager(CANVAS_WIDTH, CANVAS_HEIGHT);
+        this.gridManager = new GridManager(this);
         this.boundUpdate = this.update.bind(this);
         this.highScore = localStorage.getItem('highScore') || 0;
         this.waveDuration = WAVE_DURATION;
@@ -49,13 +48,16 @@ export class Game {
         this.autosaveInterval = null;
         this.unlockedDefenses = ['firewall'];
         this.nextWaveInfo = null;
+        this.imageCache = {};
     }
+
     async initialize() {
         try {
             await this.assetLoader.loadAssets();
             this.gridManager.initializeGrid();
             this.uiManager.initializeUI();
             this.setState(GAME_STATES.MENU);
+            this.initializeEventListeners();
         } catch (error) {
             console.error("Failed to load game resources:", error);
             this.uiManager.showErrorMessage("Failed to load game resources. Please refresh the page.");
@@ -87,15 +89,15 @@ export class Game {
         const savedState = localStorage.getItem('gameState');
         if (savedState) {
             const gameState = JSON.parse(savedState);
-            
+
             this.systemIntegrity = gameState.systemIntegrity;
             this.resources = gameState.resources;
             this.currentWave = gameState.currentWave;
             this.playerLevel = gameState.playerLevel;
             this.playerExperience = gameState.playerExperience;
-            
+
             this.towers = gameState.towers.map(towerData => 
-                new Tower(towerData.type, towerData.x, towerData.y, towerData.level)
+                new Tower(towerData.type, towerData.x, towerData.y, towerData.level, this)
             );
             this.towers.forEach(tower => {
                 tower.experience = gameState.towers.find(t => t.x === tower.x && t.y === tower.y).experience;
@@ -108,26 +110,6 @@ export class Game {
             return true;
         }
         return false;
-    }
-
-    // Add autosave functionality
-    autosave() {
-        setInterval(() => this.saveGame(), 60000); // Autosave every minute
-    }
-
-    async start() {
-        try {
-            await this.assetLoader.loadAssets();
-            const loaded = this.loadGame();
-            if (!loaded) {
-                this.resetGameLogic();
-            }
-            this.setState(GAME_STATES.PLAYING);
-            requestAnimationFrame(this.boundUpdate);
-        } catch (error) {
-            console.error("Failed to start game:", error);
-            this.uiManager.showErrorMessage("Failed to start game. Please try again.");
-        }
     }
 
     startAutosave() {
@@ -161,7 +143,6 @@ export class Game {
         }
     }
 
-
     setState(newState) {
         this.state = newState;
         this.uiManager.updateUI();
@@ -171,6 +152,7 @@ export class Game {
             this.uiManager.showMenu();
         } else if (newState === GAME_STATES.GAME_OVER) {
             this.stopAutosave();
+            this.uiManager.showGameOver();
         }
     }
 
@@ -226,7 +208,7 @@ export class Game {
         }
         this.uiManager.updatePauseButton();
     }
-    
+
     update(timestamp) {
         if (this.state !== GAME_STATES.PLAYING) return;
 
@@ -257,7 +239,7 @@ export class Game {
 
         requestAnimationFrame(this.boundUpdate);
     }
-    
+
     drawProjectiles() {
         this.projectiles.forEach(projectile => {
             if (projectile && typeof projectile.draw === 'function') {
@@ -294,29 +276,31 @@ export class Game {
             return true;
         });
     }
-    
+
     updateTowers(timestamp) {
         this.towers.forEach(tower => {
-            const newProjectile = tower.update(timestamp, this.threats);
-            if (newProjectile) {
-                this.projectiles.push(newProjectile);
+            const target = tower.findTarget(this.threats);
+            if (target && tower.canFire(timestamp)) {
+                const projectile = tower.fire(target);
+                if (projectile) {
+                    this.projectiles.push(projectile);
+                }
             }
         });
     }
-        
-    // Update the updateProjectiles method:
+
     updateProjectiles(timestamp) {
-        this.projectiles = this.projectiles.filter(projectile => {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const projectile = this.projectiles[i];
             projectile.move();
             const hitThreat = projectile.checkCollision(this.threats);
             if (hitThreat) {
                 this.handleProjectileImpact(projectile, hitThreat);
-                return false;
+                this.projectiles.splice(i, 1);
             }
-            return true;
-        });
+        }
     }
-    
+
     addVisualEffect(type, x, y) {
         switch (type) {
             case 'explosion':
@@ -381,7 +365,7 @@ export class Game {
 
     addSystemDamageEffect() {
         let alpha = 0.5;
-        
+
         const animate = () => {
             this.ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -395,10 +379,10 @@ export class Game {
 
         animate();
     }
-    
+
     handleProjectileImpact(projectile, threat) {
         if (threat.invisible && !threat.revealed) {
-            if (projectile.tower.type === 'ids' && projectile.tower.level === 5) {
+            if (projectile.towerType === 'ids' && projectile.towerLevel === 5) {
                 threat.reveal();
             }
         }
@@ -421,7 +405,7 @@ export class Game {
         this.currentWave++;
         this.isWaveActive = true;
         this.waveTimer = performance.now();
-        
+
         const waveMultiplier = 1 + (this.currentWave - 1) * 0.1; // 10% increase per wave
         const threatsPerWave = Math.min(this.currentWave * 2, 50); // Cap at 50 threats per wave
 
@@ -469,7 +453,7 @@ export class Game {
     placeTower(type, x, y) {
         const cell = this.gridManager.getGridCell(x, y);
         if (cell && !cell.occupied && this.canAffordTower(type) && this.isDefenseUnlocked(type)) {
-            const newTower = new Tower(type, cell.x, cell.y);
+            const newTower = new Tower(type, cell.x, cell.y, 1, this);
             this.towers.push(newTower);
             this.resources -= newTower.cost;
             cell.occupied = true;
