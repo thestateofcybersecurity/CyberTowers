@@ -10,6 +10,7 @@ export class UIManager {
         this.createMenuButtons();
         this.createTowerButtons();
         this.setupEventListeners();
+        this.createErrorMessageElement();
     }
 
     createMenuButtons() {
@@ -40,6 +41,10 @@ export class UIManager {
             button.textContent = towerType;
             button.classList.add('towerButton');
             button.dataset.tower = towerType;
+            button.addEventListener('click', () => {
+                this.game.selectedTowerType = towerType;
+                this.updateTowerSelection();
+            });
             towerSelection.appendChild(button);
         });
     }
@@ -217,20 +222,28 @@ export class UIManager {
         }
     }
 
+    createErrorMessageElement() {
+        const errorMessage = document.createElement('div');
+        errorMessage.id = 'errorMessage';
+        errorMessage.style.display = 'none';
+        errorMessage.style.position = 'absolute';
+        errorMessage.style.top = '10px';
+        errorMessage.style.left = '50%';
+        errorMessage.style.transform = 'translateX(-50%)';
+        errorMessage.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+        errorMessage.style.color = 'white';
+        errorMessage.style.padding = '10px';
+        errorMessage.style.borderRadius = '5px';
+        document.body.appendChild(errorMessage);
+    }
+
     showErrorMessage(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'errorMessage';
-        errorDiv.textContent = message;
-        errorDiv.style.position = 'absolute';
-        errorDiv.style.top = '10px';
-        errorDiv.style.left = '50%';
-        errorDiv.style.transform = 'translateX(-50%)';
-        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
-        errorDiv.style.color = 'white';
-        errorDiv.style.padding = '10px';
-        errorDiv.style.borderRadius = '5px';
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        setTimeout(() => {
+            errorMessage.style.display = 'none';
+        }, 3000);
     }
 
     showLevelUpMessage(level) {
