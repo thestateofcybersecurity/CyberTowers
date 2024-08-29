@@ -613,3 +613,4 @@ export class Game {
     addEffect(x, y, type) {
         this.effects.push({x, y, type, frame: 0});
     }
+}
