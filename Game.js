@@ -57,7 +57,6 @@ export class Game {
             this.gridManager.initializeGrid();
             this.uiManager.initializeUI();
             this.setState(GAME_STATES.MENU);
-            this.initializeEventListeners();
         } catch (error) {
             console.error("Failed to load game resources:", error);
             this.uiManager.showErrorMessage("Failed to load game resources. Please refresh the page.");
