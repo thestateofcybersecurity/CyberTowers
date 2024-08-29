@@ -14,8 +14,9 @@ export class Tower {
     }
     constructor(type, x, y, level, game) {
         this.type = type;
-        this.x = Number(x);
-        this.y = Number(y);
+        this._x = 0;
+        this._y = 0;
+        this.setPosition(x, y);
         this.level = Number(level);
         this.game = game;
     
@@ -42,7 +43,7 @@ export class Tower {
         this.image = new Image();
         this.image.src = towerData.icon;
     
-        console.log(`Tower created: ${type} at (${this.x}, ${this.y})`);
+        console.log(`Tower created: ${type} at (${this._x}, ${this._y})`);
         console.log(`Tower properties: damage=${this.damage}, range=${this.range}, fireRate=${this.fireRate}, projectileSpeed=${this.projectileSpeed}`);
     }
 
@@ -226,9 +227,54 @@ export class Tower {
         }
     }
 
-    fire(target) {
-        const projectile = new Projectile(this, target);
-        this.game.projectiles.push(projectile);
+    setPosition(x, y) {
+        const newX = Number(x);
+        const newY = Number(y);
+        if (isNaN(newX) || isNaN(newY)) {
+            console.error(`Invalid tower coordinates: x=${x}, y=${y}`);
+            return;
+        }
+        this._x = newX;
+        this._y = newY;
+    }
+
+    get x() {
+        return this._x;
+    }
+
+    get y() {
+        return this._y;
+    }
+    
+    fire(target, currentTime) {
+        console.log(`Tower firing at ${target.type}`);
+
+        console.log(`Tower position: (${this._x}, ${this._y})`);
+        console.log(`Projectile start position: (${this._x}, ${this._y})`);
+
+        if (isNaN(this._x) || isNaN(this._y)) {
+            console.error(`Invalid tower coordinates: x=${this._x}, y=${this._y}`);
+            return;
+        }
+
+        const projectile = new Projectile(
+            this._x,
+            this._y,
+            target,
+            this.damage,
+            this.projectileSpeed,
+            this.type,
+            this.level,
+            this
+        );
+
+        if (!projectile.toRemove) {
+            this.game.projectiles.push(projectile);
+            this.lastFiredTime = currentTime;
+            console.log(`Projectile created with damage: ${this.damage}. Total projectiles: ${this.game.projectiles.length}`);
+        } else {
+            console.error('Failed to create valid projectile');
+        }
     }
 
     getUpgradeCost() {
