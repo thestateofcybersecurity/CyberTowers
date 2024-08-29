@@ -548,15 +548,7 @@ export class Game {
     }
 
     drawTowers() {
-        this.towers.forEach(tower => {
-            if (!tower.hasBeenDrawn) {
-                tower.draw(this.ctx);
-                tower.hasBeenDrawn = true;
-                console.log(`Tower drawn at (${tower.x}, ${tower.y})`);
-            } else {
-                tower.draw(this.ctx);
-            }
-        });
+        this.towers.forEach(tower => tower.draw(this.ctx));
     }
 
     drawThreats() {
