@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cybersecurity Tower Defense</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Cyber Towers</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameBoard" width="800" height="600"></canvas>
+        <canvas id="gameBoard"></canvas>
         <div id="uiContainer">
             <div id="score">System Integrity: <span id="scoreValue">100</span></div>
             <div id="resources">Resources: <span id="resourcesValue">500</span></div>
             <div id="wave">Wave: <span id="waveValue">1</span></div>
             <div id="level">Level: <span id="playerLevel">1</span></div>
             <div id="experience">Experience: <span id="playerExperience">0</span></div>
-            <!-- Other UI elements as needed -->
         </div>
-        <!-- Include buttons and menus here -->
+        <div id="towerSelection"></div>
+        <button id="pauseButton">Pause</button>
     </div>
-    <script src="constants.js"></script>
-    <script src="AssetLoader.js"></script>
-    <script src="GridManager.js"></script>
-    <script src="UIManager.js"></script>
-    <script src="Projectile.js"></script>
-    <script src="Threat.js"></script>
-    <script src="Tower.js"></script>
-    <script src="Game.js"></script>
-    <script>
-        const game = new Game();
-        game.start();
-    </script>
+    <div id="menuContainer" style="display: none;">
+        <!-- Menu buttons will be added here dynamically -->
+    </div>
+    <div id="gameOverContainer" style="display: none;">
+        <h2>Game Over</h2>
+        <p>Final Score: <span id="finalScore"></span></p>
+        <p>High Score: <span id="highScore"></span></p>
+        <button id="restartButton">Restart</button>
+    </div>
+    <script type="module" src="Game.js"></script>
 </body>
 </html>
