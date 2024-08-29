@@ -8,11 +8,15 @@ export class Tower {
         this.type = type;
         this.x = x;
         this.y = y;
-        this.damage = towerData.damage;
-        this.range = towerData.range;
-        this.fireRate = towerData.fireRate;
+        this.position = position;
+        this.level = 1;
+        this.damage = type.damage;
+        this.range = type.range;
+        this.fireRate = type.fireRate;
+        this.projectileSpeed = type.projectileSpeed || 5;
+        this.projectileColor = type.projectileColor || '#FFFFFF';
+        this.specialAbilities = {};
         this.cost = towerData.cost;
-        this.projectileColor = towerData.projectileColor;
         this.experience = 0;
         this.lastFired = 0;
         this.image = new Image();
@@ -23,11 +27,13 @@ export class Tower {
     }
 
     update(timestamp, threats) {
-        if (timestamp - this.lastFired > this.fireRate) {
-            const target = this.findTarget(threats);
-            if (target) {
-                this.fire(target);
-                this.lastFired = timestamp;
+        if (this.level < MAX_TOWER_LEVEL) {
+            this.level++;
+            this.damage += this.type.upgrades[this.level - 1].damage || 0;
+            this.range += this.type.upgrades[this.level - 1].range || 0;
+            this.fireRate = this.type.upgrades[this.level - 1].fireRate || this.fireRate;
+            if (this.type.upgrades[this.level - 1].special) {
+                this.applySpecialAbility(this.type.upgrades[this.level - 1].special);
             }
         }
     }
@@ -137,11 +143,9 @@ export class Tower {
         }
     }
 
-    // Update the fire method to use special abilities
     fire(target) {
-        const projectile = new Projectile(this.x, this.y, target, this.damage, this.projectileColor, this);
-        this.applySpecialAbility(target);
-        return projectile;
+        const projectile = new Projectile(this, target);
+        this.game.projectiles.push(projectile);
     }
 
     draw(ctx) {
