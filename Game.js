@@ -593,7 +593,8 @@ export class Game {
                 threatData.health * waveMultiplier,
                 threatData.speed,
                 threatData.damage * waveMultiplier,
-                threatData.reward * waveMultiplier
+                threatData.reward * waveMultiplier,
+                this  // Pass the game instance
             );
             this.threats.push(newThreat);
         } else {
