@@ -1,7 +1,13 @@
 export class Projectile {
     constructor(x, y, target, damage, speed, towerType, towerLevel, tower) {
-        this.x = Number(x);
-        this.y = Number(y);
+        if (typeof x !== 'number' || typeof y !== 'number') {
+            console.error(`Invalid coordinates for projectile: x=${x}, y=${y}`);
+            this.toRemove = true;
+            return;
+        }
+    
+        this.x = x;
+        this.y = y;
         this.target = target;
         this.damage = Number(damage);
         this.speed = Number(speed);
@@ -10,12 +16,7 @@ export class Projectile {
         this.tower = tower;
         this.toRemove = false;
     
-        if (isNaN(this.x) || isNaN(this.y)) {
-            console.error(`Invalid coordinates for projectile: x=${x}, y=${y}`);
-            this.toRemove = true;
-        } else {
-            console.log(`New projectile created at (${this.x.toFixed(2)}, ${this.y.toFixed(2)}) targeting ${this.target ? this.target.type : 'unknown'}`);
-        }
+        console.log(`New projectile created at (${this.x.toFixed(2)}, ${this.y.toFixed(2)}) targeting ${this.target ? this.target.type : 'unknown'}`);
     }
 
     move() {
