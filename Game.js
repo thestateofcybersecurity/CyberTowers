@@ -123,7 +123,6 @@ export class Game {
                 this.resetGameLogic();
             }
             this.setState(GAME_STATES.PLAYING);
-            this.startAutosave();
             requestAnimationFrame(this.boundUpdate);
         } catch (error) {
             console.error("Failed to start game:", error);
