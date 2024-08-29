@@ -38,102 +38,109 @@ export class Tower {
         });
     }
 
+    getUpgradeCost() {
+        if (this.level >= MAX_TOWER_LEVEL) {
+            return Infinity; // Cannot upgrade beyond max level
+        }
+        return Math.floor(this.cost * Math.pow(1.5, this.level)); // 50% increase per level
+    }
+
     applySpecialAbility(target) {
-            if (this.level === 5) {
-                switch (this.type) {
-                    case 'firewall':
-                        this.applyBurnEffect(target);
-                        break;
-                    case 'antivirus':
-                        this.applyChainReaction(target);
-                        break;
-                    case 'encryption':
-                        this.applySlowEffect(target);
-                        break;
-                    case 'ai':
-                        this.applyAdaptiveDamage(target);
-                        break;
-                    case 'ids':
-                        this.revealInvisibleThreats();
-                        break;
-                    case 'soc':
-                        this.applyCoordinatedAttack(target);
-                        break;
-                    case 'honeypot':
-                        this.applyConfuseEffect(target);
-                        break;
-                }
+        if (this.level === 5) {
+            switch (this.type) {
+                case 'firewall':
+                    this.applyBurnEffect(target);
+                    break;
+                case 'antivirus':
+                    this.applyChainReaction(target);
+                    break;
+                case 'encryption':
+                    this.applySlowEffect(target);
+                    break;
+                case 'ai':
+                    this.applyAdaptiveDamage(target);
+                    break;
+                case 'ids':
+                    this.revealInvisibleThreats();
+                    break;
+                case 'soc':
+                    this.applyCoordinatedAttack(target);
+                    break;
+                case 'honeypot':
+                    this.applyConfuseEffect(target);
+                    break;
             }
         }
+    }
     
-        applyBurnEffect(target) {
-            const burnDamage = this.damage * 0.2;
-            const burnDuration = 5000;
-            const burnInterval = 1000;
-    
-            let elapsedTime = 0;
-            const burnEffect = setInterval(() => {
-                target.takeDamage(burnDamage);
-                elapsedTime += burnInterval;
-                if (elapsedTime >= burnDuration || target.currentHealth <= 0) {
-                    clearInterval(burnEffect);
-                }
-            }, burnInterval);
-        }
-    
-        applyChainReaction(target) {
-            const nearbyThreats = this.game.threats.filter(threat => 
-                Math.hypot(threat.x - target.x, threat.y - target.y) <= 50 && threat !== target
-            );
-            nearbyThreats.forEach(threat => threat.takeDamage(this.damage * 0.5));
-        }
-    
-        applySlowEffect(target) {
-            target.speed *= 0.5;
-            setTimeout(() => {
-                target.speed /= 0.5;
-            }, 3000);
-        }
-    
-        applyAdaptiveDamage(target) {
-            this.damage += 1;
-        }
-    
-        revealInvisibleThreats() {
-            this.game.threats.forEach(threat => {
-                if (threat.invisible) {
-                    threat.reveal();
-                }
-            });
-        }
-    
-        applyCoordinatedAttack(target) {
-            this.game.towers.forEach(tower => {
-                if (tower !== this && Math.hypot(tower.x - this.x, tower.y - this.y) <= 100) {
-                    tower.damage *= 1.2;
-                    setTimeout(() => {
-                        tower.damage /= 1.2;
-                    }, 5000);
-                }
-            });
-        }
-    
-        applyConfuseEffect(target) {
-            const nearbyThreats = this.game.threats.filter(threat => 
-                Math.hypot(threat.x - target.x, threat.y - target.y) <= 100 && threat !== target
-            );
-            if (nearbyThreats.length > 0) {
-                const randomThreat = nearbyThreats[Math.floor(Math.random() * nearbyThreats.length)];
-                target.takeDamage(randomThreat.damage);
-                randomThreat.takeDamage(target.damage);
+    applyBurnEffect(target) {
+        const burnDamage = this.damage * 0.2;
+        const burnDuration = 5000;
+        const burnInterval = 1000;
+
+        let elapsedTime = 0;
+        const burnEffect = setInterval(() => {
+            target.takeDamage(burnDamage);
+            elapsedTime += burnInterval;
+            if (elapsedTime >= burnDuration || target.currentHealth <= 0) {
+                clearInterval(burnEffect);
             }
+        }, burnInterval);
+    }
+
+    applyChainReaction(target) {
+        const nearbyThreats = this.game.threats.filter(threat => 
+            Math.hypot(threat.x - target.x, threat.y - target.y) <= 50 && threat !== target
+        );
+        nearbyThreats.forEach(threat => threat.takeDamage(this.damage * 0.5));
+    }
+
+    applySlowEffect(target) {
+        target.speed *= 0.5;
+        setTimeout(() => {
+            target.speed /= 0.5;
+        }, 3000);
+    }
+
+    applyAdaptiveDamage(target) {
+        this.damage += 1;
+    }
+
+    revealInvisibleThreats() {
+        this.game.threats.forEach(threat => {
+            if (threat.invisible) {
+                threat.reveal();
+            }
+        });
+    }
+
+    applyCoordinatedAttack(target) {
+        this.game.towers.forEach(tower => {
+            if (tower !== this && Math.hypot(tower.x - this.x, tower.y - this.y) <= 100) {
+                tower.damage *= 1.2;
+                setTimeout(() => {
+                    tower.damage /= 1.2;
+                }, 5000);
+            }
+        });
+    }
+
+    applyConfuseEffect(target) {
+        const nearbyThreats = this.game.threats.filter(threat => 
+            Math.hypot(threat.x - target.x, threat.y - target.y) <= 100 && threat !== target
+        );
+        if (nearbyThreats.length > 0) {
+            const randomThreat = nearbyThreats[Math.floor(Math.random() * nearbyThreats.length)];
+            target.takeDamage(randomThreat.damage);
+            randomThreat.takeDamage(target.damage);
         }
-    
-        // Update the fire method to use special abilities
-        fire(target) {
-            const projectile = new Projectile(this.x, this.y, target, this.damage, this.projectileColor, this);
-            this.applySpecialAbility(target);
-            return projectile;
+    }
+
+    // Update the fire method to use special abilities
+    fire(target) {
+        const projectile = new Projectile(this.x, this.y, target, this.damage, this.projectileColor, this);
+        this.applySpecialAbility(target);
+        return projectile;
     }
 
     draw(ctx) {
