@@ -8,15 +8,23 @@ export class Projectile {
         this.towerType = towerType;
         this.towerLevel = towerLevel;
         this.tower = tower;
+        this.toRemove = false; // Flag to mark projectile for removal
     }
 
     move() {
+        if (!this.target || this.target.currentHealth <= 0) {
+            console.log('Projectile target is no longer valid. Marking for removal.');
+            this.toRemove = true;
+            return;
+        }
+
         const dx = this.target.x - this.x;
         const dy = this.target.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < this.speed) {
-            this.hitTarget();
+            this.x = this.target.x;
+            this.y = this.target.y;
         } else {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
@@ -30,16 +38,26 @@ export class Projectile {
     }
 
     checkCollision(threats) {
-        return threats.find(threat => {
-            const distance = Math.hypot(threat.x - this.x, threat.y - this.y);
-            return distance < 5; // Collision radius
-        });
+        if (this.toRemove) return null;
+
+        for (let threat of threats) {
+            const dx = this.x - threat.x;
+            const dy = this.y - threat.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 10) { // Assuming 10 is the collision radius
+                return threat;
+            }
+        }
+        return null;
     }
 
     draw(ctx) {
+        if (this.toRemove) return;
+
+        ctx.fillStyle = this.tower.projectileColor;
         ctx.beginPath();
         ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
         ctx.fill();
     }
 }
