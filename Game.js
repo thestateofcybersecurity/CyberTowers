@@ -460,31 +460,35 @@ export class Game {
     placeTower(type, x, y) {
         console.log(`Attempting to place tower of type ${type} at (${x}, ${y})`);
         const cell = this.gridManager.getGridCell(x, y);
-        console.log('Cell:', cell);
-        console.log('Can afford tower:', this.canAffordTower(type));
-        console.log('Is defense unlocked:', this.isDefenseUnlocked(type));
-        
-        if (cell && !cell.occupied && this.canAffordTower(type) && this.isDefenseUnlocked(type)) {
-            const towerCost = Tower.getCost(type);
-            if (this.resources >= towerCost) {
-                const newTower = new Tower(type, cell.x, cell.y, 1, this);
-                this.towers.push(newTower);
-                this.resources -= towerCost;
-                cell.occupied = true;
-                this.gridManager.updateGrid(cell.x, cell.y, true);
-                this.uiManager.updateUI();
-                console.log(`Tower placed at (${cell.x}, ${cell.y})`);
-            } else {
-                console.log("Not enough resources to place tower");
-            }
-        } else {
-            console.log("Cannot place tower at this location");
-            if (cell) {
-                console.log(`Cell occupied: ${cell.occupied}`);
-            } else {
-                console.log("Invalid cell");
-            }
+        const towerCost = Tower.getCost(type);
+    
+        if (!cell) {
+            this.uiManager.showErrorMessage("Invalid grid location");
+            return;
         }
+    
+        if (cell.occupied) {
+            this.uiManager.showErrorMessage("Cell already occupied");
+            return;
+        }
+    
+        if (!this.isDefenseUnlocked(type)) {
+            this.uiManager.showErrorMessage("Defense not unlocked yet");
+            return;
+        }
+    
+        if (this.resources < towerCost) {
+            this.uiManager.showErrorMessage("Not enough resources");
+            return;
+        }
+    
+        const newTower = new Tower(type, x, y, 1, this);
+        this.towers.push(newTower);
+        this.resources -= towerCost;
+        cell.occupied = true;
+        this.gridManager.updateGrid(x, y, true);
+        this.uiManager.updateUI();
+        console.log(`Tower placed at (${x}, ${y})`);
     }
     
     canAffordTower(type) {
