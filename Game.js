@@ -465,6 +465,7 @@ export class Game {
             if (!this.canAffordTower(type)) console.log('Cannot afford tower');
             if (!this.isDefenseUnlocked(type)) console.log('Defense not unlocked');
         }
+    }
     
     canAffordTower(type) {
         return this.resources >= Tower.getCost(type);
