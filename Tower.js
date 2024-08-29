@@ -1,5 +1,6 @@
 import { defenseTypes, MAX_TOWER_LEVEL, TOWER_STATS } from './constants.js';
 import { Projectile } from './Projectile.js';
+import { GAME_STATES } from './constants.js';
 
 export class Tower {
     checkProperties() {
