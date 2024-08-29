@@ -1,4 +1,3 @@
-import { GAME_STATES } from './constants.js';
 import { Threat } from './Threat.js';
 import { Tower } from './Tower.js';
 import { Projectile } from './Projectile.js';
