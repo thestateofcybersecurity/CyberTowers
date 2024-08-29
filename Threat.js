@@ -1,23 +1,20 @@
 // Threat.js
-import { threatTypes } from './constants.js';
+import { THREAT_EVOLUTION_FACTOR } from './constants.js';
 
 export class Threat {
-    constructor(type, x, y, waveMultiplier = 1) {
-        const threatData = threatTypes[type];
+    constructor(type, x, y, health, speed, damage, reward) {
+        this.type = type;
         this.x = x;
         this.y = y;
-        this.type = type;
-        this.currentHealth = threatData.health * waveMultiplier;
-        this.maxHealth = threatData.health * waveMultiplier;
-        this.speed = threatData.speed;
-        this.damage = threatData.damage * waveMultiplier;
-        this.reward = threatData.reward * waveMultiplier;
-        this.invisible = threatData.invisible || false;
-        this.evolves = threatData.evolves || false;
+        this.health = health;
+        this.maxHealth = health;
+        this.speed = speed;
+        this.damage = damage;
+        this.reward = reward;
         this.pathIndex = 0;
+        this.invisible = type === 'rootkit';
+        this.evolves = type === 'apt';
         this.revealed = false;
-        this.image = new Image();
-        this.image.src = threatData.icon;
     }
 
     move(path) {
@@ -34,6 +31,34 @@ export class Threat {
             this.y += (dy / distance) * this.speed;
             return false;
         }
+        if (this.evolves && Math.random() < 0.001) { // 0.1% chance to evolve each move
+            this.evolve();
+        }
+
+        return reachedEnd;
+    }
+
+    takeDamage(amount) {
+        if (this.invisible && !this.revealed) {
+            amount *= 0.5; // Invisible threats take half damage unless revealed
+        }
+        this.health -= amount;
+        if (this.health <= 0) {
+            return true; // Threat is destroyed
+        }
+        return false;
+    }
+
+    evolve() {
+        this.health *= THREAT_EVOLUTION_FACTOR.health;
+        this.maxHealth = this.health;
+        this.speed *= THREAT_EVOLUTION_FACTOR.speed;
+        this.damage *= THREAT_EVOLUTION_FACTOR.damage;
+        this.reward *= THREAT_EVOLUTION_FACTOR.reward;
+    }
+
+    reveal() {
+        this.revealed = true;
     }
 
     draw(ctx) {
