@@ -421,14 +421,22 @@ export class Game {
     }
 
     handleProjectileImpact(projectile, threat) {
+        console.log(`Projectile hit ${threat.type}. Current health: ${threat.currentHealth}/${threat.maxHealth}`);
+        console.log(`Projectile damage: ${projectile.damage}`);
+
         if (threat.invisible && !threat.revealed) {
             if (projectile.towerType === 'ids' && projectile.towerLevel === 5) {
                 threat.reveal();
             }
         }
+
         const destroyed = threat.takeDamage(projectile.damage);
+        console.log(`After damage, ${threat.type} health: ${threat.currentHealth}/${threat.maxHealth}`);
+
         this.addVisualEffect('explosion', threat.x, threat.y);
+
         if (destroyed) {
+            console.log(`${threat.type} destroyed!`);
             this.handleThreatDeath(threat, projectile.tower);
         }
     }
@@ -541,7 +549,13 @@ export class Game {
 
     drawTowers() {
         this.towers.forEach(tower => {
-            tower.draw(this.ctx);
+            if (!tower.hasBeenDrawn) {
+                tower.draw(this.ctx);
+                tower.hasBeenDrawn = true;
+                console.log(`Tower drawn at (${tower.x}, ${tower.y})`);
+            } else {
+                tower.draw(this.ctx);
+            }
         });
     }
 
@@ -613,6 +627,7 @@ export class Game {
         } else if (this.state === GAME_STATES.PAUSED) {
             this.setState(GAME_STATES.PLAYING);
             this.startAutosave();
+            requestAnimationFrame(this.gameLoop.bind(this)); // Restart the game loop
         }
         console.log('New state:', this.state);
         this.uiManager.updatePauseButton();
