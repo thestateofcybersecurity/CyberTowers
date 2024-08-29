@@ -188,11 +188,12 @@ export class Tower {
     }
 
     draw(ctx) {
+        const cellSize = this.game.gridManager.cellSize;
         if (this.image.complete) {
-            ctx.drawImage(this.image, this.x, this.y, this.game.gridManager.cellSize, this.game.gridManager.cellSize);
+            ctx.drawImage(this.image, this.x, this.y, cellSize, cellSize);
         } else {
             ctx.fillStyle = 'gray';
-            ctx.fillRect(this.x, this.y, this.game.gridManager.cellSize, this.game.gridManager.cellSize);
+            ctx.fillRect(this.x, this.y, cellSize, cellSize);
         }
         console.log(`Tower drawn at (${this.x}, ${this.y})`); // Debug log
     }
