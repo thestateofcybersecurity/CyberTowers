@@ -9,7 +9,7 @@ export const GAME_STATES = {
     GAME_OVER: 'gameOver'
 };
 
-export const WAVE_DURATION = 60000; // 60 seconds
+export const WAVE_DURATION = 30000; // 30 seconds
 export const BREAK_DURATION = 10000; // 10 seconds
 
 export const STARTING_RESOURCES = 500;
@@ -158,10 +158,10 @@ export const TOWER_STATS = {
         4: { damage: 40, range: 170, fireRate: 1100 },
         5: { damage: 45, range: 170, fireRate: 1000 }
     },
-        encryption: { 
+    encryption: { 
         1: { damage: 35, range: 180, fireRate: 1500 },
         2: { damage: 40, range: 190, fireRate: 1500 },
-        3: { damage: 45, range: 160, fireRate: 1400 },
+        3: { damage: 45, range: 190, fireRate: 1400 },
         4: { damage: 50, range: 200, fireRate: 1400 },
         5: { damage: 55, range: 200, fireRate: 1300 }
     },
@@ -188,7 +188,7 @@ export const TOWER_STATS = {
     },
     honeypot: {
         1: { damage: 5, range: 150, fireRate: 800 },
-        2: { damage: 5, range: 170, fireRate: 700 },
+        2: { damage: 5, range: 170, fireRate: 800 },
         3: { damage: 10, range: 170, fireRate: 700 },
         4: { damage: 10, range: 190, fireRate: 700 },
         5: { damage: 15, range: 190, fireRate: 600 }
