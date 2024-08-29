@@ -184,10 +184,30 @@ export class Game {
 
     gameLoop(timestamp) {
         if (this.state !== GAME_STATES.PLAYING) return;
-
-        this.update(timestamp);
-        this.draw();
-
+    
+        // Clear the canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+        // Update game entities
+        this.updateThreats(timestamp);
+        this.updateTowers(timestamp);
+        this.updateProjectiles(timestamp);
+    
+        // Draw game entities
+        this.drawBackground();
+        this.gridManager.drawGrid(this.ctx);
+        this.drawPath();
+        this.drawThreats();
+        this.drawTowers();
+        this.drawProjectiles();
+    
+        // Update and draw UI
+        this.uiManager.draw(this.ctx);
+    
+        // Handle wave system
+        this.updateWaveSystem(timestamp);
+    
+        // Request next frame
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
