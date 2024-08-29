@@ -177,6 +177,9 @@ export class Game {
 
     startGame() {
         this.resetGameLogic();
+        console.log('Starting new game');
+        this.uiManager.hideMenu();
+        this.uiManager.hideGameOver();
         this.setState(GAME_STATES.PLAYING);
         this.startAutosave();
         this.gameLoop();
@@ -234,6 +237,8 @@ export class Game {
     }
 
     restartGame() {
+        console.log('Restarting game...');
+        this.setState(GAME_STATES.PLAYING);
         this.stopAutosave();
         this.resetGameLogic();
         this.startGame();
