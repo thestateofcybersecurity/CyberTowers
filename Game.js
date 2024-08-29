@@ -448,32 +448,23 @@ export class Game {
         return possibleThreats[Math.floor(Math.random() * possibleThreats.length)];
     }
 
+
     placeTower(type, x, y) {
         const cell = this.gridManager.getGridCell(x, y);
         if (cell && !cell.occupied && this.canAffordTower(type) && this.isDefenseUnlocked(type)) {
-            const towerCost = Tower.getCost(type);
-            if (this.resources >= towerCost) {
-                const newTower = new Tower(type, cell.x, cell.y, 1, this);
-                this.towers.push(newTower);
-                this.resources -= towerCost;
-                cell.occupied = true;
-                this.gridManager.updateGrid(cell.x, cell.y, true);
-                this.uiManager.updateUI();
-                console.log(`Tower placed at (${cell.x}, ${cell.y})`); // Debug log
-            } else {
-                console.log("Not enough resources to place tower"); // Debug log
-            }
+            const newTower = new Tower(type, cell.x, cell.y, 1, this);
+            this.towers.push(newTower);
+            this.resources -= newTower.cost;
+            cell.occupied = true;
+            this.uiManager.updateUI();
+            console.log(`Tower placed at (${cell.x}, ${cell.y})`); // Debug log
         } else {
-            console.log("Cannot place tower at this location"); // Debug log
-            if (cell) {
-                console.log(`Cell occupied: ${cell.occupied}`);
-                console.log(`Can afford: ${this.canAffordTower(type)}`);
-                console.log(`Is unlocked: ${this.isDefenseUnlocked(type)}`);
-            } else {
-                console.log("Invalid cell");
-            }
+            console.log(`Cannot place tower at (${x}, ${y})`); // Debug log
+            if (!cell) console.log('No valid cell');
+            if (cell && cell.occupied) console.log('Cell is occupied');
+            if (!this.canAffordTower(type)) console.log('Cannot afford tower');
+            if (!this.isDefenseUnlocked(type)) console.log('Defense not unlocked');
         }
-    }
     
     canAffordTower(type) {
         return this.resources >= Tower.getCost(type);
@@ -510,7 +501,7 @@ export class Game {
         });
     }
 
-        draw() {
+    draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw background
