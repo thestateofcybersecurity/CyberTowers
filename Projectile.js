@@ -1,10 +1,9 @@
-// Projectile.js
 export class Projectile {
     constructor(tower, target) {
         this.tower = tower;
         this.target = target;
-        this.x = tower.position.x;
-        this.y = tower.position.y;
+        this.x = tower.x;
+        this.y = tower.y;
         this.speed = tower.projectileSpeed || 5;
         this.damage = tower.damage;
         this.color = tower.projectileColor || '#FFFFFF';
@@ -25,8 +24,8 @@ export class Projectile {
 
     hitTarget() {
         this.target.takeDamage(this.damage);
-        this.tower.game.projectiles = this.tower.game.projectiles.filter(p => p !== this); // Remove projectile after hit
-        this.tower.game.addEffect(this.x, this.y, 'explosion');
+        this.tower.game.projectiles = this.tower.game.projectiles.filter(p => p !== this);
+        this.tower.game.addVisualEffect('explosion', this.x, this.y);
     }
 
     checkCollision(threats) {
