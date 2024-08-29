@@ -3,7 +3,7 @@ import { defenseTypes, MAX_TOWER_LEVEL, TOWER_STATS } from './constants.js';
 import { Projectile } from './Projectile.js';
 
 export class Tower {
-    constructor(type, x, y, level = 1) {
+    constructor(type, x, y, level = 1, game) {
         const towerData = defenseTypes[type];
         this.type = type;
         this.x = x;
@@ -19,6 +19,7 @@ export class Tower {
         this.image.src = towerData.icon;
         this.level = level;
         this.stats = TOWER_STATS[type][level];
+        this.game = game;
     }
 
     update(timestamp, threats) {
@@ -169,14 +170,20 @@ export class Tower {
         this.level++;
         this.experience -= Math.pow(this.level - 1, 2) * 100;
         this.upgradeStats();
-        this.game.addVisualEffect('levelUp', this.x, this.y);
+        if (this.game) {
+            this.game.addVisualEffect('levelUp', this.x, this.y);
+        }
     }
 
     upgradeStats() {
-        this.stats = TOWER_STATS[this.type][this.level];
-        const upgrades = defenseTypes[this.type].upgrades.find(u => u.level === this.level);
-        if (upgrades) {
-            Object.assign(this, upgrades);
+        if (TOWER_STATS[this.type] && TOWER_STATS[this.type][this.level]) {
+            this.stats = TOWER_STATS[this.type][this.level];
+            const upgrades = defenseTypes[this.type].upgrades.find(u => u.level === this.level);
+            if (upgrades) {
+                Object.assign(this, upgrades);
+            }
+        } else {
+            console.warn(`No upgrade stats found for ${this.type} at level ${this.level}`);
         }
     }
 
