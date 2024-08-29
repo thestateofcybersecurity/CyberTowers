@@ -85,9 +85,14 @@ export class Tower {
 
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
+        const projectileX = this.x + (this.game.gridManager.cellSize / 2);
+        const projectileY = this.y + (this.game.gridManager.cellSize / 2);
+        
+        console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
+        
         const projectile = new Projectile(
-            this.x + this.game.gridManager.cellSize / 2,
-            this.y + this.game.gridManager.cellSize / 2,
+            projectileX,
+            projectileY,
             target,
             this.damage,
             this.projectileSpeed,
@@ -95,9 +100,14 @@ export class Tower {
             this.level,
             this
         );
-        this.game.projectiles.push(projectile);
-        this.lastFiredTime = currentTime;
-        console.log(`Projectile created with damage: ${this.damage}. Total projectiles: ${this.game.projectiles.length}`);
+        
+        if (!projectile.toRemove) {
+            this.game.projectiles.push(projectile);
+            this.lastFiredTime = currentTime;
+            console.log(`Projectile created with damage: ${this.damage}. Total projectiles: ${this.game.projectiles.length}`);
+        } else {
+            console.error('Failed to create valid projectile');
+        }
     }
 
     levelUp() {
