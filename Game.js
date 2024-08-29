@@ -194,7 +194,7 @@ export class Game {
     }
 
     isDefenseUnlocked(defenseType) {
-        return this.playerLevel >= defenseTypes[defenseType].requiredLevel;
+        return this.unlockedDefenses.includes(defenseType);
     }
 
     togglePause() {
@@ -451,13 +451,27 @@ export class Game {
     placeTower(type, x, y) {
         const cell = this.gridManager.getGridCell(x, y);
         if (cell && !cell.occupied && this.canAffordTower(type) && this.isDefenseUnlocked(type)) {
-            const newTower = new Tower(type, cell.x, cell.y, 1, this);
-            this.towers.push(newTower);
-            this.resources -= newTower.cost;
-            cell.occupied = true;
-            this.uiManager.updateUI();
-        } else if (!this.isDefenseUnlocked(type)) {
-            this.uiManager.showErrorMessage("This defense type is not unlocked yet!");
+            const towerCost = Tower.getCost(type);
+            if (this.resources >= towerCost) {
+                const newTower = new Tower(type, cell.x, cell.y, 1, this);
+                this.towers.push(newTower);
+                this.resources -= towerCost;
+                cell.occupied = true;
+                this.gridManager.updateGrid(cell.x, cell.y, true);
+                this.uiManager.updateUI();
+                console.log(`Tower placed at (${cell.x}, ${cell.y})`); // Debug log
+            } else {
+                console.log("Not enough resources to place tower"); // Debug log
+            }
+        } else {
+            console.log("Cannot place tower at this location"); // Debug log
+            if (cell) {
+                console.log(`Cell occupied: ${cell.occupied}`);
+                console.log(`Can afford: ${this.canAffordTower(type)}`);
+                console.log(`Is unlocked: ${this.isDefenseUnlocked(type)}`);
+            } else {
+                console.log("Invalid cell");
+            }
         }
     }
     
@@ -494,6 +508,31 @@ export class Game {
             }
             return effect.frame < 20;
         });
+    }
+
+        draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw background
+        this.drawBackground();
+
+        // Draw grid
+        this.gridManager.drawGrid(this.ctx);
+
+        // Draw path
+        this.drawPath();
+
+        // Draw towers
+        this.towers.forEach(tower => tower.draw(this.ctx));
+
+        // Draw threats
+        this.threats.forEach(threat => threat.draw(this.ctx));
+
+        // Draw projectiles
+        this.projectiles.forEach(projectile => projectile.draw(this.ctx));
+
+        // Draw UI
+        this.uiManager.draw(this.ctx);
     }
 
     checkGameOver() {
