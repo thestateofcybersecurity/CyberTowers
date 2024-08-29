@@ -620,12 +620,27 @@ export class Game {
     }
 
     drawTowerRanges() {
-        this.ctx.globalAlpha = 0.2;
+        this.ctx.globalAlpha = 0.1;
         this.towers.forEach(tower => {
             this.ctx.beginPath();
-            this.ctx.arc(tower.x + this.gridManager.cellSize / 2, tower.y + this.gridManager.cellSize / 2, tower.range, 0, Math.PI * 2);
+            this.ctx.arc(
+                tower.x + this.gridManager.cellSize / 2, 
+                tower.y + this.gridManager.cellSize / 2, 
+                tower.range, 
+                0, 
+                Math.PI * 2
+            );
             this.ctx.fillStyle = 'yellow';
             this.ctx.fill();
+            
+            // Draw range circle outline
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.strokeStyle = 'orange';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            // Reset global alpha for next iteration
+            this.ctx.globalAlpha = 0.1;
         });
         this.ctx.globalAlpha = 1;
     }
