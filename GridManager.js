@@ -48,14 +48,16 @@ export class GridManager {
     }
 
     drawGrid(ctx) {
-        ctx.strokeStyle = '#0A3C59';
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+    
         for (let x = 0; x <= this.game.canvas.width; x += this.cellSize) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, this.game.canvas.height);
             ctx.stroke();
         }
+    
         for (let y = 0; y <= this.game.canvas.height; y += this.cellSize) {
             ctx.beginPath();
             ctx.moveTo(0, y);
@@ -63,7 +65,6 @@ export class GridManager {
             ctx.stroke();
         }
     }
-
     distanceToSegment(x, y, x1, y1, x2, y2) {
         const A = x - x1;
         const B = y - y1;
