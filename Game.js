@@ -355,6 +355,11 @@ export class Game {
     }
     
     handleProjectileImpact(projectile, threat) {
+        if (threat.invisible && !threat.revealed) {
+            if (projectile.tower.type === 'ids' && projectile.tower.level === 5) {
+                threat.reveal();
+            }
+        }
         const destroyed = threat.takeDamage(projectile.damage);
         this.addVisualEffect('explosion', threat.x, threat.y);
         if (destroyed) {
