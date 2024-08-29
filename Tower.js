@@ -22,6 +22,8 @@ export class Tower {
         this.stats = TOWER_STATS[type][level];
         this.game = game;
         this.lastFiredTime = 0;
+        this.hasLoggedDraw = false;
+
         console.log(`Tower created: ${type} at (${x}, ${y})`); // Debug log
     }
 
@@ -195,7 +197,11 @@ export class Tower {
             ctx.fillStyle = 'gray';
             ctx.fillRect(this.x, this.y, cellSize, cellSize);
         }
-        console.log(`Tower drawn at (${this.x}, ${this.y})`); // Debug log
+        
+        if (!this.hasLoggedDraw) {
+            console.log(`Tower drawn at (${this.x}, ${this.y})`);
+            this.hasLoggedDraw = true;
+        }
     }
 
     levelUp() {
