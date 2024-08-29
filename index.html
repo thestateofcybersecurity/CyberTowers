@@ -20,6 +20,10 @@
             </div>
             <button id="pauseButton">Pause</button>
             <div id="nextWaveInfo"></div>
+            <div id="playerInfo">
+                <span>Level: <span id="playerLevel">1</span></span>
+                <span>XP: <span id="playerExperience">0</span></span>
+            </div>
         </div>
         <div id="menuContainer" style="display: none;">
             <h1>Cybersecurity Tower Defense</h1>
@@ -33,19 +37,21 @@
             <button id="restartButton">Restart Game</button>
             <button id="menuButton">Return to Menu</button>
         </div>
-        <div id="playerInfo">
-            <span>Level: <span id="playerLevel">1</span></span>
-            <span>XP: <span id="playerExperience">0</span></span>
-        </div>
     </div>
     <script type="module">
         import { Game } from './Game.js';
         
         let game;
-
         document.addEventListener('DOMContentLoaded', () => {
             game = new Game();
             game.initialize(); // Make sure this method exists and calls uiManager.showMenu()
+            
+            // Event listeners for menu buttons
+            document.getElementById('startButton').addEventListener('click', () => game.startGame());
+            document.getElementById('optionsButton').addEventListener('click', () => game.showOptions());
+            document.getElementById('restartButton').addEventListener('click', () => game.restartGame());
+            document.getElementById('menuButton').addEventListener('click', () => game.showMenu());
+            document.getElementById('pauseButton').addEventListener('click', () => game.togglePause());
         });
     </script>
 </body>
