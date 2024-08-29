@@ -123,8 +123,16 @@ export class Game {
     }
 
     initializeEventListeners() {
-        this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
-        document.addEventListener('keydown', this.handleKeyPress.bind(this));
+        this.canvas.addEventListener('click', (event) => {
+            console.log('Canvas clicked');
+            if (this.state === GAME_STATES.PLAYING) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                console.log(`Click coordinates: (${x}, ${y})`);
+                this.placeTower(this.selectedTowerType, x, y);
+            }
+        });
     }
 
     handleCanvasClick(event) {
@@ -450,20 +458,32 @@ export class Game {
 
 
     placeTower(type, x, y) {
+        console.log(`Attempting to place tower of type ${type} at (${x}, ${y})`);
         const cell = this.gridManager.getGridCell(x, y);
+        console.log('Cell:', cell);
+        console.log('Can afford tower:', this.canAffordTower(type));
+        console.log('Is defense unlocked:', this.isDefenseUnlocked(type));
+        
         if (cell && !cell.occupied && this.canAffordTower(type) && this.isDefenseUnlocked(type)) {
-            const newTower = new Tower(type, cell.x, cell.y, 1, this);
-            this.towers.push(newTower);
-            this.resources -= newTower.cost;
-            cell.occupied = true;
-            this.uiManager.updateUI();
-            console.log(`Tower placed at (${cell.x}, ${cell.y})`); // Debug log
+            const towerCost = Tower.getCost(type);
+            if (this.resources >= towerCost) {
+                const newTower = new Tower(type, cell.x, cell.y, 1, this);
+                this.towers.push(newTower);
+                this.resources -= towerCost;
+                cell.occupied = true;
+                this.gridManager.updateGrid(cell.x, cell.y, true);
+                this.uiManager.updateUI();
+                console.log(`Tower placed at (${cell.x}, ${cell.y})`);
+            } else {
+                console.log("Not enough resources to place tower");
+            }
         } else {
-            console.log(`Cannot place tower at (${x}, ${y})`); // Debug log
-            if (!cell) console.log('No valid cell');
-            if (cell && cell.occupied) console.log('Cell is occupied');
-            if (!this.canAffordTower(type)) console.log('Cannot afford tower');
-            if (!this.isDefenseUnlocked(type)) console.log('Defense not unlocked');
+            console.log("Cannot place tower at this location");
+            if (cell) {
+                console.log(`Cell occupied: ${cell.occupied}`);
+            } else {
+                console.log("Invalid cell");
+            }
         }
     }
     
@@ -544,11 +564,16 @@ export class Game {
     }
 
     togglePause() {
+        console.log('Toggle pause called. Current state:', this.state);
         if (this.state === GAME_STATES.PLAYING) {
             this.setState(GAME_STATES.PAUSED);
+            this.stopAutosave();
         } else if (this.state === GAME_STATES.PAUSED) {
             this.setState(GAME_STATES.PLAYING);
+            this.startAutosave();
         }
+        console.log('New state:', this.state);
+        this.uiManager.updatePauseButton();
     }
 
     addPlayerExperience(amount) {
