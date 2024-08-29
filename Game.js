@@ -183,7 +183,15 @@ export class Game {
     }
 
     gameLoop(timestamp) {
-        if (this.state !== GAME_STATES.PLAYING) return;
+        if (this.state !== GAME_STATES.PLAYING) {
+            console.log('Game is paused, not updating');
+            return;
+        }
+
+        console.log('--- New Frame ---');
+        this.updateThreats(timestamp);
+        this.updateTowers(timestamp);
+        this.updateProjectiles(timestamp);
     
         // Clear the canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -318,14 +326,9 @@ export class Game {
     }
 
     updateTowers(timestamp) {
+        console.log(`Updating ${this.towers.length} towers`);
         this.towers.forEach(tower => {
-            const target = tower.findTarget(this.threats);
-            if (target && tower.canFire(timestamp)) {
-                const projectile = tower.fire(target);
-                if (projectile) {
-                    this.projectiles.push(projectile);
-                }
-            }
+            tower.update(timestamp, this.threats);
         });
     }
 
