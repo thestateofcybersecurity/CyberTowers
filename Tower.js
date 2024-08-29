@@ -75,12 +75,11 @@ export class Tower {
     fire(target, currentTime) {
         console.log(`Tower firing at ${target.type}`);
     
-        const cellSize = this.game.gridManager.cellSize;
-        const projectileX = this.x + (cellSize / 2);
-        const projectileY = this.y + (cellSize / 2);
+        // Ensure x and y are numbers
+        const projectileX = Number(this.x);
+        const projectileY = Number(this.y);
     
-        console.log(`Tower position: (${this.x}, ${this.y})`);
-        console.log(`Cell size: ${cellSize}`);
+        console.log(`Tower position: (${projectileX}, ${projectileY})`);
         console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
     
         const projectile = new Projectile(
