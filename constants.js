@@ -40,10 +40,10 @@ export const defenseTypes = {
         maxLevel: 5,
         requiredLevel: 1,
         upgrades: [
-            { level: 2, damage: 18, range: 220 },
-            { level: 3, damage: 22, fireRate: 500 },
-            { level: 4, damage: 26, range: 240 },
-            { level: 5, damage: 30, fireRate: 400, special: 'Burn damage over time' }
+            { level: 2, damage: 25, range: 220 },
+            { level: 3, damage: 30, fireRate: 500 },
+            { level: 4, damage: 35, range: 240 },
+            { level: 5, damage: 45, fireRate: 400, special: 'Burn damage over time' }
         ]
     },
     antivirus: { 
@@ -146,11 +146,11 @@ export const defenseTypes = {
 
 export const TOWER_STATS = {
     firewall: {
-        1: { damage: 10, range: 200, fireRate: 600 },
-        2: { damage: 12, range: 220, fireRate: 600 },
-        3: { damage: 14, range: 220, fireRate: 550 },
-        4: { damage: 16, range: 240, fireRate: 550 },
-        5: { damage: 18, range: 240, fireRate: 500 }
+        1: { damage: 15, range: 200, fireRate: 600 },
+        2: { damage: 25, range: 220, fireRate: 600 },
+        3: { damage: 30, range: 220, fireRate: 550 },
+        4: { damage: 35, range: 240, fireRate: 550 },
+        5: { damage: 45, range: 240, fireRate: 500 }
     },
     antivirus: {
         1: { damage: 20, range: 250, fireRate: 1300 },
