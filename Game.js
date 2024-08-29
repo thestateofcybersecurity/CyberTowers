@@ -5,7 +5,7 @@ import { Projectile } from './Projectile.js';
 import { UIManager } from './UIManager.js';
 import { AssetLoader } from './AssetLoader.js';
 import { GridManager } from './GridManager.js';
-import { threatTypes } from './constants.js';
+import { threatTypes, defenseTypes } from './constants.js';
 import { 
     CANVAS_WIDTH, 
     CANVAS_HEIGHT, 
@@ -46,18 +46,18 @@ export class Game {
         this.waveDuration = WAVE_DURATION;
         this.breakDuration = BREAK_DURATION;
         this.path = PATH;
+        this.autosaveInterval = null;
     }
-    initialize() {
-        this.assetLoader.loadAssets().then(() => {
+    async initialize() {
+        try {
+            await this.assetLoader.loadAssets();
             this.gridManager.initializeGrid();
             this.uiManager.initializeUI();
             this.setState(GAME_STATES.MENU);
-        }).catch(error => {
+        } catch (error) {
             console.error("Failed to load game resources:", error);
             this.uiManager.showErrorMessage("Failed to load game resources. Please refresh the page.");
-        });
-    
-        this.boundUpdate = this.update.bind(this);
+        }
     }
 
     saveGame() {
@@ -111,16 +111,31 @@ export class Game {
         setInterval(() => this.saveGame(), 60000); // Autosave every minute
     }
 
-    // Update the start method to include loading and autosaving
     async start() {
-        await this.assetLoader.loadAssets();
-        const loaded = this.loadGame();
-        if (!loaded) {
-            this.resetGameLogic();
+        try {
+            await this.assetLoader.loadAssets();
+            const loaded = this.loadGame();
+            if (!loaded) {
+                this.resetGameLogic();
+            }
+            this.setState(GAME_STATES.PLAYING);
+            this.startAutosave();
+            requestAnimationFrame(this.boundUpdate);
+        } catch (error) {
+            console.error("Failed to start game:", error);
+            this.uiManager.showErrorMessage("Failed to start game. Please try again.");
         }
-        this.setState(GAME_STATES.PLAYING);
-        this.autosave();
-        requestAnimationFrame(this.boundUpdate);
+    }
+
+    startAutosave() {
+        this.autosaveInterval = setInterval(() => this.saveGame(), 60000); // Autosave every minute
+    }
+
+    stopAutosave() {
+        if (this.autosaveInterval) {
+            clearInterval(this.autosaveInterval);
+            this.autosaveInterval = null;
+        }
     }
 
     initializeEventListeners() {
@@ -143,9 +158,17 @@ export class Game {
         }
     }
 
+
     setState(newState) {
         this.state = newState;
         this.uiManager.updateUI();
+        if (newState === GAME_STATES.PLAYING) {
+            this.uiManager.hideMenu();
+        } else if (newState === GAME_STATES.MENU) {
+            this.uiManager.showMenu();
+        } else if (newState === GAME_STATES.GAME_OVER) {
+            this.stopAutosave();
+        }
     }
 
     resetGameLogic() {
@@ -167,7 +190,7 @@ export class Game {
     startGame() {
         this.resetGameLogic();
         this.setState(GAME_STATES.PLAYING);
-        this.uiManager.hideMenu();
+        this.startAutosave();
         requestAnimationFrame(this.boundUpdate);
     }
 
@@ -176,24 +199,29 @@ export class Game {
     }
 
     restartGame() {
+        this.stopAutosave();
         this.resetGameLogic();
         this.startGame();
     }
 
     showMenu() {
         this.setState(GAME_STATES.MENU);
-        this.uiManager.showMenu();
+    }
+
+    isDefenseUnlocked(defenseType) {
+        return this.playerLevel >= defenseTypes[defenseType].requiredLevel;
     }
 
     togglePause() {
         if (this.state === GAME_STATES.PLAYING) {
             this.setState(GAME_STATES.PAUSED);
+            this.stopAutosave();
         } else if (this.state === GAME_STATES.PAUSED) {
             this.setState(GAME_STATES.PLAYING);
+            this.startAutosave();
         }
         this.uiManager.updatePauseButton();
     }
-
     update(timestamp) {
         if (this.state !== GAME_STATES.PLAYING) return;
 
@@ -208,6 +236,7 @@ export class Game {
         this.updateThreats(timestamp);
         this.updateProjectiles(timestamp);
         this.updateWaveSystem(timestamp);
+        this.updateTowers(timestamp);
 
         if (this.isWaveActive && timestamp - this.lastSpawnTime > 2000 && this.threats.length < this.currentWave * 5) {
             this.spawnThreat(1 + (this.currentWave - 1) * 0.1);
@@ -222,6 +251,14 @@ export class Game {
         this.uiManager.updateUI();
 
         requestAnimationFrame(this.boundUpdate);
+    }
+
+    drawProjectiles() {
+        this.projectiles.forEach(projectile => {
+            if (projectile && typeof projectile.draw === 'function') {
+                projectile.draw(this.ctx);
+            }
+        });
     }
 
     drawBackground() {
@@ -575,10 +612,4 @@ export class Game {
 
     addEffect(x, y, type) {
         this.effects.push({x, y, type, frame: 0});
-    }
-
-    drawProjectiles() {
-        this.projectiles.forEach(projectile => {
-            projectile.draw(this.ctx);
-        });
     }
