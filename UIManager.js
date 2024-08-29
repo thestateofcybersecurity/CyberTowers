@@ -1,10 +1,9 @@
-// UIManager.js
 import { GAME_STATES, defenseTypes } from './constants.js';
+import { Tower } from './Tower.js';
 
 export class UIManager {
     constructor(game) {
         this.game = game;
-        this.initializeUI();
     }
 
     initializeUI() {
@@ -45,37 +44,6 @@ export class UIManager {
         });
     }
 
-    showPauseMenu() {
-        const pauseMenu = document.createElement('div');
-        pauseMenu.id = 'pauseMenu';
-        pauseMenu.style.position = 'absolute';
-        pauseMenu.style.left = `${canvas.width / 2 - 100}px`;
-        pauseMenu.style.top = `${canvas.height / 2 - 50}px`;
-        pauseMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        pauseMenu.style.padding = '20px';
-        pauseMenu.style.borderRadius = '10px';
-        pauseMenu.style.textAlign = 'center';
-        pauseMenu.style.color = 'white';
-
-        const resumeButton = document.createElement('button');
-        resumeButton.textContent = 'Resume';
-        resumeButton.style.marginBottom = '10px';
-        resumeButton.addEventListener('click', () => this.game.togglePause());
-        pauseMenu.appendChild(resumeButton);
-
-        const quitButton = document.createElement('button');
-        quitButton.textContent = 'Quit to Menu';
-        quitButton.addEventListener('click', () => this.game.setState(GAME_STATES.MENU));
-        pauseMenu.appendChild(quitButton);
-
-        document.body.appendChild(pauseMenu);
-    }
-
-    hidePauseMenu() {
-        const pauseMenu = document.getElementById('pauseMenu');
-        if (pauseMenu) document.body.removeChild(pauseMenu);
-    }
-
     setupEventListeners() {
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
@@ -84,29 +52,6 @@ export class UIManager {
                 this.updateTowerSelection();
             });
         });
-
-        if (this.game.canvas) {
-            this.game.canvas.addEventListener('click', (event) => {
-                if (this.game.state === GAME_STATES.PLAYING) {
-                    const rect = this.game.canvas.getBoundingClientRect();
-                    const x = event.clientX - rect.left;
-                    const y = event.clientY - rect.top;
-                    
-                    const clickedTower = this.game.towers.find(tower => 
-                        x >= tower.x && x <= tower.x + 40 && y >= tower.y && y <= tower.y + 40
-                    );
-
-                    if (clickedTower) {
-                        this.showTowerUpgradeMenu(clickedTower);
-                    } else {
-                        this.game.placeTower(this.game.selectedTowerType, x, y);
-                        this.removeTowerUpgradeMenu();
-                    }
-                }
-            });
-        } else {
-            console.error('Game canvas not found');
-        }
 
         const pauseButton = document.getElementById('pauseButton');
         if (pauseButton) {
@@ -117,7 +62,6 @@ export class UIManager {
             console.error('Pause button not found');
         }
 
-        // Close upgrade menu when clicking outside
         document.addEventListener('click', (event) => {
             if (!event.target.closest('#towerUpgradeMenu') && !event.target.closest('.towerButton')) {
                 this.removeTowerUpgradeMenu();
@@ -126,7 +70,7 @@ export class UIManager {
     }
 
     showTowerUpgradeMenu(tower) {
-        this.removeTowerUpgradeMenu(); // Remove existing menu if any
+        this.removeTowerUpgradeMenu();
         const upgradeMenu = document.createElement('div');
         upgradeMenu.id = 'towerUpgradeMenu';
         upgradeMenu.classList.add('tower-upgrade-menu');
@@ -148,10 +92,10 @@ export class UIManager {
             if (this.game.resources >= upgradeCost) {
                 this.game.resources -= upgradeCost;
                 tower.levelUp();
-                this.showTowerUpgradeMenu(tower); // Refresh the menu
+                this.showTowerUpgradeMenu(tower);
                 this.updateUI();
             } else {
-                alert('Not enough resources!');
+                this.showErrorMessage('Not enough resources!');
             }
         });
 
@@ -168,23 +112,13 @@ export class UIManager {
     }
 
     updateUI() {
-        document.getElementById('scoreValue').textContent = Math.floor(this.game.systemIntegrity); 
-        document.getElementById('resourcesValue').textContent = Math.floor(this.game.resources);  
+        document.getElementById('scoreValue').textContent = Math.floor(this.game.systemIntegrity);
+        document.getElementById('resourcesValue').textContent = Math.floor(this.game.resources);
         document.getElementById('waveValue').textContent = this.game.currentWave;
         document.getElementById('playerLevel').textContent = this.game.playerLevel;
         document.getElementById('playerExperience').textContent = this.game.playerExperience;
-    }
-
-    updateScore() {
-        document.getElementById('scoreValue').textContent = Math.floor(this.game.systemIntegrity);
-    }
-
-    updateResources() {
-        document.getElementById('resourcesValue').textContent = Math.floor(this.game.resources);
-    }
-
-    updateWaveInfo() {
-        document.getElementById('waveValue').textContent = this.game.currentWave;
+        this.updateTowerButtons();
+        this.updateNextWaveInfo();
     }
 
     updateTowerButtons() {
@@ -215,7 +149,7 @@ export class UIManager {
     showMenu() {
         const menuContainer = document.getElementById('menuContainer');
         const gameOverContainer = document.getElementById('gameOverContainer');
-        
+
         if (menuContainer) menuContainer.style.display = 'flex';
         if (gameOverContainer) gameOverContainer.style.display = 'none';
     }
@@ -240,13 +174,16 @@ export class UIManager {
         const errorDiv = document.createElement('div');
         errorDiv.id = 'errorMessage';
         errorDiv.textContent = message;
+        errorDiv.style.position = 'absolute';
+        errorDiv.style.top = '10px';
+        errorDiv.style.left = '50%';
+        errorDiv.style.transform = 'translateX(-50%)';
+        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.borderRadius = '5px';
         document.body.appendChild(errorDiv);
         setTimeout(() => errorDiv.remove(), 3000);
-    }
-
-    updatePlayerInfo() {
-        document.getElementById('playerLevel').textContent = this.game.playerLevel;
-        document.getElementById('playerExperience').textContent = this.game.playerExperience;
     }
 
     showLevelUpMessage(level) {
@@ -266,48 +203,12 @@ export class UIManager {
     }
 
     loadGame() {
-        try {
-            const savedState = localStorage.getItem('gameState');
-            if (savedState) {
-                const gameState = JSON.parse(savedState);
-                this.game.systemIntegrity = gameState.systemIntegrity;
-                this.game.resources = gameState.resources;
-                this.game.currentWave = gameState.currentWave;
-                this.game.playerLevel = gameState.playerLevel;
-                this.game.playerExperience = gameState.playerExperience;
-
-                this.game.towers = gameState.towers.map(towerData => 
-                    new Tower(towerData.type, towerData.x, towerData.y, towerData.level, this.game)
-                );
-                this.game.towers.forEach(tower => {
-                    tower.experience = gameState.towers.find(t => t.x === tower.x && t.y === tower.y).experience;
-                });
-
-                this.game.highScore = gameState.highScore;
-
-                this.updateUI();
-                return true;
-            }
-        } catch (error) {
-            console.error('Error loading game:', error);
-            this.showErrorMessage('Failed to load the game. Starting a new game.');
+        if (this.game.loadGame()) {
+            this.updateUI();
+            this.game.startGame();
+        } else {
+            this.showErrorMessage('No saved game found. Starting a new game.');
+            this.game.startGame();
         }
-        return false;
-    }
-
-    showErrorMessage(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'errorMessage';
-        errorDiv.textContent = message;
-        errorDiv.style.position = 'absolute';
-        errorDiv.style.top = '10px';
-        errorDiv.style.left = '50%';
-        errorDiv.style.transform = 'translateX(-50%)';
-        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
-        errorDiv.style.color = 'white';
-        errorDiv.style.padding = '10px';
-        errorDiv.style.borderRadius = '5px';
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
     }
 }
