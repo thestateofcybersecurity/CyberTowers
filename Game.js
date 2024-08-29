@@ -51,6 +51,11 @@ export class Game {
         this.nextWaveInfo = null;
         this.imageCache = {};
         this.gridSize = GRID_SIZE;
+        this.canvas.addEventListener('mousemove', (event) => {
+        const rect = this.canvas.getBoundingClientRect();
+        this.lastMouseX = event.clientX - rect.left;
+        this.lastMouseY = event.clientY - rect.top;
+    });
     }
 
     async initialize() {
@@ -211,6 +216,8 @@ export class Game {
         this.drawThreats();
         this.drawTowers();
         this.drawProjectiles();
+        this.draw();
+        this.drawGhostTower(this.lastMouseX, this.lastMouseY);
     
         // Update and draw UI
         this.uiManager.draw(this.ctx);
@@ -581,6 +588,19 @@ export class Game {
         this.threats.forEach(threat => {
             threat.draw(this.ctx);
         });
+    }
+
+    drawGhostTower(mouseX, mouseY) {
+        if (this.selectedTowerType) {
+            const cell = this.gridManager.getGridCell(mouseX, mouseY);
+            if (cell && !cell.occupied && !this.gridManager.isCellOnPath(cell)) {
+                const ctx = this.canvas.getContext('2d');
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                ctx.fillRect(cell.x, cell.y, this.gridManager.cellSize, this.gridManager.cellSize);
+                ctx.globalAlpha = 1.0;
+            }
+        }
     }
 
     updateAndDrawEffects() {
