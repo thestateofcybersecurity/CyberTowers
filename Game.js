@@ -267,7 +267,6 @@ export class Game {
         this.threats = this.threats.filter(threat => {
             const reachedEnd = threat.move(this.path);
             if (reachedEnd) {
-                this.systemIntegrity -= threat.damage;
                 this.addVisualEffect('systemDamage');
                 this.checkGameOver();
                 return false;
@@ -594,7 +593,7 @@ export class Game {
                 threatData.speed,
                 threatData.damage * waveMultiplier,
                 threatData.reward * waveMultiplier,
-                this  // Pass the game instance
+                this  // Pass the game instance here
             );
             this.threats.push(newThreat);
         } else {
