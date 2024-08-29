@@ -541,11 +541,11 @@ export class Game {
 
     addPlayerExperience(amount) {
         this.playerExperience += amount;
-        const expForNextLevel = Math.pow(this.playerLevel, 2) * 100;
+        const nextLevelThreshold = PLAYER_LEVEL_THRESHOLDS[this.playerLevel];
 
-        while (this.playerLevel < PLAYER_LEVEL_THRESHOLDS.length && 
-            this.playerExperience >= PLAYER_LEVEL_THRESHOLDS[this.playerLevel]) {
+        while (this.playerExperience >= nextLevelThreshold && this.playerLevel < PLAYER_LEVEL_THRESHOLDS.length) {
             this.playerLevel++;
+            this.playerExperience -= nextLevelThreshold;
             this.unlockNewDefense();
             this.uiManager.showLevelUpMessage(this.playerLevel);
         }
@@ -557,20 +557,29 @@ export class Game {
         const unlockedDefenses = Object.keys(defenseTypes);
         if (this.playerLevel <= unlockedDefenses.length) {
             const newDefense = unlockedDefenses[this.playerLevel - 1];
-            this.unlockedDefenses.push(newDefense);
-            this.uiManager.showUnlockMessage(newDefense);
+            if (!this.unlockedDefenses.includes(newDefense)) {
+                this.unlockedDefenses.push(newDefense);
+                this.uiManager.showUnlockMessage(newDefense);
+            }
         }
     }
 
     calculateNextWaveInfo() {
         const nextWave = this.currentWave + 1;
         const possibleThreats = this.getThreatsForWave(nextWave);
-        const threatsPerWave = Math.min(nextWave * 2, 50); // Cap at 50 threats per wave
+        const threatsPerWave = Math.min(nextWave * 2, 50);
 
-        this.nextWaveInfo = {
-            types: possibleThreats,
-            totalThreats: threatsPerWave
-        };
+        if (possibleThreats.length > 0) {
+            this.nextWaveInfo = {
+                types: possibleThreats,
+                totalThreats: threatsPerWave
+            };
+        } else {
+            this.nextWaveInfo = {
+                types: ['No threats available'],
+                totalThreats: 0
+            };
+        }
     }
 
     getThreatsForWave(wave) {
@@ -593,17 +602,21 @@ export class Game {
 
     spawnThreat(waveMultiplier) {
         const threatType = this.selectThreatType();
-        const threatData = threatTypes[threatType];
-        const newThreat = new Threat(
-            threatType,
-            this.path[0].x,
-            this.path[0].y,
-            threatData.health * waveMultiplier,
-            threatData.speed,
-            threatData.damage * waveMultiplier,
-            threatData.reward * waveMultiplier
-        );
-        this.threats.push(newThreat);
+        if (threatTypes[threatType]) {
+            const threatData = threatTypes[threatType];
+            const newThreat = new Threat(
+                threatType,
+                this.path[0].x,
+                this.path[0].y,
+                threatData.health * waveMultiplier,
+                threatData.speed,
+                threatData.damage * waveMultiplier,
+                threatData.reward * waveMultiplier
+            );
+            this.threats.push(newThreat);
+        } else {
+            console.error(`Invalid threat type: ${threatType}`);
+        }
     }
 
     updateWaveSystem(timestamp) {
