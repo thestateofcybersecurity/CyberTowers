@@ -8,8 +8,8 @@ export class Projectile {
         this.towerType = towerType;
         this.towerLevel = towerLevel;
         this.tower = tower;
-        this.toRemove = false; // Flag to mark projectile for removal
-
+        this.toRemove = false;
+    
         if (isNaN(this.x) || isNaN(this.y)) {
             console.error(`Invalid coordinates for projectile: x=${x}, y=${y}`);
             this.toRemove = true;
