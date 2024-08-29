@@ -620,5 +620,11 @@ export class Game {
 }
 
 // Initialize the game when the script is loaded
-const game = new Game();
-game.initialize();
+document.addEventListener('DOMContentLoaded', () => {
+    const game = new Game();
+    game.initialize().then(() => {
+        console.log('Game initialized successfully');
+    }).catch(error => {
+        console.error('Failed to initialize game:', error);
+    });
+});
