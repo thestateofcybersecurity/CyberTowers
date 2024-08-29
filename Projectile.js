@@ -1,6 +1,6 @@
 export class Projectile {
     constructor(x, y, target, damage, speed, towerType, towerLevel, tower) {
-        if (typeof x !== 'number' || typeof y !== 'number') {
+        if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
             console.error(`Invalid coordinates for projectile: x=${x}, y=${y}`);
             this.toRemove = true;
             return;
