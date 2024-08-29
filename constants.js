@@ -10,9 +10,9 @@ export const GAME_STATES = {
 };
 
 export const WAVE_DURATION = 30000; // 30 seconds
-export const BREAK_DURATION = 10000; // 10 seconds
+export const BREAK_DURATION = 5000; // 10 seconds
 
-export const STARTING_RESOURCES = 300;
+export const STARTING_RESOURCES = 500;
 export const STARTING_SYSTEM_INTEGRITY = 100;
 
 export const MAX_TOWER_LEVEL = 5;
