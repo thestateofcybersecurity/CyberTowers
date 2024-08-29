@@ -9,13 +9,13 @@ export class Projectile {
         this.towerLevel = towerLevel;
         this.tower = tower;
         this.toRemove = false; // Flag to mark projectile for removal
+        console.log(`New projectile created at (${this.x.toFixed(2)}, ${this.y.toFixed(2)}) targeting ${this.target.type}`);
     }
 
     move() {
         if (!this.target || this.target.currentHealth <= 0) {
             console.log('Projectile target is no longer valid. Marking for removal.');
-            this.toRemove = true;
-            return;
+            return true; // Mark for removal
         }
 
         const dx = this.target.x - this.x;
@@ -25,9 +25,13 @@ export class Projectile {
         if (distance < this.speed) {
             this.x = this.target.x;
             this.y = this.target.y;
+            console.log(`Projectile reached target at (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`);
+            return true; // Mark for removal, we've hit the target
         } else {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
+            console.log(`Projectile moved to (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`);
+            return false;
         }
     }
 
