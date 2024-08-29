@@ -43,8 +43,8 @@ export class GridManager {
             const end = this.game.path[index + 1];
             if (!start || !end) return false; // Skip if start or end is undefined
             return this.distanceToSegment(
-                cell.x + this.cellSize / 2, 
-                cell.y + this.cellSize / 2, 
+                cell.x + this.cellSize, 
+                cell.y + this.cellSize, 
                 start.x, 
                 start.y, 
                 end.x, 
