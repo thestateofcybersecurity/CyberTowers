@@ -40,9 +40,13 @@ export class Tower {
         });
     }
 
+    canFire(timestamp) {
+        return timestamp - this.lastFired >= this.fireRate;
+    }
+
     fire(target) {
-        const projectile = new Projectile(this, target);
-        this.game.projectiles.push(projectile);
+        this.lastFired = performance.now();
+        return new Projectile(this, target);
     }
 
     levelUp() {
