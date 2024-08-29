@@ -8,40 +8,49 @@ export class UIManager {
     }
 
     initializeUI() {
-        this.createMenuButtons(); // Add this line to create menu buttons
+        this.createMenuButtons();
         this.createTowerButtons();
-        this.addEventListeners();
+        this.setupEventListeners();
     }
 
     createMenuButtons() {
         const menuContainer = document.getElementById('menuContainer');
-        menuContainer.innerHTML = ''; // Clear existing content
+        if (!menuContainer) {
+            console.error('Menu container not found');
+            return;
+        }
 
-        const startButton = document.createElement('button');
-        startButton.textContent = 'Start New Game';
-        startButton.addEventListener('click', () => this.game.startGame());
+        const buttons = [
+            { text: 'Start New Game', action: () => this.game.startGame() },
+            { text: 'Load Game', action: () => this.loadGame() },
+            { text: 'Options', action: () => this.game.showOptions() }
+        ];
 
-        const loadButton = document.createElement('button');
-        loadButton.textContent = 'Load Game';
-        loadButton.addEventListener('click', () => {
-            if (this.game.loadGame()) {
-                this.game.setState(GAME_STATES.PLAYING);
-                this.hideMenu();
-            } else {
-                alert('No saved game found!');
-            }
+        buttons.forEach(({ text, action }) => {
+            const button = document.createElement('button');
+            button.textContent = text;
+            button.addEventListener('click', action);
+            menuContainer.appendChild(button);
         });
-
-        const optionsButton = document.createElement('button');
-        optionsButton.textContent = 'Options';
-        optionsButton.addEventListener('click', () => this.game.showOptions());
-
-        menuContainer.appendChild(startButton);
-        menuContainer.appendChild(loadButton);
-        menuContainer.appendChild(optionsButton);
     }
 
-addEventListeners() {
+    createTowerButtons() {
+        const towerSelection = document.getElementById('towerSelection');
+        if (!towerSelection) {
+            console.error('Tower selection container not found');
+            return;
+        }
+
+        Object.keys(defenseTypes).forEach(towerType => {
+            const button = document.createElement('button');
+            button.textContent = towerType;
+            button.classList.add('towerButton');
+            button.dataset.tower = towerType;
+            towerSelection.appendChild(button);
+        });
+    }
+
+    setupEventListeners() {
         document.querySelectorAll('.towerButton').forEach(button => {
             button.addEventListener('click', () => {
                 const towerType = button.dataset.tower;
@@ -50,27 +59,38 @@ addEventListeners() {
             });
         });
 
-        this.game.canvas.addEventListener('click', (event) => {
-            const rect = this.game.canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+        if (this.game.canvas) {
+            this.game.canvas.addEventListener('click', (event) => {
+                if (this.game.state === GAME_STATES.PLAYING) {
+                    const rect = this.game.canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    
+                    const clickedTower = this.game.towers.find(tower => 
+                        x >= tower.x && x <= tower.x + 40 && y >= tower.y && y <= tower.y + 40
+                    );
 
-            if (this.game.state === GAME_STATES.PLAYING) {
-                const clickedTower = this.game.towers.find(tower => 
-                    x >= tower.x && x <= tower.x + 40 && y >= tower.y && y <= tower.y + 40
-                );
-
-                if (clickedTower) {
-                    this.showTowerUpgradeMenu(clickedTower);
-                } else {
-                    this.game.placeTower(this.game.selectedTowerType, x, y);
+                    if (clickedTower) {
+                        this.showTowerUpgradeMenu(clickedTower);
+                    } else {
+                        this.game.placeTower(this.game.selectedTowerType, x, y);
+                        this.removeTowerUpgradeMenu();
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            console.error('Game canvas not found');
+        }
 
-        document.getElementById('pauseButton').addEventListener('click', () => {
-            this.game.togglePause();
-        });
+        const pauseButton = document.getElementById('pauseButton');
+        if (pauseButton) {
+            pauseButton.addEventListener('click', () => {
+                this.game.togglePause();
+            });
+        } else {
+            console.error('Pause button not found');
+        }
+
         // Close upgrade menu when clicking outside
         document.addEventListener('click', (event) => {
             if (!event.target.closest('#towerUpgradeMenu') && !event.target.closest('.towerButton')) {
@@ -168,12 +188,16 @@ addEventListeners() {
     }
 
     showMenu() {
-        document.getElementById('menuContainer').style.display = 'flex';
-        document.getElementById('gameOverContainer').style.display = 'none';
+        const menuContainer = document.getElementById('menuContainer');
+        const gameOverContainer = document.getElementById('gameOverContainer');
+        
+        if (menuContainer) menuContainer.style.display = 'flex';
+        if (gameOverContainer) gameOverContainer.style.display = 'none';
     }
 
     hideMenu() {
-        document.getElementById('menuContainer').style.display = 'none';
+        const menuContainer = document.getElementById('menuContainer');
+        if (menuContainer) menuContainer.style.display = 'none';
     }
 
     showGameOver() {
