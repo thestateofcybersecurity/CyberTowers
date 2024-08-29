@@ -618,3 +618,7 @@ export class Game {
         this.effects.push({x, y, type, frame: 0});
     }
 }
+
+// Initialize the game when the script is loaded
+const game = new Game();
+game.initialize();
