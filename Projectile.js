@@ -1,27 +1,32 @@
 // Projectile.js
 export class Projectile {
-    constructor(x, y, target, damage, color, tower) {
-        this.x = x;
-        this.y = y;
-        this.target = target;
-        this.damage = damage;
-        this.color = color;
+    constructor(tower, target) {
         this.tower = tower;
-        this.speed = 5;
+        this.target = target;
+        this.x = tower.position.x;
+        this.y = tower.position.y;
+        this.speed = tower.projectileSpeed || 5;
+        this.damage = tower.damage;
+        this.color = tower.projectileColor || '#FFFFFF';
     }
 
     move() {
         const dx = this.target.x - this.x;
         const dy = this.target.y - this.y;
-        const distance = Math.hypot(dx, dy);
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > this.speed) {
+        if (distance < this.speed) {
+            this.hitTarget();
+        } else {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
-        } else {
-            this.x = this.target.x;
-            this.y = this.target.y;
         }
+    }
+
+    hitTarget() {
+        this.target.takeDamage(this.damage);
+        this.tower.game.projectiles = this.tower.game.projectiles.filter(p => p !== this); // Remove projectile after hit
+        this.tower.game.addEffect(this.x, this.y, 'explosion');
     }
 
     checkCollision(threats) {
