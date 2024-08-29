@@ -681,9 +681,10 @@ export class Game {
                 threatData.speed,
                 threatData.damage * waveMultiplier,
                 threatData.reward * waveMultiplier,
-                this  // Pass the game instance here
+                this
             );
             this.threats.push(newThreat);
+            console.log(`Spawned ${threatType} threat at (${newThreat.x}, ${newThreat.y})`);
         } else {
             console.error(`Invalid threat type: ${threatType}`);
         }
