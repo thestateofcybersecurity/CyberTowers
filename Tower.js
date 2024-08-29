@@ -19,6 +19,11 @@ export class Tower {
         this.level = Number(level);
         this.game = game;
     
+        if (isNaN(this.x) || isNaN(this.y)) {
+            console.error(`Invalid tower coordinates: x=${x}, y=${y}`);
+            return;
+        }
+    
         const towerData = defenseTypes[type];
         if (!towerData) {
             console.error(`Invalid tower type: ${type}`);
@@ -81,6 +86,11 @@ export class Tower {
     
         console.log(`Tower position: (${projectileX}, ${projectileY})`);
         console.log(`Projectile start position: (${projectileX}, ${projectileY})`);
+    
+        if (isNaN(projectileX) || isNaN(projectileY)) {
+            console.error(`Invalid tower coordinates: x=${this.x}, y=${this.y}`);
+            return;
+        }
     
         const projectile = new Projectile(
             projectileX,
