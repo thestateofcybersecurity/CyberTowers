@@ -217,9 +217,29 @@ export class UIManager {
     }
 
     showGameOver() {
-        document.getElementById('gameOverContainer').style.display = 'flex';
-        document.getElementById('finalScore').textContent = this.game.currentWave;
-        document.getElementById('highScore').textContent = this.game.highScore;
+        const gameOverContainer = document.getElementById('gameOverContainer');
+        if (gameOverContainer) {
+            gameOverContainer.style.display = 'flex';
+            document.getElementById('finalScore').textContent = this.game.currentWave;
+            document.getElementById('highScore').textContent = this.game.highScore;
+
+            const restartButton = document.getElementById('restartButton');
+            if (restartButton) {
+                // Remove any existing event listeners to prevent duplicates
+                restartButton.removeEventListener('click', this.handleRestartClick);
+                // Add new event listener
+                restartButton.addEventListener('click', this.handleRestartClick);
+            } else {
+                console.error('Restart button not found in the DOM');
+            }
+        } else {
+            console.error('Game over container not found in the DOM');
+        }
+    }
+
+    handleRestartClick = () => {
+        console.log('Restart button clicked');
+        this.game.restartGame();
     }
 
     updatePauseButton() {
