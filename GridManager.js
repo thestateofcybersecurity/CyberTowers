@@ -14,13 +14,27 @@ export class GridManager {
                 this.gridMap.set(key, { x, y, occupied: false });
             }
         }
+        console.log("Grid initialized"); // Debug log
     }
 
     getGridCell(x, y) {
-        const key = `${Math.floor(x / this.cellSize) * this.cellSize},${Math.floor(y / this.cellSize) * this.cellSize}`;
+        const gridX = Math.floor(x / this.cellSize) * this.cellSize;
+        const gridY = Math.floor(y / this.cellSize) * this.cellSize;
+        const key = `${gridX},${gridY}`;
         return this.gridMap.get(key);
     }
 
+    updateGrid(x, y, occupied) {
+        const key = `${x},${y}`;
+        const cell = this.gridMap.get(key);
+        if (cell) {
+            cell.occupied = occupied;
+            console.log(`Grid updated at (${x}, ${y}), occupied: ${occupied}`); // Debug log
+        } else {
+            console.log(`Invalid cell at (${x}, ${y})`); // Debug log
+        }
+    }
+    
     isCellOnPath(cell) {
         const tolerance = 20; // Adjust this value as needed
         return this.game.path.some(segment => 
