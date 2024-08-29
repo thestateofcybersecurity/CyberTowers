@@ -29,8 +29,8 @@ export class UIManager {
 
         const buttons = [
             { text: 'Start New Game', action: () => this.game.startGame() },
-            { text: 'Load Game', action: () => this.loadGame() },
-            { text: 'Options', action: () => this.game.showOptions() }
+            //{ text: 'Load Game', action: () => this.loadGame() },
+            //{ text: 'Options', action: () => this.game.showOptions() }
         ];
 
         buttons.forEach(({ text, action }) => {
