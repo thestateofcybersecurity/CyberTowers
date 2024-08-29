@@ -303,14 +303,22 @@ export class Game {
     }
 
     drawPath() {
-        this.ctx.strokeStyle = '#00FFFF';
-        this.ctx.lineWidth = 4;
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.lineWidth = 2;
         this.ctx.beginPath();
         this.ctx.moveTo(this.path[0].x, this.path[0].y);
         for (let i = 1; i < this.path.length; i++) {
             this.ctx.lineTo(this.path[i].x, this.path[i].y);
         }
         this.ctx.stroke();
+
+        // Draw points on the path
+        this.ctx.fillStyle = 'red';
+        this.path.forEach(point => {
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
     }
 
     updateThreats(timestamp) {
@@ -509,11 +517,14 @@ export class Game {
         console.log(`Attempting to place tower of type ${type} at (${x}, ${y})`);
         const cell = this.gridManager.getGridCell(x, y);
         const towerCost = Tower.getCost(type);
-    
+
         if (!cell) {
+            console.error("Invalid grid location");
             this.uiManager.showErrorMessage("Invalid grid location");
             return;
         }
+
+        console.log(`Cell found: ${JSON.stringify(cell)}`);
     
         if (cell.occupied) {
             this.uiManager.showErrorMessage("Cell already occupied");
@@ -537,6 +548,7 @@ export class Game {
     
         const newTower = new Tower(type, cell.x, cell.y, 1, this);
         this.towers.push(newTower);
+        console.log(`Tower placed at (${cell.x}, ${cell.y}), range: ${newTower.range}`);
         this.resources -= towerCost;
         cell.occupied = true;
         this.gridManager.updateGrid(cell.x, cell.y, true);
