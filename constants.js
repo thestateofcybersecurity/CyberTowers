@@ -19,14 +19,14 @@ export const MAX_TOWER_LEVEL = 5;
 export const GRID_SIZE = 40;
 
 export const threatTypes = {
-    virus: { health: 45, speed: 1.5, damage: 5, reward: 20, icon: './api/virus.jpg' },
-    trojan: { health: 75, speed: 1, damage: 8, reward: 30, icon: './api/trojan.jpg' },
-    ransomware: { health: 120, speed: 0.7, damage: 15, reward: 50, icon: './api/ransomware.jpg' },
-    worm: { health: 30, speed: 2, damage: 10, reward: 25, icon: './api/worm.jpg' },
-    botnet: { health: 200, speed: 0.5, damage: 20, reward: 80, icon: './api/botnet.jpg' },
-    phishing: { health: 20, speed: 2.5, damage: 3, reward: 15, icon: './api/phishing.jpg' },
-    rootkit: { health: 100, speed: 0.8, damage: 12, reward: 40, icon: './api/rootkit.jpg', invisible: true },
-    apt: { health: 150, speed: 1.2, damage: 18, reward: 60, icon: './api/apt.jpg', evolves: true }
+    virus: { health: 60, speed: 1.7, damage: 7, reward: 20, icon: './api/virus.jpg' }, // Increased health and speed
+    trojan: { health: 90, speed: 1.2, damage: 10, reward: 30, icon: './api/trojan.jpg' },
+    ransomware: { health: 150, speed: 0.9, damage: 18, reward: 50, icon: './api/ransomware.jpg' },
+    worm: { health: 40, speed: 2.3, damage: 12, reward: 25, icon: './api/worm.jpg' },
+    botnet: { health: 250, speed: 0.7, damage: 25, reward: 80, icon: './api/botnet.jpg' },
+    phishing: { health: 30, speed: 2.8, damage: 5, reward: 15, icon: './api/phishing.jpg' },
+    rootkit: { health: 130, speed: 1.0, damage: 15, reward: 40, icon: './api/rootkit.jpg', invisible: true },
+    apt: { health: 200, speed: 1.4, damage: 22, reward: 60, icon: './api/apt.jpg', evolves: true }
 };
 
 export const defenseTypes = {
@@ -146,53 +146,53 @@ export const defenseTypes = {
 
 export const TOWER_STATS = {
     firewall: {
-        1: { damage: 15, range: 120, fireRate: 500 },
-        2: { damage: 18, range: 130, fireRate: 500 },
-        3: { damage: 22, range: 130, fireRate: 450 },
-        4: { damage: 26, range: 140, fireRate: 450 },
-        5: { damage: 30, range: 140, fireRate: 400 }
+        1: { damage: 10, range: 100, fireRate: 600 }, // Reduced damage and range
+        2: { damage: 12, range: 110, fireRate: 600 },
+        3: { damage: 14, range: 110, fireRate: 550 },
+        4: { damage: 16, range: 120, fireRate: 550 },
+        5: { damage: 18, range: 120, fireRate: 500 }
     },
     antivirus: {
-        1: { damage: 25, range: 150, fireRate: 1200 },
-        2: { damage: 30, range: 160, fireRate: 1200 },
-        3: { damage: 35, range: 160, fireRate: 1100 },
-        4: { damage: 40, range: 170, fireRate: 1100 },
-        5: { damage: 45, range: 170, fireRate: 1000 }
+        1: { damage: 20, range: 130, fireRate: 1300 },
+        2: { damage: 24, range: 140, fireRate: 1300 },
+        3: { damage: 28, range: 140, fireRate: 1200 },
+        4: { damage: 32, range: 150, fireRate: 1200 },
+        5: { damage: 36, range: 150, fireRate: 1100 }
     },
     encryption: { 
-        1: { damage: 35, range: 180, fireRate: 1500 },
-        2: { damage: 40, range: 190, fireRate: 1500 },
-        3: { damage: 45, range: 190, fireRate: 1400 },
-        4: { damage: 50, range: 200, fireRate: 1400 },
-        5: { damage: 55, range: 200, fireRate: 1300 }
+        1: { damage: 30, range: 160, fireRate: 1700 },
+        2: { damage: 34, range: 170, fireRate: 1700 },
+        3: { damage: 38, range: 170, fireRate: 1600 },
+        4: { damage: 42, range: 180, fireRate: 1600 },
+        5: { damage: 46, range: 180, fireRate: 1500 }
     },
     ai: {
-        1: { damage: 50, range: 200, fireRate: 2000 },
-        2: { damage: 60, range: 220, fireRate: 2000 },
-        3: { damage: 70, range: 220, fireRate: 1800 },
-        4: { damage: 80, range: 240, fireRate: 1800 },
-        5: { damage: 90, range: 240, fireRate: 1600 }
+        1: { damage: 40, range: 180, fireRate: 2200 },
+        2: { damage: 46, range: 200, fireRate: 2200 },
+        3: { damage: 52, range: 200, fireRate: 2000 },
+        4: { damage: 58, range: 220, fireRate: 2000 },
+        5: { damage: 64, range: 220, fireRate: 1800 }
     },
     ids: {
-        1: { damage: 30, range: 220, fireRate: 1300 },
-        2: { damage: 35, range: 240, fireRate: 1300 },
-        3: { damage: 40, range: 240, fireRate: 1200 },
-        4: { damage: 45, range: 260, fireRate: 1200 },
-        5: { damage: 50, range: 260, fireRate: 1100 }
+        1: { damage: 24, range: 200, fireRate: 1500 },
+        2: { damage: 28, range: 220, fireRate: 1500 },
+        3: { damage: 32, range: 220, fireRate: 1400 },
+        4: { damage: 36, range: 240, fireRate: 1400 },
+        5: { damage: 40, range: 240, fireRate: 1300 }
     },
     soc: {
-        1: { damage: 45, range: 250, fireRate: 1800 },
-        2: { damage: 55, range: 270, fireRate: 1800 },
-        3: { damage: 65, range: 270, fireRate: 1700 },
-        4: { damage: 75, range: 290, fireRate: 1700 },
-        5: { damage: 85, range: 290, fireRate: 1600 }
+        1: { damage: 36, range: 230, fireRate: 2000 },
+        2: { damage: 42, range: 250, fireRate: 2000 },
+        3: { damage: 48, range: 250, fireRate: 1900 },
+        4: { damage: 54, range: 270, fireRate: 1900 },
+        5: { damage: 60, range: 270, fireRate: 1800 }
     },
     honeypot: {
-        1: { damage: 5, range: 150, fireRate: 800 },
-        2: { damage: 5, range: 170, fireRate: 800 },
-        3: { damage: 10, range: 170, fireRate: 700 },
-        4: { damage: 10, range: 190, fireRate: 700 },
-        5: { damage: 15, range: 190, fireRate: 600 }
+        1: { damage: 3, range: 140, fireRate: 900 },
+        2: { damage: 3, range: 150, fireRate: 900 },
+        3: { damage: 6, range: 150, fireRate: 800 },
+        4: { damage: 6, range: 160, fireRate: 800 },
+        5: { damage: 9, range: 160, fireRate: 700 }
     }
 };
 
@@ -210,8 +210,8 @@ export const PLAYER_LEVEL_THRESHOLDS = [
 ];
 
 export const THREAT_EVOLUTION_FACTOR = {
-    health: 1.5,
-    speed: 1.2,
-    damage: 1.5,
-    reward: 2
+    health: 1.3,  // More gradual health increase
+    speed: 1.1,   // Slight increase in speed
+    damage: 1.3,  // Gradual increase in damage
+    reward: 1.5   // Slight increase in rewards
 };
