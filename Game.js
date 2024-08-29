@@ -14,7 +14,8 @@ import {
     STARTING_RESOURCES, 
     STARTING_SYSTEM_INTEGRITY,
     PATH,
-    PLAYER_LEVEL_THRESHOLDS
+    PLAYER_LEVEL_THRESHOLDS,
+    GRID_SIZE
 } from './constants.js';
 
 export class Game {
@@ -49,6 +50,7 @@ export class Game {
         this.unlockedDefenses = ['firewall'];
         this.nextWaveInfo = null;
         this.imageCache = {};
+        this.gridSize = GRID_SIZE;
     }
 
     async initialize() {
@@ -56,6 +58,7 @@ export class Game {
             await this.assetLoader.loadAssets();
             this.gridManager.initializeGrid();
             this.uiManager.initializeUI();
+            this.initializeEventListeners();
             this.setState(GAME_STATES.MENU);
         } catch (error) {
             console.error("Failed to load game resources:", error);
@@ -123,16 +126,7 @@ export class Game {
     }
 
     initializeEventListeners() {
-        this.canvas.addEventListener('click', (event) => {
-            console.log('Canvas clicked');
-            if (this.state === GAME_STATES.PLAYING) {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-                console.log(`Click coordinates: (${x}, ${y})`);
-                this.placeTower(this.selectedTowerType, x, y);
-            }
-        });
+        this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
     }
 
     handleCanvasClick(event) {
@@ -140,6 +134,7 @@ export class Game {
             const rect = this.canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
+            console.log(`Click coordinates: (${x}, ${y})`);
             this.placeTower(this.selectedTowerType, x, y);
         }
     }
@@ -184,7 +179,16 @@ export class Game {
         this.resetGameLogic();
         this.setState(GAME_STATES.PLAYING);
         this.startAutosave();
-        requestAnimationFrame(this.boundUpdate);
+        this.gameLoop();
+    }
+
+    gameLoop(timestamp) {
+        if (this.state !== GAME_STATES.PLAYING) return;
+
+        this.update(timestamp);
+        this.draw();
+
+        requestAnimationFrame(this.gameLoop.bind(this));
     }
 
     showOptions() {
