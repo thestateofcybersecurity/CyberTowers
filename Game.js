@@ -42,11 +42,13 @@ export class Game {
         this.assetLoader = new AssetLoader();
         this.gridManager = new GridManager(CANVAS_WIDTH, CANVAS_HEIGHT);
         this.boundUpdate = this.update.bind(this);
-        this.highScore = 0;
+        this.highScore = localStorage.getItem('highScore') || 0;
         this.waveDuration = WAVE_DURATION;
         this.breakDuration = BREAK_DURATION;
         this.path = PATH;
         this.autosaveInterval = null;
+        this.unlockedDefenses = ['firewall'];
+        this.nextWaveInfo = null;
     }
     async initialize() {
         try {
@@ -74,7 +76,8 @@ export class Game {
                 level: tower.level,
                 experience: tower.experience
             })),
-            highScore: this.highScore
+            highScore: this.highScore,
+            unlockedDefenses: this.unlockedDefenses
         };
 
         localStorage.setItem('gameState', JSON.stringify(gameState));
@@ -99,6 +102,7 @@ export class Game {
             });
 
             this.highScore = gameState.highScore;
+            this.unlockedDefenses = gameState.unlockedDefenses;
 
             this.uiManager.updateUI();
             return true;
@@ -184,6 +188,7 @@ export class Game {
         this.playerLevel = 1;
         this.playerExperience = 0;
         this.selectedTowerType = 'firewall';
+        this.unlockedDefenses = ['firewall'];
         this.gridManager.resetGrid();
     }
 
