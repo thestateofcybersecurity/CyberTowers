@@ -46,9 +46,9 @@ export class UIManager {
 
     createTowerButtons() {
         const towerSelection = document.getElementById('towerSelection');
-        Object.keys(defenseTypes).forEach(towerType => {
+        Object.entries(defenseTypes).forEach(([towerType, towerData]) => {
             const button = document.createElement('button');
-            button.textContent = towerType;
+            button.textContent = `${towerType} (${towerData.cost})`;
             button.classList.add('towerButton');
             button.dataset.tower = towerType;
             button.addEventListener('click', () => {
@@ -161,10 +161,12 @@ export class UIManager {
     updateTowerButtons() {
         document.querySelectorAll('.towerButton').forEach(button => {
             const towerType = button.dataset.tower;
+            const towerData = defenseTypes[towerType];
             const isUnlocked = this.game.isDefenseUnlocked(towerType);
-            const isAffordable = this.game.resources >= defenseTypes[towerType].cost;
+            const isAffordable = this.game.resources >= towerData.cost;
             button.disabled = !isUnlocked || !isAffordable;
             button.classList.toggle('affordable', isAffordable);
+            button.textContent = `${towerType} (${towerData.cost})`;
         });
     }
 
