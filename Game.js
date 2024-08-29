@@ -582,4 +582,9 @@ export class Game {
             projectile.draw(this.ctx);
         });
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const game = new Game();
+        game.initialize(); // Make sure this method exists and calls uiManager.showMenu()
+    });
 }
