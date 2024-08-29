@@ -12,29 +12,29 @@ export const GAME_STATES = {
 export const WAVE_DURATION = 30000; // 30 seconds
 export const BREAK_DURATION = 10000; // 10 seconds
 
-export const STARTING_RESOURCES = 500;
+export const STARTING_RESOURCES = 300;
 export const STARTING_SYSTEM_INTEGRITY = 100;
 
 export const MAX_TOWER_LEVEL = 5;
 export const GRID_SIZE = 40;
 
 export const threatTypes = {
-    virus: { health: 60, speed: 1.7, damage: 7, reward: 20, icon: './api/virus.jpg' }, // Increased health and speed
-    trojan: { health: 90, speed: 1.2, damage: 10, reward: 30, icon: './api/trojan.jpg' },
-    ransomware: { health: 150, speed: 0.9, damage: 18, reward: 50, icon: './api/ransomware.jpg' },
-    worm: { health: 40, speed: 2.3, damage: 12, reward: 25, icon: './api/worm.jpg' },
-    botnet: { health: 250, speed: 0.7, damage: 25, reward: 80, icon: './api/botnet.jpg' },
-    phishing: { health: 30, speed: 2.8, damage: 5, reward: 15, icon: './api/phishing.jpg' },
-    rootkit: { health: 130, speed: 1.0, damage: 15, reward: 40, icon: './api/rootkit.jpg', invisible: true },
-    apt: { health: 200, speed: 1.4, damage: 22, reward: 60, icon: './api/apt.jpg', evolves: true }
+    virus: { health: 60, speed: 1.7, damage: 7, reward: 10, icon: './api/virus.jpg' }, // Increased health and speed
+    trojan: { health: 90, speed: 1.2, damage: 10, reward: 15, icon: './api/trojan.jpg' },
+    ransomware: { health: 150, speed: 0.9, damage: 18, reward: 25, icon: './api/ransomware.jpg' },
+    worm: { health: 40, speed: 2.3, damage: 12, reward: 20, icon: './api/worm.jpg' },
+    botnet: { health: 250, speed: 0.7, damage: 25, reward: 40, icon: './api/botnet.jpg' },
+    phishing: { health: 30, speed: 2.8, damage: 5, reward: 10, icon: './api/phishing.jpg' },
+    rootkit: { health: 130, speed: 1.0, damage: 15, reward: 20, icon: './api/rootkit.jpg', invisible: true },
+    apt: { health: 200, speed: 1.4, damage: 22, reward: 30, icon: './api/apt.jpg', evolves: true }
 };
 
 export const defenseTypes = {
     firewall: { 
         cost: 100, 
-        damage: 15, 
-        range: 120, 
-        fireRate: 500, 
+        damage: 10, 
+        range: 100, 
+        fireRate: 600, 
         icon: './api/firewall.jpg', 
         projectileColor: '#FF0000',
         maxLevel: 5,
@@ -48,9 +48,9 @@ export const defenseTypes = {
     },
     antivirus: { 
         cost: 200, 
-        damage: 25, 
-        range: 150, 
-        fireRate: 1200, 
+        damage: 20, 
+        range: 130, 
+        fireRate: 1300, 
         icon: './api/antivirus.jpg', 
         projectileColor: '#00FF00',
         maxLevel: 5,
@@ -64,9 +64,9 @@ export const defenseTypes = {
     },
     encryption: { 
         cost: 300, 
-        damage: 35, 
-        range: 180, 
-        fireRate: 1500, 
+        damage: 30, 
+        range: 160, 
+        fireRate: 1700, 
         icon: './api/encryption.jpg', 
         projectileColor: '#0000FF',
         maxLevel: 5,
@@ -80,9 +80,9 @@ export const defenseTypes = {
     },
     ai: { 
         cost: 450, 
-        damage: 50, 
-        range: 200, 
-        fireRate: 2000, 
+        damage: 40, 
+        range: 180, 
+        fireRate: 2200, 
         icon: './api/ai.jpg', 
         projectileColor: '#FFFF00',
         maxLevel: 5,
@@ -96,9 +96,9 @@ export const defenseTypes = {
     },
     ids: { 
         cost: 350, 
-        damage: 30, 
-        range: 220, 
-        fireRate: 1300, 
+        damage: 24, 
+        range: 200, 
+        fireRate: 1500, 
         icon: './api/ids.jpg', 
         projectileColor: '#800080',
         maxLevel: 5,
@@ -112,9 +112,9 @@ export const defenseTypes = {
     },
     soc: { 
         cost: 550, 
-        damage: 45, 
-        range: 250, 
-        fireRate: 1800, 
+        damage: 36, 
+        range: 230, 
+        fireRate: 2000, 
         icon: './api/soc.jpg', 
         projectileColor: '#FFA500',
         maxLevel: 5,
@@ -129,8 +129,8 @@ export const defenseTypes = {
     honeypot: { 
         cost: 150, 
         damage: 5, 
-        range: 150, 
-        fireRate: 800, 
+        range: 130, 
+        fireRate: 900, 
         icon: './api/honeypot.jpg', 
         projectileColor: '#FFD700',
         maxLevel: 5,
@@ -197,16 +197,16 @@ export const TOWER_STATS = {
 };
 
 export const PATH = [
-    {x: 0, y: 300},
-    {x: 200, y: 300},
-    {x: 200, y: 100},
-    {x: 600, y: 100},
-    {x: 600, y: 500},
-    {x: 800, y: 500}
+    {x: 0, y: 280},
+    {x: 200, y: 280},
+    {x: 200, y: 120},
+    {x: 600, y: 120},
+    {x: 600, y: 480},
+    {x: 800, y: 480}
 ];
 
 export const PLAYER_LEVEL_THRESHOLDS = [
-    0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500
+    0, 200, 600, 1200, 2000, 3000, 4200, 5400, 7200, 9000
 ];
 
 export const THREAT_EVOLUTION_FACTOR = {
