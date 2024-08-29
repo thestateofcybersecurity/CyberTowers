@@ -46,13 +46,16 @@ export class Threat {
 
     takeDamage(damage) {
         this.currentHealth -= damage;
+        console.log(`${this.type} took ${damage} damage. Current health: ${this.currentHealth}/${this.maxHealth}`);
+        
         if (this.currentHealth <= 0) {
-            this.die();
-            return true;
+            this.currentHealth = 0;
+            console.log(`${this.type} destroyed!`);
+            return true; // Threat is destroyed
         }
-        return false;
+        return false; // Threat is still alive
     }
-
+    
     die() {
         this.game.threats = this.game.threats.filter(threat => threat !== this);
         this.game.resources += this.reward;
