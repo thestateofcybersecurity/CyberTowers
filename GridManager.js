@@ -35,12 +35,22 @@ export class GridManager {
     }
 
     isCellOnPath(cell) {
+        if (!cell) return false;
         const tolerance = this.cellSize / 2;
-        return this.game.path.some(segment => 
-            this.distanceToSegment(cell.x + this.cellSize / 2, cell.y + this.cellSize / 2, 
-                                   segment.start.x, segment.start.y, 
-                                   segment.end.x, segment.end.y) < tolerance
-        );
+        return this.game.path.some((segment, index) => {
+            if (index === this.game.path.length - 1) return false; // Skip the last segment
+            const start = segment;
+            const end = this.game.path[index + 1];
+            if (!start || !end) return false; // Skip if start or end is undefined
+            return this.distanceToSegment(
+                cell.x + this.cellSize / 2, 
+                cell.y + this.cellSize / 2, 
+                start.x, 
+                start.y, 
+                end.x, 
+                end.y
+            ) < tolerance;
+        });
     }
 
     resetGrid() {
