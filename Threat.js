@@ -70,7 +70,7 @@ export class Threat {
         }
         return true;
     }
-
+    
     evolve() {
         if (this.evolves) {
             this.maxHealth *= THREAT_EVOLUTION_FACTOR.health;
