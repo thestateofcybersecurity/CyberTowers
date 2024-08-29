@@ -330,15 +330,19 @@ export class Game {
     }
 
     updateProjectiles(timestamp) {
-        for (let i = this.projectiles.length - 1; i >= 0; i--) {
-            const projectile = this.projectiles[i];
+        this.projectiles = this.projectiles.filter(projectile => {
+            if (projectile.toRemove) {
+                return false; // Remove the projectile
+            }
+
             projectile.move();
             const hitThreat = projectile.checkCollision(this.threats);
             if (hitThreat) {
                 this.handleProjectileImpact(projectile, hitThreat);
-                this.projectiles.splice(i, 1);
+                return false; // Remove the projectile after impact
             }
-        }
+            return true; // Keep the projectile
+        });
     }
 
     addVisualEffect(type, x, y) {
