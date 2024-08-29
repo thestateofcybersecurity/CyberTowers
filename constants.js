@@ -19,8 +19,8 @@ export const MAX_TOWER_LEVEL = 5;
 export const GRID_SIZE = 40;
 
 export const threatTypes = {
-    virus: { health: 60, speed: 1.7, damage: 7, reward: 10, icon: './api/virus.jpg' }, // Increased health and speed
-    trojan: { health: 90, speed: 1.2, damage: 10, reward: 15, icon: './api/trojan.jpg' },
+    virus: { health: 45, speed: 1.7, damage: 7, reward: 10, icon: './api/virus.jpg' }, // Increased health and speed
+    trojan: { health: 75, speed: 1.2, damage: 10, reward: 15, icon: './api/trojan.jpg' },
     ransomware: { health: 150, speed: 0.9, damage: 18, reward: 25, icon: './api/ransomware.jpg' },
     worm: { health: 40, speed: 2.3, damage: 12, reward: 20, icon: './api/worm.jpg' },
     botnet: { health: 250, speed: 0.7, damage: 25, reward: 40, icon: './api/botnet.jpg' },
@@ -206,7 +206,7 @@ export const PATH = [
 ];
 
 export const PLAYER_LEVEL_THRESHOLDS = [
-    0, 300, 1000, 2000, 3000, 4200, 5400, 7200, 9000, 15000
+    0, 300, 600, 2000, 3000, 4200, 5400, 7200, 9000, 15000
 ];
 
 export const THREAT_EVOLUTION_FACTOR = {
