@@ -71,7 +71,6 @@ addEventListeners() {
         document.getElementById('pauseButton').addEventListener('click', () => {
             this.game.togglePause();
         });
-    }
         // Close upgrade menu when clicking outside
         document.addEventListener('click', (event) => {
             if (!event.target.closest('#towerUpgradeMenu') && !event.target.closest('.towerButton')) {
