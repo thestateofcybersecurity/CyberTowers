@@ -1,18 +1,15 @@
 import { THREAT_EVOLUTION_FACTOR } from './constants.js';
 
 export class Threat {
-    constructor(type, x, y, health, speed, damage, reward) {
+    constructor(type, x, y, health, speed, damage, reward, game) {
         this.type = type;
         this.x = x;
         this.y = y;
         this.maxHealth = health;
-        this.position = position;
-        this.path = path;
-        this.currentHealth = type.health;
-        this.speed = type.speed;
-        this.damage = type.damage;
-        this.reward = type.reward;
-        this.icon = type.icon;
+        this.currentHealth = health;
+        this.speed = speed;
+        this.damage = damage;
+        this.reward = reward;
         this.pathIndex = 0;
         this.invisible = type === 'rootkit';
         this.evolves = type === 'apt';
@@ -21,35 +18,39 @@ export class Threat {
         this.image.src = `./api/${type}.jpg`;
         this.imageLoaded = false;
         this.image.onload = () => {
-        this.imageLoaded = true;
+            this.imageLoaded = true;
         };
         this.image.onerror = () => {
             console.error(`Failed to load image for threat type: ${type}`);
         };
+        this.game = game;
     }
 
     move(path) {
-        const targetPoint = this.path[this.pathIndex];
-        const dx = targetPoint.x - this.position.x;
-        const dy = targetPoint.y - this.position.y;
+        const targetPoint = path[this.pathIndex];
+        const dx = targetPoint.x - this.x;
+        const dy = targetPoint.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < this.speed) {
             this.pathIndex++;
-            if (this.pathIndex >= this.path.length) {
-                this.reachEnd();
+            if (this.pathIndex >= path.length) {
+                return this.reachEnd();
             }
         } else {
-            this.position.x += (dx / distance) * this.speed;
-            this.position.y += (dy / distance) * this.speed;
+            this.x += (dx / distance) * this.speed;
+            this.y += (dy / distance) * this.speed;
         }
+        return false;
     }
 
     takeDamage(damage) {
         this.currentHealth -= damage;
         if (this.currentHealth <= 0) {
             this.die();
+            return true;
         }
+        return false;
     }
 
     die() {
@@ -61,16 +62,19 @@ export class Threat {
         this.game.systemIntegrity -= this.damage;
         this.game.threats = this.game.threats.filter(threat => threat !== this);
         if (this.game.systemIntegrity <= 0) {
-            this.game.setState(GAME_STATES.GAME_OVER);
+            this.game.setState(this.game.GAME_STATES.GAME_OVER);
         }
+        return true;
     }
 
     evolve() {
-        this.health *= THREAT_EVOLUTION_FACTOR.health;
-        this.maxHealth = this.health;
-        this.speed *= THREAT_EVOLUTION_FACTOR.speed;
-        this.damage *= THREAT_EVOLUTION_FACTOR.damage;
-        this.reward *= THREAT_EVOLUTION_FACTOR.reward;
+        if (this.evolves) {
+            this.maxHealth *= THREAT_EVOLUTION_FACTOR.health;
+            this.currentHealth = this.maxHealth;
+            this.speed *= THREAT_EVOLUTION_FACTOR.speed;
+            this.damage *= THREAT_EVOLUTION_FACTOR.damage;
+            this.reward *= THREAT_EVOLUTION_FACTOR.reward;
+        }
     }
 
     reveal() {
@@ -82,7 +86,6 @@ export class Threat {
             if (this.imageLoaded) {
                 ctx.drawImage(this.image, this.x - 15, this.y - 15, 30, 30);
             } else {
-                // Fallback drawing if image is not loaded
                 ctx.fillStyle = 'red';
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
@@ -94,11 +97,11 @@ export class Threat {
 
     drawHealthBar(ctx) {
         const healthPercentage = this.currentHealth / this.maxHealth;
-        const healthBarWidth = 30; // Increased for better visibility
-        const healthBarHeight = 4; // Increased for better visibility
-        const healthBarY = this.y - 20; // Moved up slightly
+        const healthBarWidth = 30;
+        const healthBarHeight = 4;
+        const healthBarY = this.y - 20;
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(this.x - healthBarWidth / 2, healthBarY, healthBarWidth, healthBarHeight);
         ctx.fillStyle = this.getHealthBarColor(healthPercentage);
         ctx.fillRect(this.x - healthBarWidth / 2, healthBarY, healthBarWidth * healthPercentage, healthBarHeight);
@@ -111,7 +114,7 @@ export class Threat {
         if (percentage > 0.3) return 'yellow';
         return 'red';
     }
-
+    
     takeDamage(amount) {
         this.currentHealth -= amount;
         if (this.currentHealth <= 0) {
