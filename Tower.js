@@ -2,6 +2,16 @@ import { defenseTypes, MAX_TOWER_LEVEL, TOWER_STATS } from './constants.js';
 import { Projectile } from './Projectile.js';
 
 export class Tower {
+    checkProperties() {
+        console.log(`Tower properties check:
+            Type: ${this.type}
+            Level: ${this.level}
+            Damage: ${this.damage}
+            Range: ${this.range}
+            Fire Rate: ${this.fireRate}
+            Last Fired: ${this.lastFired}
+        `);
+    }
     constructor(type, x, y, level = 1, game) {
         const towerData = defenseTypes[type];
         this.type = type;
@@ -23,24 +33,33 @@ export class Tower {
         this.game = game;
         this.lastFiredTime = 0;
         this.hasLoggedDraw = false;
+        this.checkProperties();
 
         console.log(`Tower created: ${type} at (${x}, ${y})`); // Debug log
     }
 
     update(timestamp, threats) {
+        console.log(`Updating tower at (${this.x}, ${this.y}), type: ${this.type}`);
         if (timestamp - this.lastFired >= this.fireRate) {
             const target = this.findTarget(threats);
             if (target) {
+                console.log(`Tower found target: ${target.type} at (${target.x}, ${target.y})`);
                 this.fire(target);
-                this.lastFired = timestamp;
+            } else {
+                console.log('No target found for tower');
             }
+        } else {
+            console.log(`Tower cooldown: ${this.fireRate - (timestamp - this.lastFired)}ms remaining`);
         }
     }
 
     findTarget(threats) {
+        console.log(`Searching for target among ${threats.length} threats`);
         return threats.find(threat => {
             const distance = Math.hypot(threat.x - this.x, threat.y - this.y);
-            return distance <= this.range;
+            const inRange = distance <= this.range;
+            console.log(`Threat ${threat.type} at distance ${distance}, in range: ${inRange}`);
+            return inRange;
         });
     }
 
@@ -49,6 +68,7 @@ export class Tower {
     }
 
     fire(target) {
+        console.log(`Tower firing at ${target.type}`);
         const projectile = new Projectile(
             this.x + this.game.gridManager.cellSize / 2,
             this.y + this.game.gridManager.cellSize / 2,
@@ -60,9 +80,8 @@ export class Tower {
             this
         );
         this.game.projectiles.push(projectile);
-        this.lastFiredTime = performance.now();
-        console.log(`Tower fired projectile with damage: ${this.damage}`);
-        return projectile;
+        this.lastFired = performance.now();
+        console.log(`Projectile created with damage: ${this.damage}`);
     }
 
     levelUp() {
