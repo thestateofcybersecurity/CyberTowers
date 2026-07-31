@@ -29,9 +29,19 @@ export default async function SignInPage() {
             ranks. The game is fully playable without one.
           </p>
 
-          {neonAuth ? (
-            <NeonAuthForm />
-          ) : handleAccounts ? (
+          {neonAuth && (
+            <>
+              <NeonAuthForm />
+              {handleAccounts && (
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-edge" />
+                  <span className="label">or</span>
+                  <span className="h-px flex-1 bg-edge" />
+                </div>
+              )}
+            </>
+          )}
+          {handleAccounts ? (
             <AccountForm />
           ) : (
             <div className="mt-6 space-y-3">
@@ -65,17 +75,13 @@ export default async function SignInPage() {
           )}
         </div>
 
-        {neonAuth ? (
-          <p className="mt-4 px-1 text-xs leading-relaxed text-muted">
-            Sign-in is handled by Neon Auth. Accounts live in your Neon project alongside the game
-            data.
-          </p>
-        ) : handleAccounts ? (
-          <p className="mt-4 px-1 text-xs leading-relaxed text-muted">
-            Neon Auth is not configured, so this deployment is using handle accounts: no email or
-            password, a signed cookie, and a recovery key to move between devices.
-          </p>
-        ) : null}
+        <p className="mt-4 px-1 text-xs leading-relaxed text-muted">
+          {neonAuth && handleAccounts
+            ? 'Neon Auth accounts use an email and password and live in your Neon project. Handle accounts need neither, and use a signed cookie plus a recovery key.'
+            : neonAuth
+              ? 'Sign-in is handled by Neon Auth. Accounts live in your Neon project alongside the game data.'
+              : 'Neon Auth is not configured, so this deployment is using handle accounts: no email or password, a signed cookie, and a recovery key to move between devices.'}
+        </p>
 
       </main>
     </>
