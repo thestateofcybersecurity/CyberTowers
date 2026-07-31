@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
 import { authDiagnostics, signIn } from '@/auth';
-import { getSession } from '@/lib/session';
+import AccountForm from '@/components/AccountForm';
 import SiteNav from '@/components/SiteNav';
+import { isMongoConfigured } from '@/lib/mongo';
+import { currentUser } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Sign in · CyberTowers' };
@@ -12,11 +14,12 @@ const PROVIDERS = [
 ] as const;
 
 export default async function SignInPage() {
-  const session = await getSession();
-  if (session?.user) redirect('/profile');
+  const user = await currentUser();
+  if (user) redirect('/profile');
 
   const available = PROVIDERS.filter((p) => Boolean(process.env[p.env]));
   const diagnostics = authDiagnostics();
+  const accountsPossible = isMongoConfigured() && diagnostics.secret;
 
   return (
     <>
@@ -29,11 +32,43 @@ export default async function SignInPage() {
             ranks. The game is fully playable without one.
           </p>
 
-          {available.length === 0 ? (
+          {accountsPossible ? (
+            <>
+              <AccountForm />
+
+              {available.length > 0 && (
+                <>
+                  <div className="my-5 flex items-center gap-3">
+                    <span className="h-px flex-1 bg-edge" />
+                    <span className="label">or</span>
+                    <span className="h-px flex-1 bg-edge" />
+                  </div>
+                  <div className="space-y-2">
+                    {available.map((provider) => (
+                      <form
+                        key={provider.id}
+                        action={async () => {
+                          'use server';
+                          await signIn(provider.id, { redirectTo: '/profile' });
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          className="w-full rounded-lg border border-edge px-4 py-2.5 font-mono text-sm text-ink transition hover:bg-panel-2"
+                        >
+                          {provider.label}
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
             <div className="mt-6 space-y-3">
               <div className="rounded-lg border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-amber">
-                Sign-in is not available on this deployment yet. Below is what the server can
-                currently see — presence only, never values.
+                Accounts are unavailable on this deployment. Below is what the server can currently
+                see — presence only, never values.
               </div>
               <dl className="rounded-lg border border-edge bg-panel-2/50 px-4 py-3 text-xs">
                 <ConfigRow
@@ -42,56 +77,34 @@ export default async function SignInPage() {
                   hint="Generate with `npx auth secret`. NEXTAUTH_SECRET also works."
                 />
                 <ConfigRow
-                  label="Postgres (Neon)"
-                  ok={diagnostics.database}
-                  hint="DATABASE_URL, POSTGRES_URL or the Neon integration equivalents."
-                />
-                <ConfigRow
                   label="MongoDB"
                   ok={diagnostics.mongo}
                   hint="MONGODB_URI. Stores profiles, saves and scores."
                 />
                 <ConfigRow
-                  label="GitHub OAuth"
-                  ok={diagnostics.github}
-                  hint="AUTH_GITHUB_ID + AUTH_GITHUB_SECRET. No database integration provides these."
+                  label="Postgres (Neon)"
+                  ok={diagnostics.database}
+                  hint="Only needed for OAuth sign-in, not for handle accounts."
                 />
                 <ConfigRow
-                  label="Google OAuth"
-                  ok={diagnostics.google}
-                  hint="AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET."
+                  label="GitHub OAuth"
+                  ok={diagnostics.github}
+                  hint="Optional. AUTH_GITHUB_ID + AUTH_GITHUB_SECRET."
                 />
               </dl>
-              <p className="text-xs leading-relaxed text-muted">
-                Database integrations provision databases, not identity providers. At least one
-                OAuth app has to be registered by hand, with callback URL{' '}
-                <code className="font-mono text-ink">
-                  {'{origin}'}/api/auth/callback/github
-                </code>
-                .
-              </p>
-            </div>
-          ) : (
-            <div className="mt-6 space-y-2">
-              {available.map((provider) => (
-                <form
-                  key={provider.id}
-                  action={async () => {
-                    'use server';
-                    await signIn(provider.id, { redirectTo: '/profile' });
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className="w-full rounded-lg border border-cyan/50 bg-cyan/10 px-4 py-2.5 font-mono text-sm font-semibold text-cyan transition hover:bg-cyan/20"
-                  >
-                    {provider.label}
-                  </button>
-                </form>
-              ))}
             </div>
           )}
         </div>
+
+        {accountsPossible && (
+          <p className="mt-4 px-1 text-xs leading-relaxed text-muted">
+            Handle accounts need no email, password or OAuth app. Sign-in is a signed cookie, and
+            you get a recovery key to move the account between devices. Adding{' '}
+            <code className="font-mono">AUTH_GITHUB_ID</code> and{' '}
+            <code className="font-mono">AUTH_GITHUB_SECRET</code> enables GitHub sign-in alongside
+            it.
+          </p>
+        )}
       </main>
     </>
   );
