@@ -62,7 +62,7 @@ export default async function ProfilePage() {
             </p>
 
             <HandleEditor initial={player.handle} />
-            <DeleteAccount handle={player.handle} />
+            <DeleteAccount handle={player.handle} kind={player.kind} />
           </section>
 
           <section className="rounded-xl border border-edge bg-panel/80 p-5 lg:col-span-2">

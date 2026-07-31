@@ -4,7 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 /** Two-step account deletion: reveal, then type the confirmation word. */
-export default function DeleteAccount({ handle }: { handle: string }) {
+export default function DeleteAccount({
+  handle,
+  kind,
+}: {
+  handle: string;
+  kind: 'neon' | 'handle';
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
@@ -37,7 +43,7 @@ export default function DeleteAccount({ handle }: { handle: string }) {
         onClick={() => setOpen(true)}
         className="mt-3 text-xs text-muted underline underline-offset-2 transition hover:text-rose"
       >
-        Delete this account
+        {kind === 'handle' ? 'Delete this account' : 'Delete my game data'}
       </button>
     );
   }
@@ -45,8 +51,19 @@ export default function DeleteAccount({ handle }: { handle: string }) {
   return (
     <div className="mt-3 rounded-lg border border-rose/40 bg-rose/5 p-3">
       <p className="text-xs leading-relaxed text-ink">
-        This permanently deletes <span className="font-mono">{handle}</span>, its cloud saves and
-        its leaderboard entries. It cannot be undone, and the recovery key will stop working.
+        {kind === 'handle' ? (
+          <>
+            This permanently deletes <span className="font-mono">{handle}</span>, its cloud saves
+            and its leaderboard entries. It cannot be undone, and the recovery key will stop
+            working.
+          </>
+        ) : (
+          <>
+            This permanently deletes the progress, cloud saves and leaderboard entries for{' '}
+            <span className="font-mono">{handle}</span>, and signs you out. Your login itself is
+            managed by Neon Auth and is not removed — signing back in starts you from zero.
+          </>
+        )}
       </p>
       <label className="label mt-2 block" htmlFor="confirm-delete">
         Type DELETE to confirm
