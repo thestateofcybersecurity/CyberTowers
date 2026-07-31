@@ -72,6 +72,7 @@ npm run lint       # eslint
 npm run simulate   # headless engine smoke test, non-zero exit on failure
 npm run balance    # run every map and build order, report waves survived
 npm run diagnose -- cloud-region campaign   # wave-by-wave difficulty trace
+npm run analyze    # per-tower efficiency and dominant-strategy check
 ```
 
 `npm run simulate` drives the real engine in Node with no browser involved. It
@@ -83,27 +84,48 @@ each got. `npm run diagnose` traces a single board wave by wave, printing wave
 health against the board's damage per second, so a difficulty cliff shows up as
 a number rather than as an unexplained death.
 
-Where the balance currently sits. `npm run balance` plays each map under five
-spending policies — spreading credits across many towers versus concentrating
-them into a few maxed ones, with firewalls only versus the full roster:
+Where the balance currently sits, measured by `npm run balance` across five
+spending policies (spread vs concentrated, one tower type vs the full roster):
 
 | Map | Firewalls only | Mixed roster |
 | --- | --- | --- |
 | Home Network | cleared | cleared |
-| Corporate LAN | wave 13–19 | cleared |
-| Cloud Region | wave 15–16 | cleared |
-| Industrial SCADA | wave 19 | cleared |
-| Datacenter Core | wave 14 | cleared |
+| Corporate LAN | wave 22–25 | cleared |
+| Cloud Region | wave 18–22 | cleared |
+| Industrial SCADA | wave 19–21 | cleared |
+| Datacenter Core | wave 16–25 | cleared |
 
-Endless: firewalls only tops out around wave 13–25; a mixed roster reaches wave
-40–64 depending on the board.
+Endless: one tower type tops out around wave 15–35; a mixed roster reaches wave
+47–60.
 
-The property that matters is that a single tower type never clears a campaign
-map past the tutorial, and that concentrating every credit into one maxed tower
-performs no better than spreading the same credits around. Both were false in an
-earlier build — one maxed firewall could carry a whole run, because firewall
-upgrades granted pierce and so quietly turned the cheapest single-target tower
-into the best area-damage tower in the game.
+### How the balance is reasoned about
+
+A tower defence board is a budget allocation problem, and that framing predicts
+the failure modes. If total damage is **linear** in how credits are split
+between tower types, the optimum is always a *corner solution*: put everything
+into whichever type has the best damage per credit. Mixed builds only win when
+the payoff is **concave** (each extra copy is worth less) or **complementary**
+(types multiply each other). Both failure modes have shown up here:
+
+- Firewall upgrades once granted pierce, so one shot hit three threats in a
+  single-file lane. That made the cheapest tower the best area-damage tower and
+  one maxed firewall could carry a run.
+- Fixing that overcorrected into the opposite corner: upgrades became poor value
+  across the board, so the optimum became spamming tier-one towers.
+
+`npm run analyze` prints the numbers that decide which regime the game is in —
+damage per credit, damage per credit against a single target, reach per credit
+(dps × range, since a threat only takes damage while inside a radius), the
+armour cliff, and whether maxing a tower beats spending the same credits on
+fresh ones. Every tower now sits at 0.98–1.02 on that last measure, so the
+arithmetic does not decide: range, position, armour profile and synergy do.
+
+The two multiplicative terms are what make a mixed board worth more than the sum
+of its parts — a SOC uplink at ×1.90 to everything in range, and an IDS flag at
+×1.45 to all damage on what it marks, ×2.76 stacked. Specialisation is enforced
+from the other side: antivirus leads damage per credit against clusters but is
+near-worst against a lone boss, while the sentinel leads reach, armour
+penetration and single-target damage but is poor value against a crowd.
 
 ## How it is put together
 

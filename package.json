@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "simulate": "tsx scripts/simulate.ts",
     "balance": "tsx scripts/simulate.ts --balance",
-    "diagnose": "tsx scripts/diagnose.ts"
+    "diagnose": "tsx scripts/diagnose.ts",
+    "analyze": "tsx scripts/analyze.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",
