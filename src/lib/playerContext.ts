@@ -5,6 +5,8 @@ import { currentUser } from '@/lib/session';
 
 export interface PlayerContext {
   signedIn: boolean;
+  /** Which identity source authenticated this player. */
+  kind: 'neon' | 'handle';
   handle: string;
   level: number;
   xp: number;
@@ -15,6 +17,7 @@ export interface PlayerContext {
 
 const GUEST: PlayerContext = {
   signedIn: false,
+  kind: 'handle',
   handle: 'Guest',
   level: 1,
   xp: 0,
@@ -41,6 +44,7 @@ export async function loadPlayerContext(): Promise<PlayerContext> {
 
     return {
       signedIn: true,
+      kind: user.kind,
       handle: profile.handle,
       level,
       xp: profile.xp,
