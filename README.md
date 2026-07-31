@@ -30,14 +30,32 @@ leaderboard degrade politely to "not configured".
 | `MONGODB_URI` | MongoDB Atlas connection string. | Profiles, saves, scores |
 | `MONGODB_DB` | Database name, defaults to `cybertowers`. | — |
 
-Apply the auth schema to Neon once:
+Apply the auth schema to Neon once. This is idempotent, so re-running it is the
+intended way to bring an existing database up to date:
 
 ```bash
-psql "$DATABASE_URL" -f db/neon-schema.sql
+npm run db:migrate
+```
+
+It reads the connection string from `.env.local`, or from the environment:
+
+```bash
+DATABASE_URL="postgres://..." npm run db:migrate
 ```
 
 OAuth callback URLs are `{origin}/api/auth/callback/github` and
 `{origin}/api/auth/callback/google`.
+
+**A database integration is not an identity provider.** Vercel's Neon and
+MongoDB integrations provision databases and set their own connection variables;
+neither gives you a way for a person to log in. At least one OAuth app has to be
+registered by hand before sign-in appears. Visiting `/signin` on a deployment
+prints a presence-only checklist of what the server can actually see, which is
+the fastest way to find out which piece is missing.
+
+The app accepts the common alternate variable names, so `NEXTAUTH_SECRET` works
+in place of `AUTH_SECRET`, and `POSTGRES_URL` or `DATABASE_URL_UNPOOLED` work in
+place of `DATABASE_URL`.
 
 ## Deploying to Vercel
 

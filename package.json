@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "simulate": "tsx scripts/simulate.ts",
     "balance": "tsx scripts/simulate.ts --balance",
-    "diagnose": "tsx scripts/diagnose.ts"
+    "diagnose": "tsx scripts/diagnose.ts",
+    "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
     "@auth/neon-adapter": "^1.11.3",
