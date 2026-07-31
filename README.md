@@ -1,1 +1,115 @@
 # CyberTowers
+
+A cybersecurity-themed tower defence game. Place firewalls, intrusion detection,
+encryption fields and AI sentinels along a network path and stop viruses,
+ransomware, rootkits and zero-days before they reach your core.
+
+Built with Next.js (App Router) on Vercel, Auth.js over Neon Postgres for
+accounts, and MongoDB for game data.
+
+## Running it
+
+```bash
+npm install
+cp .env.example .env.local   # fill in the values below
+npm run dev
+```
+
+The game is fully playable with no environment configured at all: you get a
+guest profile with the starter defences, and accounts, cloud saves and the
+leaderboard degrade politely to "not configured".
+
+## Environment
+
+| Variable | Purpose | Required for |
+| --- | --- | --- |
+| `AUTH_SECRET` | Session encryption. Generate with `npx auth secret`. | Any auth |
+| `DATABASE_URL` | Neon Postgres connection string. | Accounts |
+| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth app. | GitHub sign-in |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth client. | Google sign-in |
+| `MONGODB_URI` | MongoDB Atlas connection string. | Profiles, saves, scores |
+| `MONGODB_DB` | Database name, defaults to `cybertowers`. | — |
+
+Apply the auth schema to Neon once:
+
+```bash
+psql "$DATABASE_URL" -f db/neon-schema.sql
+```
+
+OAuth callback URLs are `{origin}/api/auth/callback/github` and
+`{origin}/api/auth/callback/google`.
+
+## Deploying to Vercel
+
+Import the repository, set the environment variables above in the project
+settings, and deploy. No build configuration is needed; Vercel detects Next.js.
+`AUTH_URL` is inferred automatically on Vercel deployments.
+
+Both datastores are serverless-friendly: Neon is accessed through
+`@neondatabase/serverless` over HTTP, and the Mongo client is cached per
+instance so functions reuse a connection rather than opening one per request.
+
+## Commands
+
+```bash
+npm run dev        # dev server
+npm run build      # production build
+npm run typecheck  # tsc --noEmit
+npm run lint       # eslint
+npm run simulate   # headless engine smoke test, non-zero exit on failure
+npm run balance    # run every map and build order, report waves survived
+```
+
+`npm run simulate` drives the real engine in Node with no browser involved. It
+is the fastest way to tell whether a rules change broke combat, the economy, the
+wave director, save/restore, or stealth detection.
+
+## How it is put together
+
+```
+src/game/          the simulation — no React, no DOM outside the renderer
+  core/            types, fixed-point math, seeded RNG
+  data/            towers, threats, maps, wave generation, progression
+  art/             pixel sprites as character grids, plus the canvas baker
+  engine/          board geometry, entities, Game (the simulation), Renderer, loop
+  audio/           procedurally synthesised sound, no audio files
+src/app/           routes and API handlers
+src/components/    UI shell, HUD, inspector, palette
+src/lib/           Mongo, session, validation, player context
+```
+
+A few decisions worth knowing about:
+
+**Fixed timestep.** `Game.tick()` always advances exactly 1/60s and is the only
+method that mutates simulation state. The render loop accumulates real time and
+runs however many ticks it owes, then interpolates positions for drawing. Frame
+rate cannot affect balance, and the fast-forward button runs more ticks rather
+than larger ones.
+
+**One damage path.** Every weapon, splash, chain and damage-over-time tick calls
+a single `applyDamage`. There is no second place a hit can be counted.
+
+**Lanes are arc-length parameterised.** A threat's position is one scalar,
+distance travelled, rather than a waypoint index. "Which threat is furthest
+along?" is then a numeric comparison, which is what first/last targeting uses.
+
+**Deterministic waves.** Wave composition is seeded on `(mapId, mode, wave)`, so
+every player sees the same campaign and the server can rebuild any wave to check
+a submitted score against what was actually possible.
+
+**Art is source code.** Sprites are 16x16 character grids with a palette, baked
+to canvases at an integer scale on first use. The grids are validated at load,
+so a miscounted row fails loudly rather than rendering slightly clipped.
+
+## Score validation
+
+This is a browser game, so the client owns the simulation and a determined
+player can lie. What the server does is replay the deterministic wave generator
+for the claimed map and wave, total the credits those waves could have paid out,
+and reject anything above that bound, below the minimum possible run duration,
+or claiming victory before the final wave. That stops casual tampering. It is
+not, and does not pretend to be, real anti-cheat.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
