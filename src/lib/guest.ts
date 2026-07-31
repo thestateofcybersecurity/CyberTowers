@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { authSecret } from '@/auth';
+import { authSecret } from './env';
 
 /**
  * Handle-based accounts, for deployments with no OAuth app registered.

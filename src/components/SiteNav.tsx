@@ -49,16 +49,7 @@ export default async function SiteNav() {
                 <span className="h-1.5 w-1.5 rounded-full bg-lime" />
                 {user.name}
               </Link>
-              {user.kind === 'oauth' ? (
-                <Link
-                  href="/api/auth/signout"
-                  className="text-sm text-muted transition hover:text-ink"
-                >
-                  Sign out
-                </Link>
-              ) : (
-                <SignOutButton />
-              )}
+              <SignOutButton kind={user.kind} />
             </>
           ) : canSignIn ? (
             <Link

@@ -1,35 +1,19 @@
 import { headers } from 'next/headers';
-import type { Session } from 'next-auth';
-import { auth, authSecret, hasAuthProviders } from '@/auth';
+import { isNeonAuthConfigured } from './env';
 import { readTokenFromCookieHeader, verifyToken } from './guest';
 import { isMongoConfigured, profiles } from './mongo';
+import { getNeonUser } from './neonAuth';
 
 export interface SessionUser {
   id: string;
   name: string;
   /** How this identity was established. */
-  kind: 'oauth' | 'handle';
+  kind: 'neon' | 'handle';
 }
 
-/**
- * True when OAuth could possibly work. Without a secret Auth.js throws on every
- * call, and without a provider there is no way to have signed in, so calling
- * `auth()` in either case only produces log noise on pages that just wanted to
- * know whether anyone was logged in.
- */
+/** True when a real identity provider is available. */
 export function isAuthConfigured(): boolean {
-  return Boolean(authSecret()) && hasAuthProviders();
-}
-
-/** Session lookup that is safe to call on an unconfigured deployment. */
-export async function getSession(): Promise<Session | null> {
-  if (!isAuthConfigured()) return null;
-  try {
-    return await auth();
-  } catch (error) {
-    console.error('Auth session lookup failed:', error);
-    return null;
-  }
+  return isNeonAuthConfigured();
 }
 
 /** Reads and verifies the handle-account cookie, if there is one. */
@@ -52,19 +36,12 @@ async function handleAccount(): Promise<SessionUser | null> {
 }
 
 /**
- * Resolves the signed-in user from either identity source. OAuth wins when both
- * are present, since it is the stronger claim.
+ * Resolves the signed-in user from either identity source. Neon Auth wins when
+ * both are present, since a verified account is the stronger claim.
  */
 export async function currentUser(): Promise<SessionUser | null> {
-  const session = await getSession();
-  const id = session?.user?.id;
-  if (id) {
-    return {
-      id,
-      name: session.user?.name ?? session.user?.email ?? 'operator',
-      kind: 'oauth',
-    };
-  }
+  const neon = await getNeonUser();
+  if (neon) return { ...neon, kind: 'neon' };
   return handleAccount();
 }
 
