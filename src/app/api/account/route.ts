@@ -1,6 +1,5 @@
 import { clearCookieHeader } from '@/lib/guest';
 import { profiles, saves, scores } from '@/lib/mongo';
-import { getNeonAuth } from '@/lib/neonAuth';
 import { jsonError, requireUser } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -38,17 +37,11 @@ export async function DELETE(request: Request) {
   ]);
   const profileDeleted = await profileCol.deleteOne({ _id: user.id });
 
-  // End the session so the profile is not immediately recreated underneath the
-  // player by whatever request the browser makes next.
-  let loginRemoved = user.kind === 'handle';
-  if (user.kind === 'neon') {
-    try {
-      await getNeonAuth()?.signOut();
-    } catch (caught) {
-      console.error('Neon Auth sign-out during account deletion failed:', caught);
-    }
-    loginRemoved = false;
-  }
+  // A handle account's cookie is cleared below and its profile is gone, so the
+  // account really is deleted. A Neon Auth session lives in the browser and can
+  // only be ended from there, which the client does on success; until it is, an
+  // authenticated request would simply be issued a fresh empty profile.
+  const loginRemoved = user.kind === 'handle';
 
   return Response.json(
     {

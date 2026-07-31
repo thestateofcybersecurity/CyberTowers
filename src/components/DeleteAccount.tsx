@@ -1,5 +1,7 @@
 'use client';
 
+import { createAuthClient } from '@neondatabase/auth/next';
+
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -27,6 +29,15 @@ export default function DeleteAccount({
         setError(data.error ?? 'Could not delete the account.');
         return;
       }
+      // Neon Auth owns the session; without ending it here the next request
+      // would be handed a brand new empty profile and the deletion would look
+      // like it had not worked.
+      if (kind === 'neon') {
+        await createAuthClient()
+          .signOut()
+          .catch(() => {});
+      }
+
       router.push('/');
       router.refresh();
     } catch {
