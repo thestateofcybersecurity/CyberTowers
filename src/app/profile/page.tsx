@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import PixelIcon from '@/components/game/PixelIcon';
+import DeleteAccount from '@/components/DeleteAccount';
 import HandleEditor from '@/components/HandleEditor';
 import SiteNav from '@/components/SiteNav';
 import { getMap } from '@/game/data/maps';
@@ -61,6 +62,7 @@ export default async function ProfilePage() {
             </p>
 
             <HandleEditor initial={player.handle} />
+            <DeleteAccount handle={player.handle} />
           </section>
 
           <section className="rounded-xl border border-edge bg-panel/80 p-5 lg:col-span-2">
