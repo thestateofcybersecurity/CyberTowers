@@ -12,7 +12,7 @@
 import { validateSprites } from '../src/game/art/bake';
 import { FIXED_DT, Game } from '../src/game/engine/Game';
 import { MAPS, getMap } from '../src/game/data/maps';
-import { TOWER_ORDER } from '../src/game/data/towers';
+import { TOWERS, TOWER_ORDER } from '../src/game/data/towers';
 import type { GameMode, TowerId } from '../src/game/core/types';
 
 let failures = 0;
@@ -33,35 +33,97 @@ function run(game: Game, seconds: number): void {
 }
 
 /**
- * Fills the board with towers, nearest-to-the-lane first, until the budget runs
- * out. Crude, but it approximates a competent player well enough to tell a
- * working defence from a broken one.
+ * Buildable tiles ordered the way a competent player would fill them: closest
+ * to a lane first, but interleaved across lanes so every lane gets covered.
+ * Sorting purely by distance clusters the whole budget onto whichever lane
+ * happens to have the tightest tiles and leaves the others undefended, which
+ * looks like a balance problem but is really a bot problem.
  */
-function autoBuild(game: Game, types: TowerId[]): number {
+function buildSpots(game: Game): Array<{ col: number; row: number }> {
   const { board } = game;
-  const candidates: Array<{ col: number; row: number; d: number }> = [];
+  const perLane: Array<Array<{ col: number; row: number; d: number }>> = board.lanes.map(() => []);
 
   for (let row = 0; row < board.rows; row++) {
     for (let col = 0; col < board.cols; col++) {
       if (!board.isBuildable(col, row)) continue;
       const x = col * 40 + 20;
       const y = row * 40 + 20;
+
       let best = Infinity;
-      for (const lane of board.lanes) {
-        for (const p of lane.points) best = Math.min(best, Math.hypot(p.x - x, p.y - y));
-      }
-      candidates.push({ col, row, d: best });
+      let bestLane = 0;
+      board.lanes.forEach((lane, i) => {
+        for (const p of lane.points) {
+          const d = Math.hypot(p.x - x, p.y - y);
+          if (d < best) {
+            best = d;
+            bestLane = i;
+          }
+        }
+      });
+      perLane[bestLane].push({ col, row, d: best });
     }
   }
-  candidates.sort((a, b) => a.d - b.d);
 
-  let built = 0;
-  for (const spot of candidates) {
-    const type = types[built % types.length];
-    if (game.build(spot.col, spot.row, type).ok) built += 1;
-    else if (game.credits < 80) break;
+  for (const list of perLane) list.sort((a, b) => a.d - b.d);
+
+  const ordered: Array<{ col: number; row: number }> = [];
+  for (let i = 0; ordered.length < perLane.reduce((n, l) => n + l.length, 0); i++) {
+    for (const list of perLane) if (list[i]) ordered.push(list[i]);
   }
-  return built;
+  return ordered;
+}
+
+/**
+ * Spends every credit it can: builds out to `maxTowers` near the lane, then
+ * pours the rest into upgrades. Approximates a competent player closely enough
+ * to tell "the balance is wrong" from "the bot is bad", which the first version
+ * of this harness could not do.
+ */
+function invest(game: Game, types: TowerId[], maxTowers = 40): number {
+  const spots = buildSpots(game);
+  let actions = 0;
+  let progress = true;
+
+  while (progress) {
+    progress = false;
+
+    if (game.towers.length < maxTowers) {
+      const affordable = types.filter((t) => game.credits >= TOWERS[t].tiers[0].cost);
+      if (affordable.length > 0) {
+        // Rotate through the affordable set so the mix stays varied.
+        const type = affordable[game.towers.length % affordable.length];
+        for (const spot of spots) {
+          if (game.towerAt(spot.col, spot.row)) continue;
+          if (game.build(spot.col, spot.row, type).ok) {
+            actions += 1;
+            progress = true;
+          }
+          break;
+        }
+        if (progress) continue;
+      }
+    }
+
+    // Upgrade the cheapest available improvement, which keeps the whole board
+    // rising rather than dumping everything into one maxed tower.
+    let cheapest: { id: number; cost: number } | null = null;
+    for (const tower of game.towers) {
+      const cost = game.upgradeCost(tower);
+      if (cost === null || cost > game.credits) continue;
+      if (!cheapest || cost < cheapest.cost) cheapest = { id: tower.id, cost };
+    }
+    if (cheapest && game.upgrade(cheapest.id).ok) {
+      actions += 1;
+      progress = true;
+    }
+  }
+
+  return actions;
+}
+
+/** Kept for the smoke test, where only "can towers be placed at all" matters. */
+function autoBuild(game: Game, types: TowerId[]): number {
+  return invest(game, types);
 }
 
 function smokeTest(): void {
@@ -171,13 +233,15 @@ function balanceReport(): void {
       const row: string[] = [];
       for (const build of builds) {
         const game = new Game({ map, mode, unlocked: TOWER_ORDER });
-        autoBuild(game, build.types);
-        for (let i = 0; i < 3600 && game.phase !== 'defeat' && game.phase !== 'victory'; i++) {
+        invest(game, build.types);
+        for (let i = 0; i < 5400 && game.phase !== 'defeat' && game.phase !== 'victory'; i++) {
           run(game, 1);
-          // Reinvest as credits accumulate, the way a real player would.
-          if (game.credits > 600) autoBuild(game, build.types);
+          // Reinvest during build phases, the way a real player would.
+          if (game.phase === 'building') invest(game, build.types);
         }
-        row.push(`${build.name}: W${game.wave}${game.phase === 'victory' ? ' ✓' : ''}`);
+        row.push(
+          `${build.name}: W${game.wave}${game.phase === 'victory' ? '✓' : ''}`.padEnd(22),
+        );
       }
       console.log(`  ${map.name.padEnd(18)} ${row.join('   ')}`);
     }

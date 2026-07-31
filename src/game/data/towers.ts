@@ -51,7 +51,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Shots pierce one extra threat.',
       },
       {
-        cost: 320,
+        cost: 260,
         damage: 30,
         range: 146,
         fireRate: 3.4,
@@ -92,7 +92,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Heuristics: larger blast, less falloff.',
       },
       {
-        cost: 520,
+        cost: 430,
         damage: 44,
         range: 130,
         fireRate: 1.3,
@@ -140,7 +140,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Correlation engine: +32% damage taken.',
       },
       {
-        cost: 480,
+        cost: 400,
         damage: 26,
         range: 192,
         fireRate: 1.9,
@@ -188,7 +188,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Perfect forward secrecy: 42% slow.',
       },
       {
-        cost: 600,
+        cost: 500,
         damage: 18,
         range: 132,
         fireRate: 1.3,
@@ -229,7 +229,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Tarpit: threats take damage over time, +5 credits.',
       },
       {
-        cost: 440,
+        cost: 370,
         damage: 17,
         range: 148,
         fireRate: 1.8,
@@ -270,7 +270,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Threat intel feed: +27% to both.',
       },
       {
-        cost: 820,
+        cost: 690,
         damage: 0,
         range: 178,
         fireRate: 0,
@@ -303,7 +303,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Faster convergence: ramps to +150%.',
       },
       {
-        cost: 1100,
+        cost: 900,
         damage: 95,
         range: 324,
         fireRate: 1.0,
@@ -343,7 +343,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Arcs to 4 with less damage loss.',
       },
       {
-        cost: 760,
+        cost: 640,
         damage: 48,
         range: 166,
         fireRate: 1.4,

@@ -583,8 +583,11 @@ export class Game {
     if (!ignoreArmor) {
       // Armour subtracts flat damage but can never fully negate a hit, so rapid
       // low-damage towers become inefficient against heavies without becoming
-      // literally useless.
-      damage = Math.max(damage * 0.15, damage - threat.armor);
+      // literally useless. At a 15% floor an 8-damage firewall did 1.2 to a
+      // zero-day, which made the wave-10 boss an unpassable wall for any cheap
+      // build rather than a reason to diversify. 25% keeps the incentive to
+      // bring heavy hitters without deleting the contribution of the rest.
+      damage = Math.max(damage * 0.25, damage - threat.armor);
     }
     if (threat.def.traits.hardened) damage *= 0.8;
 

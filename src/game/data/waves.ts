@@ -8,20 +8,28 @@ import { BOSS_THREAT, THREATS } from './threats';
  * unplayable rather than hard, and runaway bounty removes every build decision.
  */
 export function healthScale(wave: number): number {
-  return Math.pow(1.085, wave - 1);
+  return Math.pow(1.055, wave - 1);
 }
 
 export function speedScale(wave: number): number {
   return Math.min(1.5, 1 + (wave - 1) * 0.004);
 }
 
+/**
+ * Bounty compounds too, just more slowly than health. This is the single most
+ * important relationship in the whole balance: if income grows linearly while
+ * threat health grows exponentially, the player falls behind at an accelerating
+ * rate and no amount of skill closes the gap. Compounding both keeps a good
+ * board viable deep into a run, and the gap between the two rates is what makes
+ * endless eventually end.
+ */
 export function bountyScale(wave: number): number {
-  return 1 + (wave - 1) * 0.045;
+  return Math.pow(1.038, wave - 1);
 }
 
 /** Rough "threat points" a wave is allowed to spend. */
 function waveBudget(wave: number): number {
-  return 26 * Math.pow(wave, 1.28) + 24 * wave;
+  return 15 * Math.pow(wave, 1.12) + 13 * wave;
 }
 
 export function isBossWave(wave: number): boolean {
@@ -30,7 +38,7 @@ export function isBossWave(wave: number): boolean {
 
 /** Credits paid out for surviving the wave. */
 export function waveBounty(wave: number): number {
-  return Math.round(45 + wave * 13 + (isBossWave(wave) ? 150 : 0));
+  return Math.round(70 + wave * 24 + (isBossWave(wave) ? 250 : 0));
 }
 
 function eligibleThreats(map: GameMapDef, wave: number): ThreatId[] {

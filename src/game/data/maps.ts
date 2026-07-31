@@ -43,7 +43,7 @@ export const MAPS: GameMapDef[] = [
       [t(-1, 12), t(5, 12), t(5, 7), t(12, 7), t(12, 4), t(19, 4), t(19, 11), t(24, 11)],
     ],
     blocked: [t(8, 1), t(9, 1), t(8, 13), t(9, 13), t(15, 8), t(16, 8), t(15, 9)],
-    startCredits: 460,
+    startCredits: 520,
     startIntegrity: 100,
     waveCount: 25,
     threatPool: [
@@ -68,12 +68,15 @@ export const MAPS: GameMapDef[] = [
     unlockAfter: 'corp-lan',
     cols: GRID_COLS,
     rows: GRID_ROWS,
+    // The zones converge with nine tiles still to run, so a shared kill box at
+    // the egress is a real option. Converging on the exit tile instead would
+    // force the player to fund two independent batteries and nothing else.
     lanes: [
-      [t(-1, 2), t(6, 2), t(6, 6), t(13, 6), t(13, 2), t(20, 2), t(20, 7), t(24, 7)],
-      [t(-1, 12), t(6, 12), t(6, 8), t(13, 8), t(13, 12), t(20, 12), t(20, 7), t(24, 7)],
+      [t(-1, 2), t(6, 2), t(6, 6), t(11, 6), t(11, 3), t(15, 3), t(15, 7), t(24, 7)],
+      [t(-1, 12), t(6, 12), t(6, 8), t(11, 8), t(11, 11), t(15, 11), t(15, 7), t(24, 7)],
     ],
     blocked: [t(2, 7), t(3, 7), t(2, 6), t(9, 0), t(9, 14), t(16, 0), t(16, 14)],
-    startCredits: 500,
+    startCredits: 620,
     startIntegrity: 90,
     waveCount: 30,
     threatPool: [
@@ -115,7 +118,7 @@ export const MAPS: GameMapDef[] = [
       ],
     ],
     blocked: [t(23, 2), t(23, 3), t(0, 5), t(0, 6), t(23, 8), t(23, 9), t(0, 11), t(0, 12)],
-    startCredits: 540,
+    startCredits: 640,
     startIntegrity: 80,
     waveCount: 30,
     threatPool: [
@@ -132,7 +135,7 @@ export const MAPS: GameMapDef[] = [
       'logicbomb',
       'apt',
     ],
-    modifiers: { healthScale: 1.15, economyScale: 1.1 },
+    modifiers: { healthScale: 1.08, economyScale: 1.15 },
   },
 
   {
@@ -144,13 +147,16 @@ export const MAPS: GameMapDef[] = [
     unlockAfter: 'scada',
     cols: GRID_COLS,
     rows: GRID_ROWS,
+    // All three trunks merge at column 12, leaving a twelve-tile shared corridor
+    // into the core. Three lanes that only meet at the exit would just divide
+    // the player's damage by three, which is not difficulty, only arithmetic.
     lanes: [
-      [t(-1, 2), t(6, 2), t(6, 5), t(14, 5), t(14, 2), t(20, 2), t(20, 7), t(24, 7)],
-      [t(-1, 7), t(3, 7), t(3, 11), t(11, 11), t(11, 7), t(20, 7), t(24, 7)],
-      [t(-1, 12), t(6, 12), t(6, 9), t(16, 9), t(16, 12), t(20, 12), t(20, 7), t(24, 7)],
+      [t(-1, 2), t(4, 2), t(4, 5), t(8, 5), t(8, 7), t(12, 7), t(24, 7)],
+      [t(-1, 7), t(2, 7), t(2, 11), t(6, 11), t(6, 7), t(12, 7), t(24, 7)],
+      [t(-1, 12), t(4, 12), t(4, 9), t(9, 9), t(9, 7), t(12, 7), t(24, 7)],
     ],
     blocked: [t(9, 0), t(10, 0), t(9, 1), t(0, 4), t(1, 4), t(0, 14), t(1, 14), t(22, 0), t(22, 14)],
-    startCredits: 600,
+    startCredits: 780,
     startIntegrity: 75,
     waveCount: 35,
     threatPool: [
@@ -167,7 +173,7 @@ export const MAPS: GameMapDef[] = [
       'logicbomb',
       'apt',
     ],
-    modifiers: { healthScale: 1.25, speedScale: 1.05, economyScale: 1.15 },
+    modifiers: { healthScale: 1.12, speedScale: 1.05, economyScale: 1.3 },
   },
 ];
 

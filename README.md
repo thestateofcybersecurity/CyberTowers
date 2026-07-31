@@ -58,11 +58,34 @@ npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
 npm run simulate   # headless engine smoke test, non-zero exit on failure
 npm run balance    # run every map and build order, report waves survived
+npm run diagnose -- cloud-region campaign   # wave-by-wave difficulty trace
 ```
 
 `npm run simulate` drives the real engine in Node with no browser involved. It
 is the fastest way to tell whether a rules change broke combat, the economy, the
 wave director, save/restore, or stealth detection.
+
+`npm run balance` plays every map with three build orders and reports how far
+each got. `npm run diagnose` traces a single board wave by wave, printing wave
+health against the board's damage per second, so a difficulty cliff shows up as
+a number rather than as an unexplained death.
+
+Where the balance currently sits, per the bot in `npm run balance` (a naive
+player: fixed build rotation, no repositioning, no reaction to wave
+composition):
+
+| Map | Campaign | Endless |
+| --- | --- | --- |
+| Home Network | cleared by every build | wave 44–61 |
+| Corporate LAN | cleared by mixed builds | wave 26–50 |
+| Cloud Region | wave 10–20 | wave 21–40 |
+| Industrial SCADA | cleared by a full roster | wave 19–47 |
+| Datacenter Core | wave 11–14 | wave 15–50 |
+
+Cloud Region and Datacenter Core are not cleared by the bot. A human should do
+better, but treat those two as the least settled part of the tuning. Mixed
+rosters beat single-tower spam on every board, which is the property the tower
+design is aiming for.
 
 ## How it is put together
 
