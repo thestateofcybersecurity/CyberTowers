@@ -41,16 +41,16 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     params: {},
     tiers: [
       { cost: 80, damage: 8, range: 112, fireRate: 2.2, note: 'Baseline packet filtering.' },
-      { cost: 60, damage: 12, range: 122, fireRate: 2.5, note: 'Tighter rule set: +damage, +range.' },
+      { cost: 40, damage: 12, range: 122, fireRate: 2.5, note: 'Tighter rule set: +damage, +range.' },
       {
-        cost: 180,
+        cost: 90,
         damage: 17,
         range: 132,
         fireRate: 2.8,
         note: 'Application-aware filtering: faster and harder hitting.',
       },
       {
-        cost: 340,
+        cost: 120,
         damage: 24,
         range: 144,
         fireRate: 3.1,
@@ -122,7 +122,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Reveals stealth. Flagged threats take +15% damage.',
       },
       {
-        cost: 100,
+        cost: 50,
         damage: 13,
         range: 158,
         fireRate: 1.5,
@@ -130,7 +130,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Better signatures: +22% damage taken.',
       },
       {
-        cost: 220,
+        cost: 110,
         damage: 18,
         range: 172,
         fireRate: 1.7,
@@ -138,7 +138,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Correlation engine: +32% damage taken.',
       },
       {
-        cost: 520,
+        cost: 190,
         damage: 26,
         range: 192,
         fireRate: 1.9,
@@ -170,7 +170,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Pulses the field. Slows everything inside by 25%.',
       },
       {
-        cost: 130,
+        cost: 80,
         damage: 8,
         range: 108,
         fireRate: 1.0,
@@ -178,7 +178,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Stronger cipher suite: 33% slow.',
       },
       {
-        cost: 280,
+        cost: 180,
         damage: 12,
         range: 118,
         fireRate: 1.15,
@@ -186,7 +186,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Perfect forward secrecy: 42% slow.',
       },
       {
-        cost: 620,
+        cost: 340,
         damage: 18,
         range: 132,
         fireRate: 1.3,
@@ -218,7 +218,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Deeper decoy: stronger pull, +3 credits.',
       },
       {
-        cost: 200,
+        cost: 180,
         damage: 11,
         range: 134,
         fireRate: 1.7,
@@ -227,7 +227,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Tarpit: threats take damage over time, +5 credits.',
       },
       {
-        cost: 480,
+        cost: 370,
         damage: 17,
         range: 148,
         fireRate: 1.8,
@@ -283,26 +283,26 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     name: 'AI Sentinel',
     role: 'Long-range sniper',
     blurb:
-      'A model that learns the target it is shooting at. Slow, expensive, enormous range, and it ramps up the longer it stays locked on.',
+      'A model that learns the target it is shooting at. Slow, expensive, enormous range, and it ramps up the longer it stays locked on. The answer to anything with too much health to burst down.',
     unlockLevel: 6,
     attack: 'beam',
     color: '#facc15',
     targeting: 'strongest',
     params: { rampPerHit: 0.08, rampMax: 1.0 },
     tiers: [
-      { cost: 320, damage: 30, range: 244, fireRate: 0.7, note: 'Ramps +8% damage per consecutive hit, up to +100%.' },
-      { cost: 260, damage: 44, range: 268, fireRate: 0.8, note: 'Larger model: more damage and reach.' },
+      { cost: 240, damage: 55, range: 244, fireRate: 1.0, note: 'Ramps +8% damage per consecutive hit, up to +100%.' },
+      { cost: 200, damage: 90, range: 268, fireRate: 1.0, note: 'Larger model: more damage and reach.' },
       {
-        cost: 560,
-        damage: 64,
+        cost: 360,
+        damage: 140,
         range: 292,
-        fireRate: 0.9,
+        fireRate: 1.0,
         params: { rampPerHit: 0.1, rampMax: 1.5 },
         note: 'Faster convergence: ramps to +150%.',
       },
       {
-        cost: 1200,
-        damage: 95,
+        cost: 600,
+        damage: 200,
         range: 324,
         fireRate: 1.0,
         params: { rampPerHit: 0.12, rampMax: 2.2, hitsTunneled: true, pierce: 1 },
@@ -341,7 +341,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Arcs to 4 with less damage loss.',
       },
       {
-        cost: 820,
+        cost: 1180,
         damage: 48,
         range: 166,
         fireRate: 1.4,
