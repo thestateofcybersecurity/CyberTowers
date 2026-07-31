@@ -8,7 +8,7 @@ import { BOSS_THREAT, THREATS } from './threats';
  * unplayable rather than hard, and runaway bounty removes every build decision.
  */
 export function healthScale(wave: number): number {
-  return Math.pow(1.055, wave - 1);
+  return Math.pow(1.058, wave - 1);
 }
 
 export function speedScale(wave: number): number {
@@ -24,21 +24,26 @@ export function speedScale(wave: number): number {
  * endless eventually end.
  */
 export function bountyScale(wave: number): number {
-  return Math.pow(1.038, wave - 1);
+  return Math.pow(1.042, wave - 1);
 }
 
 /** Rough "threat points" a wave is allowed to spend. */
 function waveBudget(wave: number): number {
-  return 15 * Math.pow(wave, 1.12) + 13 * wave;
+  return 16 * Math.pow(wave, 1.13) + 14 * wave;
 }
 
 export function isBossWave(wave: number): boolean {
   return wave > 0 && wave % 10 === 0;
 }
 
-/** Credits paid out for surviving the wave. */
+/**
+ * Base credits for clearing a wave, before the clear-rate multiplier the game
+ * applies. Deliberately smaller than it was: kills should be the main income,
+ * with this as a top-up, not a guaranteed salary that pays out whether or not
+ * the player is actually holding the line.
+ */
 export function waveBounty(wave: number): number {
-  return Math.round(70 + wave * 24 + (isBossWave(wave) ? 250 : 0));
+  return Math.round(60 + wave * 18 + (isBossWave(wave) ? 180 : 0));
 }
 
 function eligibleThreats(map: GameMapDef, wave: number): ThreatId[] {

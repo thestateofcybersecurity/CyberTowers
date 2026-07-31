@@ -14,6 +14,8 @@ export interface HudState {
   buildTimer: number;
   threatsAlive: number;
   isBossWave: boolean;
+  /** Credits paid for sending the next wave now; computed by the simulation. */
+  earlyBonus: number;
 }
 
 interface Props {
@@ -106,7 +108,7 @@ export default function TopBar({
             onClick={onCallWave}
             className="rounded-md border border-lime/50 bg-lime/10 px-3 py-1.5 font-mono text-xs font-semibold text-lime transition hover:bg-lime/20"
           >
-            SEND WAVE ({Math.ceil(hud.buildTimer)}s) +{Math.round(hud.buildTimer * 6)}
+            SEND WAVE ({Math.ceil(hud.buildTimer)}s) +{hud.earlyBonus}
           </button>
         )}
 

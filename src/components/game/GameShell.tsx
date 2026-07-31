@@ -60,6 +60,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
     buildTimer: 30,
     threatsAlive: 0,
     isBossWave: false,
+    earlyBonus: 0,
   }));
   const [plan, setPlan] = useState<WavePlan | null>(null);
   const [buildType, setBuildType] = useState<TowerId | null>(null);
@@ -142,6 +143,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
       buildTimer: game.buildTimer,
       threatsAlive: game.threats.length,
       isBossWave: game.plan.isBoss,
+      earlyBonus: game.earlyCallBonus(),
     });
 
     const id = viewRef.current.selectedTowerId;

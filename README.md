@@ -70,22 +70,27 @@ each got. `npm run diagnose` traces a single board wave by wave, printing wave
 health against the board's damage per second, so a difficulty cliff shows up as
 a number rather than as an unexplained death.
 
-Where the balance currently sits, per the bot in `npm run balance` (a naive
-player: fixed build rotation, no repositioning, no reaction to wave
-composition):
+Where the balance currently sits. `npm run balance` plays each map under five
+spending policies — spreading credits across many towers versus concentrating
+them into a few maxed ones, with firewalls only versus the full roster:
 
-| Map | Campaign | Endless |
+| Map | Firewalls only | Mixed roster |
 | --- | --- | --- |
-| Home Network | cleared by every build | wave 44–61 |
-| Corporate LAN | cleared by mixed builds | wave 26–50 |
-| Cloud Region | wave 10–20 | wave 21–40 |
-| Industrial SCADA | cleared by a full roster | wave 19–47 |
-| Datacenter Core | wave 11–14 | wave 15–50 |
+| Home Network | cleared | cleared |
+| Corporate LAN | wave 13–19 | cleared |
+| Cloud Region | wave 15–16 | cleared |
+| Industrial SCADA | wave 19 | cleared |
+| Datacenter Core | wave 14 | cleared |
 
-Cloud Region and Datacenter Core are not cleared by the bot. A human should do
-better, but treat those two as the least settled part of the tuning. Mixed
-rosters beat single-tower spam on every board, which is the property the tower
-design is aiming for.
+Endless: firewalls only tops out around wave 13–25; a mixed roster reaches wave
+40–64 depending on the board.
+
+The property that matters is that a single tower type never clears a campaign
+map past the tutorial, and that concentrating every credit into one maxed tower
+performs no better than spreading the same credits around. Both were false in an
+earlier build — one maxed firewall could carry a whole run, because firewall
+upgrades granted pierce and so quietly turned the cheapest single-target tower
+into the best area-damage tower in the game.
 
 ## How it is put together
 
@@ -123,6 +128,22 @@ a submitted score against what was actually possible.
 **Art is source code.** Sprites are 16x16 character grids with a palette, baked
 to canvases at an integer scale on first use. The grids are validated at load,
 so a miscounted row fails loudly rather than rendering slightly clipped.
+
+## Economy
+
+Three income streams, in order of how much they should matter:
+
+1. **Kill bounties.** The main source. Every threat is worth credits, scaled up
+   as waves progress.
+2. **Wave clear bonus.** Multiplied by the fraction of the wave you actually
+   killed, from 30% for a wave that mostly leaked through to 100% for a clean
+   sweep. Letting threats reach the core costs the integrity *and* the payout.
+3. **Sending a wave early.** Capped, and small. An uncapped time bonus is free
+   money for a board that is already winning.
+
+The design intent is that income tracks how well you are actually holding the
+line. A guaranteed per-wave salary lets a losing board coast, and a losing board
+that coasts never has to change what it is doing.
 
 ## Score validation
 

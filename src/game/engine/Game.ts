@@ -90,6 +90,9 @@ export class Game {
   plan: WavePlan;
   /** Seconds since the current wave began spawning. */
   private waveClock = 0;
+  /** Threats spawned and killed in the current wave, for the clear bonus. */
+  private waveSpawned = 0;
+  private waveKilled = 0;
   /** Flattened, time-sorted spawn schedule for the active wave. */
   private schedule: Array<{ at: number; threat: ThreatId; lane: number }> = [];
   private scheduleIndex = 0;
@@ -240,10 +243,20 @@ export class Game {
     return resolveTower(type, 0);
   }
 
+  /**
+   * Credits paid for skipping the rest of the build phase. Capped, because an
+   * uncapped time bonus is free money for a board that is already winning and
+   * was a large share of total income.
+   */
+  earlyCallBonus(): number {
+    if (this.phase !== 'building') return 0;
+    return Math.min(90, Math.round(this.buildTimer * 3));
+  }
+
   /** Skips the remaining build time and pays a bonus scaled to the time saved. */
   callWaveEarly(): void {
     if (this.phase !== 'building') return;
-    const bonus = Math.round(this.buildTimer * 6);
+    const bonus = this.earlyCallBonus();
     this.credits += bonus;
     this.score += bonus;
     this.buildTimer = 0;
@@ -306,12 +319,18 @@ export class Game {
 
     this.scheduleIndex = 0;
     this.waveClock = 0;
+    this.waveSpawned = 0;
+    this.waveKilled = 0;
     this.phase = 'spawning';
     this.emit({ type: 'wave-start', wave: this.wave, isBoss: this.plan.isBoss });
   }
 
   private completeWave(): void {
-    const bounty = waveBounty(this.wave);
+    // The clear bonus is earned, not granted. Letting threats through costs the
+    // integrity *and* the payout, so a bad wave hurts twice instead of quietly
+    // topping the player up regardless of how the wave actually went.
+    const cleared = this.waveSpawned === 0 ? 1 : this.waveKilled / this.waveSpawned;
+    const bounty = Math.round(waveBounty(this.wave) * (0.3 + 0.7 * cleared));
     this.credits += bounty;
     this.score += bounty;
     this.emit({ type: 'wave-clear', wave: this.wave, bounty });
@@ -443,6 +462,7 @@ export class Game {
     threat.y = threat.prevY = scratch.y;
 
     this.threats.push(threat);
+    this.waveSpawned += 1;
     return threat;
   }
 
@@ -627,6 +647,7 @@ export class Game {
     this.score += payout;
     this.xpEarned += threat.xp;
     this.threatsKilled += 1;
+    this.waveKilled += 1;
     if (tower) tower.kills += 1;
 
     // Children are queued rather than spawned inline: `this.threats` is being
