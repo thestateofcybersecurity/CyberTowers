@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { auth, signIn } from '@/auth';
+import { authDiagnostics, signIn } from '@/auth';
+import { getSession } from '@/lib/session';
 import SiteNav from '@/components/SiteNav';
 
 export const dynamic = 'force-dynamic';
@@ -11,10 +12,11 @@ const PROVIDERS = [
 ] as const;
 
 export default async function SignInPage() {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user) redirect('/profile');
 
   const available = PROVIDERS.filter((p) => Boolean(process.env[p.env]));
+  const diagnostics = authDiagnostics();
 
   return (
     <>
@@ -28,11 +30,46 @@ export default async function SignInPage() {
           </p>
 
           {available.length === 0 ? (
-            <div className="mt-6 rounded-lg border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-amber">
-              No OAuth provider is configured on this deployment. Set{' '}
-              <code className="font-mono">AUTH_GITHUB_ID</code> and{' '}
-              <code className="font-mono">AUTH_GITHUB_SECRET</code> (or the Google equivalents) to
-              enable accounts.
+            <div className="mt-6 space-y-3">
+              <div className="rounded-lg border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-amber">
+                Sign-in is not available on this deployment yet. Below is what the server can
+                currently see — presence only, never values.
+              </div>
+              <dl className="rounded-lg border border-edge bg-panel-2/50 px-4 py-3 text-xs">
+                <ConfigRow
+                  label="AUTH_SECRET"
+                  ok={diagnostics.secret}
+                  hint="Generate with `npx auth secret`. NEXTAUTH_SECRET also works."
+                />
+                <ConfigRow
+                  label="Postgres (Neon)"
+                  ok={diagnostics.database}
+                  hint="DATABASE_URL, POSTGRES_URL or the Neon integration equivalents."
+                />
+                <ConfigRow
+                  label="MongoDB"
+                  ok={diagnostics.mongo}
+                  hint="MONGODB_URI. Stores profiles, saves and scores."
+                />
+                <ConfigRow
+                  label="GitHub OAuth"
+                  ok={diagnostics.github}
+                  hint="AUTH_GITHUB_ID + AUTH_GITHUB_SECRET. No database integration provides these."
+                />
+                <ConfigRow
+                  label="Google OAuth"
+                  ok={diagnostics.google}
+                  hint="AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET."
+                />
+              </dl>
+              <p className="text-xs leading-relaxed text-muted">
+                Database integrations provision databases, not identity providers. At least one
+                OAuth app has to be registered by hand, with callback URL{' '}
+                <code className="font-mono text-ink">
+                  {'{origin}'}/api/auth/callback/github
+                </code>
+                .
+              </p>
             </div>
           ) : (
             <div className="mt-6 space-y-2">
@@ -57,5 +94,17 @@ export default async function SignInPage() {
         </div>
       </main>
     </>
+  );
+}
+
+function ConfigRow({ label, ok, hint }: { label: string; ok: boolean; hint: string }) {
+  return (
+    <div className="flex items-start gap-2.5 border-b border-edge/60 py-1.5 last:border-0">
+      <span className={ok ? 'text-lime' : 'text-rose'}>{ok ? '✓' : '✗'}</span>
+      <div className="min-w-0">
+        <div className={`font-mono ${ok ? 'text-ink' : 'text-rose'}`}>{label}</div>
+        {!ok && <div className="mt-0.5 text-muted">{hint}</div>}
+      </div>
+    </div>
   );
 }

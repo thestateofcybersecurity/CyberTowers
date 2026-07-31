@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { auth, hasAuthProviders } from '@/auth';
+import { hasAuthProviders } from '@/auth';
+import { getSession } from '@/lib/session';
 
 const LINKS = [
   { href: '/', label: 'Missions' },
@@ -8,7 +9,7 @@ const LINKS = [
 ];
 
 export default async function SiteNav() {
-  const session = await auth();
+  const session = await getSession();
   const configured = hasAuthProviders();
 
   return (
