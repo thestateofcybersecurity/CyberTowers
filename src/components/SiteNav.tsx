@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { hasAuthProviders } from '@/auth';
-import { getSession } from '@/lib/session';
+import { isMongoConfigured } from '@/lib/mongo';
+import { currentUser } from '@/lib/session';
+import SignOutButton from './SignOutButton';
 
 const LINKS = [
   { href: '/', label: 'Missions' },
@@ -9,8 +10,10 @@ const LINKS = [
 ];
 
 export default async function SiteNav() {
-  const session = await getSession();
-  const configured = hasAuthProviders();
+  const user = await currentUser();
+  // Accounts need somewhere to live. Without Mongo there is nothing to sign in
+  // to, whether or not an OAuth provider happens to be configured.
+  const canSignIn = isMongoConfigured();
 
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-void/80 backdrop-blur">
@@ -37,23 +40,27 @@ export default async function SiteNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          {session?.user ? (
+          {user ? (
             <>
               <Link
                 href="/profile"
                 className="flex items-center gap-2 rounded-md border border-edge px-3 py-1.5 text-sm text-ink transition hover:bg-panel-2"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-                {session.user.name ?? 'Operator'}
+                {user.name}
               </Link>
-              <Link
-                href="/api/auth/signout"
-                className="text-sm text-muted transition hover:text-ink"
-              >
-                Sign out
-              </Link>
+              {user.kind === 'oauth' ? (
+                <Link
+                  href="/api/auth/signout"
+                  className="text-sm text-muted transition hover:text-ink"
+                >
+                  Sign out
+                </Link>
+              ) : (
+                <SignOutButton />
+              )}
             </>
-          ) : configured ? (
+          ) : canSignIn ? (
             <Link
               href="/signin"
               className="rounded-md border border-cyan/50 bg-cyan/10 px-3.5 py-1.5 text-sm font-medium text-cyan transition hover:bg-cyan/20"
@@ -61,7 +68,7 @@ export default async function SiteNav() {
               Sign in
             </Link>
           ) : (
-            <span className="label" title="Configure AUTH_GITHUB_ID or AUTH_GOOGLE_ID to enable accounts">
+            <span className="label" title="Set MONGODB_URI to enable accounts">
               Guest mode
             </span>
           )}

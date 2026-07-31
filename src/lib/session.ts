@@ -1,14 +1,18 @@
+import { headers } from 'next/headers';
 import type { Session } from 'next-auth';
 import { auth, authSecret, hasAuthProviders } from '@/auth';
-import { isMongoConfigured } from './mongo';
+import { readTokenFromCookieHeader, verifyToken } from './guest';
+import { isMongoConfigured, profiles } from './mongo';
 
 export interface SessionUser {
   id: string;
   name: string;
+  /** How this identity was established. */
+  kind: 'oauth' | 'handle';
 }
 
 /**
- * True when auth could possibly work. Without a secret Auth.js throws on every
+ * True when OAuth could possibly work. Without a secret Auth.js throws on every
  * call, and without a provider there is no way to have signed in, so calling
  * `auth()` in either case only produces log noise on pages that just wanted to
  * know whether anyone was logged in.
@@ -28,12 +32,40 @@ export async function getSession(): Promise<Session | null> {
   }
 }
 
-/** Resolves the signed-in user, or null when there is no session. */
+/** Reads and verifies the handle-account cookie, if there is one. */
+async function handleAccount(): Promise<SessionUser | null> {
+  if (!isMongoConfigured()) return null;
+  try {
+    const store = await headers();
+    const id = verifyToken(readTokenFromCookieHeader(store.get('cookie')));
+    if (!id) return null;
+
+    const col = await profiles();
+    const profile = await col.findOne({ _id: id });
+    if (!profile) return null;
+
+    return { id, name: profile.handle, kind: 'handle' };
+  } catch (error) {
+    console.error('Handle account lookup failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Resolves the signed-in user from either identity source. OAuth wins when both
+ * are present, since it is the stronger claim.
+ */
 export async function currentUser(): Promise<SessionUser | null> {
   const session = await getSession();
   const id = session?.user?.id;
-  if (!id) return null;
-  return { id, name: session.user?.name ?? session.user?.email ?? 'operator' };
+  if (id) {
+    return {
+      id,
+      name: session.user?.name ?? session.user?.email ?? 'operator',
+      kind: 'oauth',
+    };
+  }
+  return handleAccount();
 }
 
 export function jsonError(message: string, status: number): Response {
