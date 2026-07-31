@@ -44,7 +44,10 @@ DATABASE_URL="postgres://..." npm run db:migrate
 ```
 
 OAuth callback URLs are `{origin}/api/auth/callback/github` and
-`{origin}/api/auth/callback/google`.
+`{origin}/api/auth/callback/google`. `{origin}` must be the origin people
+actually visit. If the site is served on a custom domain, register the callback
+against that domain, not the `*.vercel.app` one — an OAuth app whose callback
+points somewhere the user never lands will fail the redirect back.
 
 **A database integration is not an identity provider.** Vercel's Neon and
 MongoDB integrations provision databases and set their own connection variables;
@@ -59,8 +62,16 @@ place of `DATABASE_URL`.
 
 ## Deploying to Vercel
 
+Vercel is the only host. The app is server-rendered and needs a Node runtime for
+its route handlers, auth and database access, so a static host cannot serve it —
+an earlier version of this repo deployed to GitHub Pages, and that is not a
+configuration this build can run under.
+
 Import the repository, set the environment variables above in the project
 settings, and deploy. No build configuration is needed; Vercel detects Next.js.
+Pushes to `main` deploy straight to production, with no CI gate in front of
+them — run `npm run typecheck && npm run lint && npm run simulate` before
+pushing, or add a workflow that does.
 `AUTH_URL` is inferred automatically on Vercel deployments.
 
 Both datastores are serverless-friendly: Neon is accessed through
