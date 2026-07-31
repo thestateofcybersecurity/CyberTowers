@@ -23,42 +23,26 @@ leaderboard degrade politely to "not configured".
 
 | Variable | Purpose | Required for |
 | --- | --- | --- |
-| `AUTH_SECRET` | Session encryption. Generate with `npx auth secret`. | Any auth |
-| `DATABASE_URL` | Neon Postgres connection string. | Accounts |
-| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth app. | GitHub sign-in |
-| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth client. | Google sign-in |
-| `MONGODB_URI` | MongoDB Atlas connection string. | Profiles, saves, scores |
+| `AUTH_SECRET` | Root signing key. Generate with `npx auth secret`. | Any account |
+| `NEON_AUTH_BASE_URL` | Provisioned when Neon Auth is enabled on the Neon project. | Neon Auth sign-in |
+| `NEON_AUTH_COOKIE_SECRET` | Optional. Derived from `AUTH_SECRET` if unset. | — |
+| `MONGODB_URI` | MongoDB connection string. | Profiles, saves, scores |
 | `MONGODB_DB` | Database name, defaults to `cybertowers`. | — |
+| `DATABASE_URL` | Neon Postgres. Aliases like `POSTGRES_URL` are accepted. | — |
 
-Apply the auth schema to Neon once. This is idempotent, so re-running it is the
-intended way to bring an existing database up to date:
+**Neon Postgres and Neon Auth are different products.** Connecting the database
+does not give anyone a way to log in; Neon Auth is enabled separately on the
+Neon project, and enabling it is what provisions `NEON_AUTH_BASE_URL`.
 
-```bash
-npm run db:migrate
-```
+Neon does not issue a cookie signing key, so `NEON_AUTH_COOKIE_SECRET` is
+derived from `AUTH_SECRET` via HMAC with a domain-separation label. The two keys
+stay cryptographically independent and there is one fewer variable to manage.
+Set it explicitly if you would rather rotate them separately.
 
-It reads the connection string from `.env.local`, or from the environment:
-
-```bash
-DATABASE_URL="postgres://..." npm run db:migrate
-```
-
-OAuth callback URLs are `{origin}/api/auth/callback/github` and
-`{origin}/api/auth/callback/google`. `{origin}` must be the origin people
-actually visit. If the site is served on a custom domain, register the callback
-against that domain, not the `*.vercel.app` one — an OAuth app whose callback
-points somewhere the user never lands will fail the redirect back.
-
-**A database integration is not an identity provider.** Vercel's Neon and
-MongoDB integrations provision databases and set their own connection variables;
-neither gives you a way for a person to log in. At least one OAuth app has to be
-registered by hand before sign-in appears. Visiting `/signin` on a deployment
-prints a presence-only checklist of what the server can actually see, which is
-the fastest way to find out which piece is missing.
-
-The app accepts the common alternate variable names, so `NEXTAUTH_SECRET` works
-in place of `AUTH_SECRET`, and `POSTGRES_URL` or `DATABASE_URL_UNPOOLED` work in
-place of `DATABASE_URL`.
+Sign-in degrades in one step: with Neon Auth configured you get email and
+password accounts; without it, handle accounts — no email, no password, a signed
+cookie and a recovery key to move between devices. Visiting `/signin` prints a
+presence-only checklist of what the server can see.
 
 ## Deploying to Vercel
 

@@ -1,25 +1,22 @@
 import { redirect } from 'next/navigation';
-import { authDiagnostics, signIn } from '@/auth';
 import AccountForm from '@/components/AccountForm';
+import NeonAuthForm from '@/components/NeonAuthForm';
 import SiteNav from '@/components/SiteNav';
+import { authDiagnostics, isNeonAuthConfigured } from '@/lib/env';
 import { isMongoConfigured } from '@/lib/mongo';
 import { currentUser } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Sign in · CyberTowers' };
 
-const PROVIDERS = [
-  { id: 'github', label: 'Continue with GitHub', env: 'AUTH_GITHUB_ID' },
-  { id: 'google', label: 'Continue with Google', env: 'AUTH_GOOGLE_ID' },
-] as const;
-
 export default async function SignInPage() {
   const user = await currentUser();
   if (user) redirect('/profile');
 
-  const available = PROVIDERS.filter((p) => Boolean(process.env[p.env]));
   const diagnostics = authDiagnostics();
-  const accountsPossible = isMongoConfigured() && diagnostics.secret;
+  const neonAuth = isNeonAuthConfigured();
+  // Handle accounts are the fallback when no identity provider is available.
+  const handleAccounts = isMongoConfigured() && diagnostics.secret;
 
   return (
     <>
@@ -32,38 +29,10 @@ export default async function SignInPage() {
             ranks. The game is fully playable without one.
           </p>
 
-          {accountsPossible ? (
-            <>
-              <AccountForm />
-
-              {available.length > 0 && (
-                <>
-                  <div className="my-5 flex items-center gap-3">
-                    <span className="h-px flex-1 bg-edge" />
-                    <span className="label">or</span>
-                    <span className="h-px flex-1 bg-edge" />
-                  </div>
-                  <div className="space-y-2">
-                    {available.map((provider) => (
-                      <form
-                        key={provider.id}
-                        action={async () => {
-                          'use server';
-                          await signIn(provider.id, { redirectTo: '/profile' });
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="w-full rounded-lg border border-edge px-4 py-2.5 font-mono text-sm text-ink transition hover:bg-panel-2"
-                        >
-                          {provider.label}
-                        </button>
-                      </form>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
+          {neonAuth ? (
+            <NeonAuthForm />
+          ) : handleAccounts ? (
+            <AccountForm />
           ) : (
             <div className="mt-6 space-y-3">
               <div className="rounded-lg border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-amber">
@@ -82,29 +51,32 @@ export default async function SignInPage() {
                   hint="MONGODB_URI. Stores profiles, saves and scores."
                 />
                 <ConfigRow
-                  label="Postgres (Neon)"
-                  ok={diagnostics.database}
-                  hint="Only needed for OAuth sign-in, not for handle accounts."
+                  label="Neon Auth base URL"
+                  ok={diagnostics.neonAuthBaseUrl}
+                  hint="NEON_AUTH_BASE_URL, provisioned when Neon Auth is enabled on the project."
                 />
                 <ConfigRow
-                  label="GitHub OAuth"
-                  ok={diagnostics.github}
-                  hint="Optional. AUTH_GITHUB_ID + AUTH_GITHUB_SECRET."
+                  label="Neon Auth cookie key"
+                  ok={diagnostics.neonAuthCookieSecret}
+                  hint="Derived from AUTH_SECRET automatically, or set NEON_AUTH_COOKIE_SECRET."
                 />
               </dl>
             </div>
           )}
         </div>
 
-        {accountsPossible && (
+        {neonAuth ? (
           <p className="mt-4 px-1 text-xs leading-relaxed text-muted">
-            Handle accounts need no email, password or OAuth app. Sign-in is a signed cookie, and
-            you get a recovery key to move the account between devices. Adding{' '}
-            <code className="font-mono">AUTH_GITHUB_ID</code> and{' '}
-            <code className="font-mono">AUTH_GITHUB_SECRET</code> enables GitHub sign-in alongside
-            it.
+            Sign-in is handled by Neon Auth. Accounts live in your Neon project alongside the game
+            data.
           </p>
-        )}
+        ) : handleAccounts ? (
+          <p className="mt-4 px-1 text-xs leading-relaxed text-muted">
+            Neon Auth is not configured, so this deployment is using handle accounts: no email or
+            password, a signed cookie, and a recovery key to move between devices.
+          </p>
+        ) : null}
+
       </main>
     </>
   );
