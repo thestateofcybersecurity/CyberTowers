@@ -103,7 +103,6 @@ function bar(value: number, max: number, width = 14): string {
 const rows = analyse();
 
 console.log('\n\x1b[1mPer-tower efficiency (support towers deal no damage by design)\x1b[0m\n');
-const maxReach = Math.max(...rows.map((r) => r.reachPerCredit));
 
 console.log(
   '  tower        tier  cost   dps   range  targets  dmg/cr   solo/cr   vs armour9',
