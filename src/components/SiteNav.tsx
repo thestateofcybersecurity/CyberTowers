@@ -6,6 +6,7 @@ import SignOutButton from './SignOutButton';
 const LINKS = [
   { href: '/', label: 'Missions' },
   { href: '/operations', label: 'Operations' },
+  { href: '/infiltrate', label: 'Infiltrate' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/codex', label: 'Codex' },
 ];

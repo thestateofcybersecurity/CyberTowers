@@ -76,6 +76,7 @@ npm run analyze    # per-tower efficiency and dominant-strategy check
 npm run ops:sync   # derive operation rosters from real ATT&CK groups
 npm run ops:check  # offline, verify the roster data is well-formed
 npm run economy    # income against difficulty; fails if a late game is trivial
+npm run intrusion  # attacker-side balance: does any intrusion shape dominate?
 ```
 
 `npm run simulate` drives the real engine in Node with no browser involved. It
@@ -193,6 +194,34 @@ phishing, and APT28 with zero-days.
 An operation also contributes its signature threats to the board's pool and
 brings them forward in the schedule, so an actor defined by long-lived implants
 fields them from the start rather than at wave sixteen of an eighteen-wave run.
+
+## Infiltrate: the attacker seat
+
+At `/infiltrate` the board is flipped. The network is already built by an AI and
+reinforces after every wave, and you have twelve attempts to bring the core
+down. Instead of credits you spend **intel** composing each intrusion, choosing
+what to send and in what proportion.
+
+Four defensive postures decide what a target is bad at, which is the read the
+mode is built around. Perimeter-heavy has almost no detection and stealth walks
+through it; detection-led is thin on raw damage and volume overwhelms it;
+containment-first is slow to kill and armoured payloads survive the crossing;
+defence in depth has no obvious gap and is the hardest target.
+
+Playing as a documented actor makes that actor's own tradecraft about 30%
+cheaper, using the same roster weights that bias what a *defender* faces, read
+the other way round: what a group does often is what it is good at.
+
+Intrusion cost is deliberately not the kill bounty. Bounty prices how much
+trouble a threat is to remove, and a trash mob is cheap by design — pricing
+intrusions that way let a first wave field three hundred DDoS packets and walk
+over any network. Cost tracks delivered damage instead, discounted by how likely
+a unit is to survive long enough to deliver it, with a large premium on evasion
+because a stealthed or tunnelled unit bypasses most of a board rather than
+merely resisting it.
+
+`npm run intrusion` reports the shape-versus-posture matrix and flags any
+intrusion that breaches everything. It caught exactly that before this shipped.
 
 ## Crossover with MITRE ATT&CK Adventure
 
