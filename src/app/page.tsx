@@ -4,6 +4,7 @@ import SiteNav from '@/components/SiteNav';
 import { MAPS } from '@/game/data/maps';
 import { levelProgress, nextUnlock } from '@/game/data/progression';
 import { TOWERS } from '@/game/data/towers';
+import { ADVENTURE_URL } from '@/game/data/attack';
 import { loadPlayerContext } from '@/lib/playerContext';
 
 export const dynamic = 'force-dynamic';
@@ -130,6 +131,29 @@ export default async function HomePage() {
                 </article>
               );
             })}
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-xl border border-violet/40 bg-violet/5 p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="label">Part of the same range</p>
+              <h2 className="mt-1 font-mono text-lg font-semibold text-ink">
+                MITRE ATT&amp;CK Adventure
+              </h2>
+              <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
+                Every threat in CyberTowers is a real ATT&amp;CK technique and every defence a real
+                D3FEND countermeasure, drawn from the same dataset. Play the other side of the
+                board: walk the kill chain as the attacker, or deploy countermeasures as the
+                defender.
+              </p>
+            </div>
+            <a
+              href={ADVENTURE_URL}
+              className="shrink-0 rounded-lg border border-violet/50 bg-violet/10 px-5 py-2.5 font-mono text-sm font-semibold text-violet transition hover:bg-violet/20"
+            >
+              OPEN THE ADVENTURE →
+            </a>
           </div>
         </section>
       </main>
