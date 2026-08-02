@@ -14,6 +14,7 @@ import type {
 import { TARGETING_MODES } from '../core/types';
 import { THREATS } from '../data/threats';
 import { TOWERS, resolveTower, sellValue } from '../data/towers';
+import { alertFatigue, depthMultiplier, layerBit } from '../data/doctrine';
 import { bountyScale, buildWave, healthScale, speedScale, waveBounty } from '../data/waves';
 import { Board, lanePointAt } from './board';
 import {
@@ -102,6 +103,8 @@ export class Game {
   private rng: Rng;
   /** Tower occupancy by tile index, so placement checks are O(1). */
   private occupancy: Map<number, Tower> = new Map();
+  /** Board-wide detection signal quality, 1 down toward 0. See doctrine.ts. */
+  alertFatigue = 1;
   /** Id indexes, so per-tick lookups never degrade into linear scans. */
   private threatById: Map<number, Threat> = new Map();
   private towerById: Map<number, Tower> = new Map();
@@ -284,6 +287,13 @@ export class Game {
       tower.auraDetect = false;
     }
 
+    // More sensors means more alerts, and past a point less attention paid to
+    // any one of them. Quality of detection beats quantity.
+    const detectors = this.towers.filter(
+      (t) => t.stats.params.detectStealth && t.def.attack !== 'aura',
+    ).length;
+    this.alertFatigue = alertFatigue(detectors);
+
     for (const source of this.towers) {
       const p = source.stats.params;
       if (p.auraDamage === 0 && p.auraFireRate === 0 && !p.detectStealth) continue;
@@ -293,8 +303,11 @@ export class Game {
       for (const target of this.towers) {
         if (target === source) continue;
         if (dist2(source.x, source.y, target.x, target.y) > rangeSq) continue;
-        target.auraDamage += p.auraDamage;
-        target.auraFireRate += p.auraFireRate;
+        // Support does not stack across copies. Five uplinks covering one
+        // tower would hand it +190% damage and delete the encounter, which is
+        // the runaway every other tower defence explicitly designs out.
+        target.auraDamage = Math.max(target.auraDamage, p.auraDamage);
+        target.auraFireRate = Math.max(target.auraFireRate, p.auraFireRate);
         if (p.detectStealth) target.auraDetect = true;
       }
     }
@@ -449,6 +462,7 @@ export class Game {
       bounty: Math.round(def.bounty * bountyScale(this.wave) * (mods.economyScale ?? 1)),
       xp: def.xp,
       statuses: [],
+      layers: 0,
       revealed: !def.traits.stealth,
       flash: 0,
       alive: true,
@@ -568,6 +582,12 @@ export class Game {
     if (effect.chance !== undefined && !this.rng.chance(effect.chance)) return;
     if (effect.type === 'slow' && threat.def.traits.slowImmune) return;
 
+    // Only the flag is diluted by alert fatigue; detection itself stays
+    // reliable, because intermittently untargetable rootkits read as a bug.
+    const potency =
+      effect.type === 'flag' ? effect.potency * this.alertFatigue : effect.potency;
+    effect = potency === effect.potency ? effect : { ...effect, potency };
+
     // Statuses of the same kind never stack; the strongest wins and refreshes.
     const existing = threat.statuses.find((s) => s.type === effect.type);
     if (existing) {
@@ -599,6 +619,12 @@ export class Game {
 
     const flag = this.strongest(threat, 'flag');
     if (flag > 0) damage *= 1 + flag;
+
+    // Defence in depth: a threat that has already been engaged by several
+    // different kinds of control takes more from the next one. This is the
+    // term that makes a varied board worth more than the sum of its towers.
+    damage *= depthMultiplier(threat.layers);
+    if (tower) threat.layers |= layerBit(tower.type);
 
     if (!ignoreArmor) {
       // Armour subtracts flat damage but can never fully negate a hit, so rapid

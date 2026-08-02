@@ -21,6 +21,7 @@
  * has no build decisions in it.
  */
 
+import { ALERT_FATIGUE, MAX_DEPTH_MULTIPLIER, alertFatigue } from '../src/game/data/doctrine';
 import { TOWERS, TOWER_ORDER, investedCredits, resolveTower } from '../src/game/data/towers';
 import type { TowerId } from '../src/game/core/types';
 
@@ -189,6 +190,22 @@ const flagMult = 1 + (flag?.potency ?? 0);
 console.log(`  SOC uplink MK4 : x${socMult.toFixed(2)} to every tower in range`);
 console.log(`  IDS flag MK4   : x${flagMult.toFixed(2)} to all damage on flagged threats`);
 console.log(`  stacked        : x${(socMult * flagMult).toFixed(2)}`);
+console.log(
+  `  defence in depth: x${MAX_DEPTH_MULTIPLIER.toFixed(2)} at full layering ` +
+    '(distinct control types, not towers)',
+);
+console.log(
+  `  all three      : x${(socMult * flagMult * MAX_DEPTH_MULTIPLIER).toFixed(2)}`,
+);
+
+console.log('\n  alert fatigue (flag strength as sensors are added):');
+for (const n of [1, 3, 5, 8, 12]) {
+  const f = alertFatigue(n);
+  console.log(
+    `    ${String(n).padStart(2)} detectors  ${(f * 100).toFixed(0).padStart(3)}%  ${bar(f, 1)}` +
+      (n <= ALERT_FATIGUE.free ? '  (free)' : ''),
+  );
+}
 console.log(
   '\n  These are the only terms that make a mixed board worth more than the sum\n' +
     '  of its parts. If they are small, the optimum stays at a corner.\n',

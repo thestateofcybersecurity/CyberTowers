@@ -120,9 +120,18 @@ armour cliff, and whether maxing a tower beats spending the same credits on
 fresh ones. Every tower now sits at 0.98–1.02 on that last measure, so the
 arithmetic does not decide: range, position, armour profile and synergy do.
 
-The two multiplicative terms are what make a mixed board worth more than the sum
-of its parts — a SOC uplink at ×1.90 to everything in range, and an IDS flag at
-×1.45 to all damage on what it marks, ×2.76 stacked. Specialisation is enforced
+Three multiplicative terms make a mixed board worth more than the sum
+of its parts — a SOC uplink at ×1.90 to everything in range, an IDS flag at
+×1.45 to all damage on what it marks, and **defence in depth** at up to ×1.36
+for having engaged a threat with five different kinds of control; ×3.76 stacked.
+
+Two rules keep those from running away, both taken from how other tower defences
+handle stacking. Support does not stack across copies: five SOC uplinks covering
+one tower would hand it +190% damage and delete the encounter, so only the
+strongest applies. And **alert fatigue** dilutes every flag on the board once
+there are more than three detectors, so three upgraded sensors beat ten cheap
+ones. Bonuses are additive against a base rather than exponential, because
+`1.2^n` runs away where `1 + 0.2n` does not. Specialisation is enforced
 from the other side: antivirus leads damage per credit against clusters but is
 near-worst against a lone boss, while the sentinel leads reach, armour
 penetration and single-target damage but is poor value against a crowd.

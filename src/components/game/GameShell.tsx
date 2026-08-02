@@ -61,6 +61,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
     threatsAlive: 0,
     isBossWave: false,
     earlyBonus: 0,
+    alertFatigue: 1,
   }));
   const [plan, setPlan] = useState<WavePlan | null>(null);
   const [buildType, setBuildType] = useState<TowerId | null>(null);
@@ -144,6 +145,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
       threatsAlive: game.threats.length,
       isBossWave: game.plan.isBoss,
       earlyBonus: game.earlyCallBonus(),
+      alertFatigue: game.alertFatigue,
     });
 
     const id = viewRef.current.selectedTowerId;
@@ -509,6 +511,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
           <TowerInspector
             tower={selected}
             credits={hud.credits}
+            alertFatigue={hud.alertFatigue}
             onUpgrade={upgradeSelected}
             onSell={sellSelected}
             onCycleTargeting={cycleTargeting}

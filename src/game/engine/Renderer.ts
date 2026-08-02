@@ -1,4 +1,5 @@
 import { getFlashSprite, getThreatSprite, getTowerSprite } from '../art/bake';
+import { countLayers } from '../data/doctrine';
 import { TILE, lerp } from '../core/math';
 import type { TowerId } from '../core/types';
 import type { Game } from './Game';
@@ -344,6 +345,7 @@ export class Renderer {
 
     this.drawHealthBar(ctx, threat, x, y);
     this.drawStatusPips(ctx, threat, x, y);
+    this.drawDepthPips(ctx, threat, x, y);
   }
 
   private drawHealthBar(
@@ -365,6 +367,25 @@ export class Renderer {
     if (threat.maxShield > 0 && threat.shield > 0) {
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(x - w / 2, top - 4, w * (threat.shield / threat.maxShield), 2);
+    }
+  }
+
+  /** One tick per distinct control that has engaged this threat. */
+  private drawDepthPips(
+    ctx: CanvasRenderingContext2D,
+    threat: Threat,
+    x: number,
+    y: number,
+  ): void {
+    const layers = countLayers(threat.layers);
+    if (layers < 2) return;
+
+    const top = y - threat.def.size - 12;
+    let px = x - (layers * 3) / 2;
+    ctx.fillStyle = '#5eead4';
+    for (let i = 0; i < layers; i++) {
+      ctx.fillRect(px, top, 2, 2);
+      px += 3;
     }
   }
 

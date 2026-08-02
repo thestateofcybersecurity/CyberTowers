@@ -47,6 +47,8 @@ export interface Threat {
   xp: number;
 
   statuses: ActiveStatus[];
+  /** Bitmask over TOWER_ORDER of the control types that have damaged it. */
+  layers: number;
   revealed: boolean;
   /** Seconds of white-flash remaining after taking a hit. */
   flash: number;
