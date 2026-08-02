@@ -40,6 +40,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: MITRE mapping consistency
+        # Offline: checks src/game/data/attack.ts against the committed snapshot
+        # of the ATT&CK Adventure dataset. Refreshing the snapshot needs that
+        # repo checked out and is done with `npm run attack:sync` locally.
+        run: npm run attack:check
+
       - name: Simulation smoke test
         run: npm run simulate
 
