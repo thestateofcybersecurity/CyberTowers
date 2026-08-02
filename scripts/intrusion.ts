@@ -41,7 +41,7 @@ function attempt(postureId: string, mix: ThreatId[], opId?: string): string {
   });
 
   let wave = 0;
-  while (game.phase === 'building' && wave < game.maxIntrusionWaves) {
+  while ((game.phase as string) === 'building' && wave < game.maxIntrusionWaves) {
     const share = game.intel / mix.length;
     const plan = mix.map((threat, i) => ({
       threat,
@@ -57,7 +57,10 @@ function attempt(postureId: string, mix: ThreatId[], opId?: string): string {
     }
 
     if (!game.launchAttack(plan.filter((p) => p.count > 0)).ok) break;
-    for (let i = 0; i < 150 && (game.phase === 'spawning' || game.phase === 'clearing'); i++) {
+    // Read through a function so TypeScript does not narrow `phase` to whatever
+    // it was at the top of the loop; ticking is exactly what changes it.
+    const phase = () => game.phase as string;
+    for (let i = 0; i < 150 && (phase() === 'spawning' || phase() === 'clearing'); i++) {
       run(game, 1);
     }
     wave++;
