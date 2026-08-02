@@ -16,6 +16,8 @@ export interface HudState {
   isBossWave: boolean;
   /** Credits paid for sending the next wave now; computed by the simulation. */
   earlyBonus: number;
+  /** Detection signal quality, 1 down toward 0 as sensors are added. */
+  alertFatigue: number;
 }
 
 interface Props {

@@ -1,5 +1,6 @@
 import PixelIcon from '@/components/game/PixelIcon';
 import SiteNav from '@/components/SiteNav';
+import { ALERT_FATIGUE, DEFENCE_IN_DEPTH, MAX_DEPTH_MULTIPLIER, alertFatigue } from '@/game/data/doctrine';
 import { THREATS, THREAT_ORDER } from '@/game/data/threats';
 import { TOWERS, TOWER_ORDER } from '@/game/data/towers';
 
@@ -19,6 +20,50 @@ export default function CodexPage() {
           Every defence and every threat, with the stats the simulation actually runs on. Threat
           numbers are the wave-one baseline; health and bounty scale up as a run progresses.
         </p>
+
+        <h2 className="label mt-10 mb-3">Doctrine</h2>
+        <div className="grid gap-3 md:grid-cols-2">
+          <article className="rounded-xl border border-edge bg-panel/80 p-4">
+            <h3 className="font-mono text-sm font-semibold text-ink">Defence in depth</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted">
+              A threat that has already been engaged by several{' '}
+              <span className="text-ink">different kinds</span> of control takes more damage from
+              the next one. Ten firewalls are one layer. A firewall, an IDS and an encryption field
+              are three.
+            </p>
+            <p className="mt-2 font-mono text-xs text-cyan">
+              +{Math.round(DEFENCE_IN_DEPTH.bonusPerLayer * 100)}% per extra layer, up to ×
+              {MAX_DEPTH_MULTIPLIER.toFixed(2)} at {DEFENCE_IN_DEPTH.maxLayers} layers
+            </p>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted">
+              The small marks above a threat&rsquo;s health bar count the layers it has taken so
+              far. This is the main reason a varied board beats a bigger uniform one.
+            </p>
+          </article>
+
+          <article className="rounded-xl border border-edge bg-panel/80 p-4">
+            <h3 className="font-mono text-sm font-semibold text-ink">Alert fatigue</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted">
+              More sensors means more alerts, and past a point less attention paid to any one of
+              them. Detectors past the {ALERT_FATIGUE.free}rd dilute the strength of every flag on
+              the board. Detection itself never fails; only the damage bonus weakens.
+            </p>
+            <dl className="mt-2 space-y-0.5 font-mono text-xs">
+              {[3, 5, 8, 12].map((n) => (
+                <div key={n} className="flex justify-between">
+                  <dt className="text-muted">{n} detectors</dt>
+                  <dd className={alertFatigue(n) < 0.7 ? 'text-rose' : 'text-ink'}>
+                    {Math.round(alertFatigue(n) * 100)}% flag strength
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted">
+              Three upgraded sensors beat ten cheap ones, which is the right answer here and in a
+              real detection programme.
+            </p>
+          </article>
+        </div>
 
         <h2 className="label mt-10 mb-3">Defences</h2>
         <div className="grid gap-3 md:grid-cols-2">

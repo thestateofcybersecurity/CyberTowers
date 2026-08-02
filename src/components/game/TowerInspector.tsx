@@ -8,6 +8,8 @@ import PixelIcon from './PixelIcon';
 interface Props {
   tower: Tower | null;
   credits: number;
+  /** Board-wide detection signal quality, 1 down toward 0. */
+  alertFatigue: number;
   onUpgrade: () => void;
   onSell: () => void;
   onCycleTargeting: () => void;
@@ -24,6 +26,7 @@ const TARGETING_LABEL: Record<TargetingMode, string> = {
 export default function TowerInspector({
   tower,
   credits,
+  alertFatigue,
   onUpgrade,
   onSell,
   onCycleTargeting,
@@ -79,6 +82,13 @@ export default function TowerInspector({
         />
         <Stat label="Kills" value={`${tower.kills}`} />
       </dl>
+
+      {tower.stats.params.detectStealth && alertFatigue < 0.995 && (
+        <p className="mt-2 rounded-md border border-amber/40 bg-amber/10 px-2 py-1 font-mono text-[10px] text-amber">
+          Alert fatigue: flags at {Math.round(alertFatigue * 100)}% strength. Too many sensors
+          dilute every alert; upgrade rather than add.
+        </p>
+      )}
 
       {(tower.auraDamage > 0 || tower.auraFireRate > 0) && (
         <p className="mt-2 rounded-md border border-orange-500/30 bg-orange-500/10 px-2 py-1 font-mono text-[10px] text-amber">
