@@ -179,7 +179,8 @@ Every threat is a real ATT&CK technique and every defence a real D3FEND
 countermeasure, taken from the same dataset that powers the sibling project at
 [mitre.cybersecurityalphabetsoup.com](https://mitre.cybersecurityalphabetsoup.com)
 (`src/data/d3fend.json` in that repo). The mapping lives in
-`src/game/data/attack.ts` and is surfaced in the codex: each threat row links to
+`src/game/data/attack.ts`, is pinned by a committed snapshot of the upstream
+dataset, and is surfaced in the codex: each threat row links to
 its technique on attack.mitre.org, each tower card shows its D3FEND tactic and
 countermeasures.
 
@@ -188,6 +189,23 @@ and a honeypot is Deceive in both. Following the sibling project's rule, nothing
 is invented: where a threat has no D3FEND coverage in that dataset (Botnet and
 Resource Hijacking), the codex still links the real ATT&CK technique rather than
 mapping it to something approximate.
+
+```bash
+npm run attack:sync    # read the sibling repo, refresh the snapshot
+npm run attack:check   # offline, verify the mapping has not drifted
+```
+
+`attack:sync` needs the Adventure repo checked out; it looks in a few likely
+places or takes `MITRE_ATTACK_REPO=/path/to/mitreattack`. It rewrites
+`src/game/data/attack-source.json` from the upstream `d3fend.json` and fails if
+any countermeasure we name has been renamed, retactic'd or removed.
+
+`attack:check` runs offline against that snapshot and is what CI runs, so the
+mapping cannot be hand-edited out of agreement with the source.
+
+One honest limit: the upstream dataset carries D3FEND countermeasures with their
+names and tactics, but not ATT&CK technique *display names*. Those are ours, and
+the script says so rather than implying it verified them.
 
 ## Economy
 

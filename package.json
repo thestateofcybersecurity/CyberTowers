@@ -11,7 +11,9 @@
     "simulate": "tsx scripts/simulate.ts",
     "balance": "tsx scripts/simulate.ts --balance",
     "diagnose": "tsx scripts/diagnose.ts",
-    "analyze": "tsx scripts/analyze.ts"
+    "analyze": "tsx scripts/analyze.ts",
+    "attack:sync": "tsx scripts/sync-attack.ts",
+    "attack:check": "tsx scripts/sync-attack.ts --check"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",

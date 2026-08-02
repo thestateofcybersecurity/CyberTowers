@@ -1,0 +1,122 @@
+{
+  "generatedAt": "2026-08-02T19:07:44.683Z",
+  "source": "mitreattack/src/data/d3fend.json",
+  "sourceSha256": "cec6c7f853ca1ac72415aea2931d2e38c1041fe5ee40ead9a081ebd5a1249919",
+  "tactics": [
+    "Model",
+    "Harden",
+    "Detect",
+    "Isolate",
+    "Deceive",
+    "Evict",
+    "Restore"
+  ],
+  "counters": {
+    "D3-NTF": {
+      "name": "Network Traffic Filtering",
+      "tactic": "Isolate"
+    },
+    "D3-ITF": {
+      "name": "Inbound Traffic Filtering",
+      "tactic": "Isolate"
+    },
+    "D3-EFA": {
+      "name": "Emulated File Analysis",
+      "tactic": "Detect"
+    },
+    "D3-EDL": {
+      "name": "Executable Denylisting",
+      "tactic": "Isolate"
+    },
+    "D3-NTSA": {
+      "name": "Network Traffic Signature Analysis",
+      "tactic": "Detect"
+    },
+    "D3-DNSTA": {
+      "name": "DNS Traffic Analysis",
+      "tactic": "Detect"
+    },
+    "D3-FE": {
+      "name": "File Encryption",
+      "tactic": "Harden"
+    },
+    "D3-DENCR": {
+      "name": "Disk Encryption",
+      "tactic": "Harden"
+    },
+    "D3-DE": {
+      "name": "Decoy Environment",
+      "tactic": "Deceive"
+    },
+    "D3-DNR": {
+      "name": "Decoy Network Resource",
+      "tactic": "Deceive"
+    },
+    "D3-NNI": {
+      "name": "Network Node Inventory",
+      "tactic": "Model"
+    },
+    "D3-SWI": {
+      "name": "Software Inventory",
+      "tactic": "Model"
+    },
+    "D3-NTCD": {
+      "name": "Network Traffic Community Deviation",
+      "tactic": "Detect"
+    },
+    "D3-IPCTA": {
+      "name": "IPC Traffic Analysis",
+      "tactic": "Detect"
+    },
+    "D3-ABPI": {
+      "name": "Application-based Process Isolation",
+      "tactic": "Isolate"
+    },
+    "D3-SCF": {
+      "name": "System Call Filtering",
+      "tactic": "Isolate"
+    }
+  },
+  "techniques": {
+    "T1204.002": {
+      "counters": 8
+    },
+    "T1091": {
+      "counters": 5
+    },
+    "T1566.002": {
+      "counters": 8
+    },
+    "T1027.002": {
+      "counters": 8
+    },
+    "T1486": {
+      "counters": 8
+    },
+    "T1105": {
+      "counters": 8
+    },
+    "T1014": {
+      "counters": 8
+    },
+    "T1498.001": {
+      "counters": 8
+    },
+    "T1572": {
+      "counters": 8
+    },
+    "T1053": {
+      "counters": 8
+    },
+    "T1078": {
+      "counters": 8
+    },
+    "T1068": {
+      "counters": 6
+    }
+  },
+  "uncovered": [
+    "T1496",
+    "T1583.005"
+  ]
+}
