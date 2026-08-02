@@ -13,11 +13,12 @@ import type {
 } from '../core/types';
 import { TARGETING_MODES } from '../core/types';
 import { THREATS } from '../data/threats';
-import { TOWERS, resolveTower, sellValue } from '../data/towers';
+import { TOWERS, TOWER_ORDER, resolveTower, sellValue } from '../data/towers';
 import { alertFatigue, depthMultiplier, layerBit } from '../data/doctrine';
 import { type Operation, rosterMultipliers } from '../data/operations';
 import { buildWave, healthScale, killReward, speedScale, waveBounty } from '../data/waves';
 import { Board, lanePointAt } from './board';
+import { fortify, getPosture, type DefencePosture } from './ai';
 import {
   allocId,
   resetIds,
@@ -49,9 +50,18 @@ export type GameEvent =
   | { type: 'defeat' }
   | { type: 'denied'; reason: string };
 
+/** Which side of the board the player is on. */
+export type GameRole = 'defender' | 'attacker';
+
 export interface GameOptions {
   map: GameMapDef;
   mode: GameMode;
+  /** Defaults to defender. Attacker composes waves against an AI network. */
+  role?: GameRole;
+  /** Defensive budget the AI spends fortifying, when the player is attacking. */
+  defenceBudget?: number;
+  /** How the AI network is built. */
+  posture?: DefencePosture;
   seed?: number;
   /** Towers the account has unlocked; anything else is refused at build time. */
   unlocked?: TowerId[];
@@ -105,6 +115,16 @@ export class Game {
   private onEvent?: (event: GameEvent) => void;
   private rng: Rng;
   readonly operation: Operation | null;
+  readonly role: GameRole;
+  readonly posture: DefencePosture;
+  /** Attacker's budget for composing waves. */
+  intel = 0;
+  /** Core integrity removed so far, which is the attacker's actual score. */
+  integrityRemoved = 0;
+  /** Defensive budget the AI adds between waves. */
+  private reinforcement = 0;
+  /** Waves an intrusion gets before the network is considered to have held. */
+  readonly maxIntrusionWaves = 12;
   /** Per-threat likelihood multipliers from the operation, if any. */
   private roster: Partial<Record<ThreatId, number>> = {};
   /** Tower occupancy by tile index, so placement checks are O(1). */
@@ -145,9 +165,146 @@ export class Game {
     this.onEvent = opts.onEvent;
     this.rng = new Rng(this.seed);
 
+    this.role = opts.role ?? 'defender';
+    this.posture = opts.posture ?? getPosture('balanced');
+
     resetIds();
     this.wave = 1;
     this.plan = buildWave(this.map, 1, this.mode, this.roster, this.operation?.id ?? '');
+
+    if (this.role === 'attacker') {
+      // The attacker never builds, so the starting credits belong to the
+      // network. Intel is the attacker's currency instead.
+      this.integrity *= 4;
+      this.maxIntegrity = this.integrity;
+      this.intel = Math.round(this.map.startCredits * 1.6);
+      this.reinforcement = Math.round((opts.defenceBudget ?? this.map.startCredits) * 0.38);
+      fortify(this, opts.defenceBudget ?? this.map.startCredits * 4.6, this.posture);
+      this.credits = 0;
+    }
+  }
+
+  /* ------------------------------------------------- AI-side board control */
+
+  /**
+   * Places a tower with no cost or unlock check. Only the AI uses this: the
+   * defending network is not spending the player's credits and is not gated by
+   * the player's clearance level.
+   */
+  placeDefence(col: number, row: number, type: TowerId): boolean {
+    if (!this.board.isBuildable(col, row)) return false;
+    if (this.occupancy.has(this.tileKey(col, row))) return false;
+
+    const saved = this.credits;
+    const savedUnlocks = this.unlocked;
+    this.credits = Infinity;
+    this.unlocked = new Set(TOWER_ORDER);
+    const ok = this.build(col, row, type).ok;
+    this.credits = saved;
+    this.unlocked = savedUnlocks;
+    return ok;
+  }
+
+  /** Upgrades a tower with no cost check. AI only. */
+  upgradeDefence(towerId: number): boolean {
+    const saved = this.credits;
+    this.credits = Infinity;
+    const ok = this.upgrade(towerId).ok;
+    this.credits = saved;
+    return ok;
+  }
+
+  /* ------------------------------------------------------- attacker actions */
+
+  /** Maximum units in a single intrusion, so volume cannot trivialise a board. */
+  readonly maxIntrusionUnits = 45;
+
+  /**
+   * What one of a threat costs the attacker to field.
+   *
+   * Deliberately not the kill bounty. Bounty prices how much trouble a threat
+   * is to *remove*, and a trash mob is cheap by design — pricing intrusions
+   * that way let a first wave field three hundred DDoS packets and walk over
+   * any network. What an attacker is buying is delivered damage, so the cost
+   * tracks how much core damage a unit can carry and how hard it is to stop.
+   */
+  intrusionCost(type: ThreatId): number {
+    const def = THREATS[type];
+    if (!def || def.traits.boss) return Infinity;
+
+    const durability = Math.sqrt(def.health + (def.traits.shield ?? 0)) * 1.6;
+    // Payload is discounted by how likely the unit is to survive long enough to
+    // deliver it. A DDoS packet priced on its damage costs the same per point as
+    // ransomware while dying to the first tower it meets, which made volume a
+    // dead strategy rather than a cheap one.
+    const survivability = Math.min(1, (def.health + (def.traits.shield ?? 0)) / 130);
+    const payload = def.damage * 11 * (0.25 + 0.75 * survivability);
+    // Evasion is not a small edge, it is a bypass. A stealthed unit can only be
+    // engaged by detectors and a tunnelled one by the handful of towers that see
+    // tunnels at all, so most of a network simply does not participate. Priced
+    // at a 35% premium it beat every posture; it has to cost like what it is.
+    // Tunnelling carries the larger premium because fewer things counter it.
+    const evasive = def.traits.tunneled ? 2.6 : def.traits.stealth ? 2.0 : 1;
+    const wave = 1 + (this.wave - 1) * 0.05;
+
+    // Playing as a documented actor makes that actor's own tradecraft cheaper.
+    // The roster weights that bias which threats a defender faces are exactly
+    // the right numbers here, read the other way round: what a group does often
+    // is what it is good at.
+    const signature = (this.roster[type] ?? 1) >= 1.5 ? 0.68 : 1;
+
+    return Math.max(8, Math.round((durability + payload) * evasive * wave * signature));
+  }
+
+  canAfford(plan: Array<{ threat: ThreatId; count: number }>): boolean {
+    return this.planCost(plan) <= this.intel;
+  }
+
+  planCost(plan: Array<{ threat: ThreatId; count: number }>): number {
+    return plan.reduce((sum, g) => sum + this.intrusionCost(g.threat) * g.count, 0);
+  }
+
+  /**
+   * Sends a composed wave at the network. The attacker's equivalent of the wave
+   * director: nothing spawns until they commit.
+   */
+  launchAttack(plan: Array<{ threat: ThreatId; count: number; lane: number }>): BuildResult {
+    if (this.role !== 'attacker') return { ok: false, reason: 'Not an intrusion' };
+    if (this.phase !== 'building') return { ok: false, reason: 'A wave is already running' };
+    if (plan.length === 0) return { ok: false, reason: 'Nothing selected' };
+
+    const units = plan.reduce((n, g) => n + g.count, 0);
+    if (units > this.maxIntrusionUnits) {
+      this.emit({ type: 'denied', reason: `Maximum ${this.maxIntrusionUnits} units per wave` });
+      return { ok: false, reason: 'Too many units' };
+    }
+
+    const cost = this.planCost(plan);
+    if (cost > this.intel) {
+      this.emit({ type: 'denied', reason: 'Not enough intel' });
+      return { ok: false, reason: 'Not enough intel' };
+    }
+
+    this.intel -= cost;
+    this.schedule = [];
+    for (const group of plan) {
+      const interval = Math.max(0.15, 0.8 - group.count * 0.02);
+      for (let i = 0; i < group.count; i++) {
+        this.schedule.push({
+          at: i * interval,
+          threat: group.threat,
+          lane: group.lane % this.board.lanes.length,
+        });
+      }
+    }
+    this.schedule.sort((a, b) => a.at - b.at);
+    this.scheduleIndex = 0;
+    this.waveClock = 0;
+    this.waveSpawned = 0;
+    this.waveKilled = 0;
+    this.phase = 'spawning';
+    this.emit({ type: 'wave-start', wave: this.wave, isBoss: false });
+    return { ok: true };
   }
 
   private emit(event: GameEvent): void {
@@ -355,6 +512,41 @@ export class Game {
     this.emit({ type: 'wave-start', wave: this.wave, isBoss: this.plan.isBoss });
   }
 
+  /**
+   * End of an attacker's wave. Intel is paid for damage actually done, so a
+   * wave that achieved nothing leaves the attacker poorer and the network
+   * better defended than before.
+   */
+  private completeIntrusion(): void {
+    const done = this.integrityRemoved;
+    const stipend = 60 + this.wave * 14;
+    const earned = Math.round(stipend + done * 30);
+    this.intel += earned;
+    this.score += earned;
+    this.emit({ type: 'wave-clear', wave: this.wave, bounty: earned });
+
+    if (this.integrity <= 0) {
+      this.phase = 'victory';
+      this.emit({ type: 'victory' });
+      return;
+    }
+
+    if (this.wave >= this.maxIntrusionWaves) {
+      // Out of attempts with the core still standing: the network held.
+      this.phase = 'defeat';
+      this.emit({ type: 'defeat' });
+      return;
+    }
+
+    // The network learns. Every wave it spends more on itself, so a slow
+    // intrusion is a losing one.
+    fortify(this, this.reinforcement, this.posture, 26 + this.wave);
+    this.reinforcement = Math.round(this.reinforcement * 1.05);
+
+    this.wave += 1;
+    this.phase = 'building';
+  }
+
   private completeWave(): void {
     // The clear bonus is earned, not granted. Letting threats through costs the
     // integrity *and* the payout, so a bad wave hurts twice instead of quietly
@@ -399,11 +591,17 @@ export class Game {
     this.compact();
 
     // `tick` returns early when already finished, so reaching here means the run
-    // is still live and this is the transition into defeat.
+    // is still live and this is the transition out of it. Which way that goes
+    // depends on which side of the board the player is on.
     if (this.integrity <= 0) {
       this.integrity = 0;
-      this.phase = 'defeat';
-      this.emit({ type: 'defeat' });
+      if (this.role === 'attacker') {
+        this.phase = 'victory';
+        this.emit({ type: 'victory' });
+      } else {
+        this.phase = 'defeat';
+        this.emit({ type: 'defeat' });
+      }
     }
   }
 
@@ -415,6 +613,9 @@ export class Game {
   private updateWaveDirector(dt: number): void {
     switch (this.phase) {
       case 'building': {
+        // An attacker's planning phase has no clock. The network is not going
+        // to attack itself, so nothing happens until the player commits a wave.
+        if (this.role === 'attacker') break;
         this.buildTimer -= dt;
         if (this.buildTimer <= 0) {
           this.buildTimer = 0;
@@ -435,7 +636,10 @@ export class Game {
         break;
       }
       case 'clearing': {
-        if (this.threats.length === 0) this.completeWave();
+        if (this.threats.length === 0) {
+          if (this.role === 'attacker') this.completeIntrusion();
+          else this.completeWave();
+        }
         break;
       }
       default:
@@ -720,6 +924,7 @@ export class Game {
     threat.alive = false;
     const damage = Math.max(1, Math.round(threat.damage));
     this.integrity -= damage;
+    this.integrityRemoved += damage;
     this.livesLost += 1;
 
     this.addEffect('leak', this.board.core.x, this.board.core.y, {
@@ -1180,6 +1385,21 @@ export class Game {
 
   result(): RunResult {
     const victory = this.phase === 'victory';
+    if (this.role === 'attacker') {
+      const breached = Math.min(1, this.integrityRemoved / Math.max(1, this.maxIntegrity));
+      return {
+        mapId: this.map.id,
+        operationId: this.operation?.id,
+        mode: this.mode,
+        wave: this.wave,
+        score: Math.round(this.score + breached * 4000 + (victory ? 6000 : 0)),
+        elapsed: Math.round(this.elapsed),
+        threatsKilled: this.threatsKilled,
+        integrity: Math.max(0, Math.round(this.integrity)),
+        victory,
+        xpEarned: Math.round(120 + breached * 400 + (victory ? 400 : 0)),
+      };
+    }
     const finalScore = Math.round(
       this.score + Math.max(0, this.integrity) * 25 + (victory ? 5000 : 0),
     );
