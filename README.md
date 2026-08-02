@@ -94,10 +94,14 @@ spending policies (spread vs concentrated, one tower type vs the full roster):
 | Map | Firewalls only | Mixed roster |
 | --- | --- | --- |
 | Home Network | cleared | cleared |
-| Corporate LAN | wave 22–25 | cleared |
-| Cloud Region | wave 18–22 | cleared |
-| Industrial SCADA | wave 19–21 | cleared |
-| Datacenter Core | wave 16–25 | cleared |
+| Corporate LAN | wave 17–25 | cleared |
+| Cloud Region | wave 18–20 | cleared |
+| Remote Workforce | wave 13–21 | cleared |
+| Container Cluster | wave 9–12 | cleared |
+| Industrial SCADA | wave 12–21 | cleared |
+| Supply Chain | wave 11–14 | cleared |
+| Datacenter Core | wave 14 | cleared |
+| Air-Gapped Facility | wave 15–16 | cleared |
 
 Endless: one tower type tops out around wave 15–35; a mixed roster reaches wave
 47–60.
