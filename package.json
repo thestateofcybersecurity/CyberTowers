@@ -14,7 +14,9 @@
     "analyze": "tsx scripts/analyze.ts",
     "attack:sync": "tsx scripts/sync-attack.ts",
     "attack:check": "tsx scripts/sync-attack.ts --check",
-    "economy": "tsx scripts/economy.ts"
+    "economy": "tsx scripts/economy.ts",
+    "ops:sync": "tsx scripts/sync-operations.ts",
+    "ops:check": "tsx scripts/sync-operations.ts --check"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",

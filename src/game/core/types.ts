@@ -288,6 +288,8 @@ export interface RunSnapshot {
 
 export interface RunResult {
   mapId: string;
+  /** Set when the run was an operation rather than the plain campaign. */
+  operationId?: string;
   mode: GameMode;
   wave: number;
   score: number;

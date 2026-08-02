@@ -15,6 +15,7 @@ import { TARGETING_MODES } from '../core/types';
 import { THREATS } from '../data/threats';
 import { TOWERS, resolveTower, sellValue } from '../data/towers';
 import { alertFatigue, depthMultiplier, layerBit } from '../data/doctrine';
+import { type Operation, rosterMultipliers } from '../data/operations';
 import { buildWave, healthScale, killReward, speedScale, waveBounty } from '../data/waves';
 import { Board, lanePointAt } from './board';
 import {
@@ -54,6 +55,8 @@ export interface GameOptions {
   seed?: number;
   /** Towers the account has unlocked; anything else is refused at build time. */
   unlocked?: TowerId[];
+  /** Campaign against a documented threat group, which bends the wave roster. */
+  operation?: Operation;
   onEvent?: (event: GameEvent) => void;
 }
 
@@ -101,6 +104,9 @@ export class Game {
   private unlocked: Set<TowerId>;
   private onEvent?: (event: GameEvent) => void;
   private rng: Rng;
+  readonly operation: Operation | null;
+  /** Per-threat likelihood multipliers from the operation, if any. */
+  private roster: Partial<Record<ThreatId, number>> = {};
   /** Tower occupancy by tile index, so placement checks are O(1). */
   private occupancy: Map<number, Tower> = new Map();
   /** Board-wide detection signal quality, 1 down toward 0. See doctrine.ts. */
@@ -117,10 +123,21 @@ export class Game {
   }> = [];
 
   constructor(opts: GameOptions) {
-    this.map = opts.map;
+    this.operation = opts.operation ?? null;
+    // An operation reshapes the board it plays on: its own length, and its
+    // modifiers layered over the map's. Merging here means everything
+    // downstream keeps reading `this.map` and needs no knowledge of operations.
+    this.map = opts.operation
+      ? {
+          ...opts.map,
+          waveCount: opts.operation.waveCount,
+          modifiers: { ...(opts.map.modifiers ?? {}), ...(opts.operation.modifiers ?? {}) },
+        }
+      : opts.map;
+    if (opts.operation) this.roster = rosterMultipliers(opts.operation);
     this.mode = opts.mode;
-    this.seed = opts.seed ?? hashString(`${opts.map.id}:${opts.mode}`);
-    this.board = new Board(opts.map);
+    this.seed = opts.seed ?? hashString(`${opts.map.id}:${opts.mode}:${opts.operation?.id ?? ''}`);
+    this.board = new Board(this.map);
     this.credits = opts.map.startCredits;
     this.integrity = opts.map.startIntegrity;
     this.maxIntegrity = opts.map.startIntegrity;
@@ -130,7 +147,7 @@ export class Game {
 
     resetIds();
     this.wave = 1;
-    this.plan = buildWave(this.map, 1, this.mode);
+    this.plan = buildWave(this.map, 1, this.mode, this.roster, this.operation?.id ?? '');
   }
 
   private emit(event: GameEvent): void {
@@ -316,7 +333,7 @@ export class Game {
   /* ------------------------------------------------------------ wave director */
 
   private startWave(): void {
-    this.plan = buildWave(this.map, this.wave, this.mode);
+    this.plan = buildWave(this.map, this.wave, this.mode, this.roster, this.operation?.id ?? '');
     this.schedule = [];
 
     for (const group of this.plan.groups) {
@@ -355,7 +372,7 @@ export class Game {
     }
 
     this.wave += 1;
-    this.plan = buildWave(this.map, this.wave, this.mode);
+    this.plan = buildWave(this.map, this.wave, this.mode, this.roster, this.operation?.id ?? '');
     this.buildTimer = BUILD_TIME;
     this.phase = 'building';
   }
@@ -1156,7 +1173,7 @@ export class Game {
     }
 
     this.recomputeAuras();
-    this.plan = buildWave(this.map, this.wave, this.mode);
+    this.plan = buildWave(this.map, this.wave, this.mode, this.roster, this.operation?.id ?? '');
     this.buildTimer = BUILD_TIME;
     this.phase = 'building';
   }
@@ -1168,6 +1185,7 @@ export class Game {
     );
     return {
       mapId: this.map.id,
+      operationId: this.operation?.id,
       mode: this.mode,
       wave: this.wave,
       score: finalScore,

@@ -11,6 +11,7 @@ import type {
   TowerId,
   WavePlan,
 } from '@/game/core/types';
+import { getOperation } from '@/game/data/operations';
 import { TOWER_ORDER, TOWERS } from '@/game/data/towers';
 import { Game, type GameEvent } from '@/game/engine/Game';
 import { Renderer, type ViewState } from '@/game/engine/Renderer';
@@ -27,13 +28,23 @@ interface Props {
   mode: GameMode;
   unlocked: TowerId[];
   signedIn: boolean;
+  /** Operation to run instead of the plain campaign, if any. */
+  operationId: string | null;
   initialSnapshot: RunSnapshot | null;
 }
 
 /** How often the React HUD re-reads the simulation, in ms. */
 const HUD_INTERVAL = 90;
 
-export default function GameShell({ map, mode, unlocked, signedIn, initialSnapshot }: Props) {
+export default function GameShell({
+  map,
+  mode,
+  unlocked,
+  signedIn,
+  operationId,
+  initialSnapshot,
+}: Props) {
+  const operation = operationId ? getOperation(operationId) : undefined;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
   const loopRef = useRef<GameLoop | null>(null);
@@ -54,7 +65,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
     maxIntegrity: map.startIntegrity,
     credits: map.startCredits,
     wave: 1,
-    waveCount: map.waveCount,
+    waveCount: operation?.waveCount ?? map.waveCount,
     score: 0,
     phase: 'building',
     buildTimer: 30,
@@ -217,6 +228,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
       map,
       mode,
       unlocked,
+      operation,
       onEvent: (event) => handleEvent(event, game),
     });
 
@@ -250,7 +262,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
     };
     // `runId` is the restart signal; everything else is stable for a given run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, mode, runId]);
+  }, [map, mode, runId, operationId]);
 
   /* ------------------------------------------------------------- interaction */
 
@@ -452,7 +464,7 @@ export default function GameShell({ map, mode, unlocked, signedIn, initialSnapsh
   return (
     <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 p-3 lg:p-4">
       <TopBar
-        mapName={map.name}
+        mapName={operation ? operation.name : map.name}
         mode={mode}
         hud={hud}
         speed={speed}
