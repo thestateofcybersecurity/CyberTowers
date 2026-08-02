@@ -1,5 +1,13 @@
 import PixelIcon from '@/components/game/PixelIcon';
 import SiteNav from '@/components/SiteNav';
+import {
+  ADVENTURE_URL,
+  TACTIC_COLOR,
+  THREAT_ATTACK,
+  TOWER_D3FEND,
+  attackUrl,
+  d3fendUrl,
+} from '@/game/data/attack';
 import { ALERT_FATIGUE, DEFENCE_IN_DEPTH, MAX_DEPTH_MULTIPLIER, alertFatigue } from '@/game/data/doctrine';
 import { THREATS, THREAT_ORDER } from '@/game/data/threats';
 import { TOWERS, TOWER_ORDER } from '@/game/data/towers';
@@ -20,6 +28,34 @@ export default function CodexPage() {
           Every defence and every threat, with the stats the simulation actually runs on. Threat
           numbers are the wave-one baseline; health and bounty scale up as a run progresses.
         </p>
+
+        <div className="mt-5 rounded-xl border border-violet/40 bg-violet/5 p-4">
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 className="font-mono text-sm font-semibold text-ink">
+                Every threat and defence here is real
+              </h2>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                Threats map to MITRE ATT&amp;CK techniques and defences to MITRE D3FEND
+                countermeasures, using the same dataset that powers{' '}
+                <span className="text-ink">MITRE ATT&amp;CK Adventure</span>. Nothing here is
+                invented: if a threat has no D3FEND coverage, this page says so rather than
+                guessing.
+              </p>
+            </div>
+            <a
+              href={ADVENTURE_URL}
+              className="shrink-0 rounded-lg border border-violet/50 bg-violet/10 px-4 py-2 font-mono text-xs font-semibold text-violet transition hover:bg-violet/20"
+            >
+              PLAY THE ADVENTURE →
+            </a>
+          </div>
+          <p className="mt-3 text-[11px] leading-relaxed text-muted">
+            Same seven D3FEND tactics the Adventure&rsquo;s Defender seat uses: Model, Harden,
+            Detect, Isolate, Deceive, Evict, Restore. A firewall here is Isolate there; a honeypot
+            is Deceive in both.
+          </p>
+        </div>
 
         <h2 className="label mt-10 mb-3">Doctrine</h2>
         <div className="grid gap-3 md:grid-cols-2">
@@ -99,6 +135,34 @@ export default function CodexPage() {
                   <Cell label="Rate" value={`${base.fireRate}/s`} />
                 </dl>
 
+                <div className="mt-3 border-t border-edge pt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="label">D3FEND</span>
+                    <span
+                      className="rounded px-1.5 py-0.5 font-mono text-[10px]"
+                      style={{
+                        background: `${TACTIC_COLOR[TOWER_D3FEND[id].tactic]}22`,
+                        color: TACTIC_COLOR[TOWER_D3FEND[id].tactic],
+                      }}
+                    >
+                      {TOWER_D3FEND[id].tactic}
+                    </span>
+                  </div>
+                  <ul className="mt-1.5 space-y-0.5">
+                    {TOWER_D3FEND[id].counters.map((c) => (
+                      <li key={c.id} className="text-[11px]">
+                        <a
+                          href={d3fendUrl(c.name)}
+                          className="font-mono text-muted transition hover:text-cyan"
+                        >
+                          {c.id}
+                        </a>{' '}
+                        <span className="text-muted">{c.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
                 <ol className="mt-3 space-y-1">
                   {def.tiers.map((tier, i) => (
                     <li key={i} className="flex gap-2 text-[11px] leading-snug">
@@ -124,6 +188,7 @@ export default function CodexPage() {
                 <Th className="text-right">Core dmg</Th>
                 <Th className="text-right">Bounty</Th>
                 <Th className="text-right">From wave</Th>
+                <Th>ATT&amp;CK</Th>
               </tr>
             </thead>
             <tbody>
@@ -149,6 +214,20 @@ export default function CodexPage() {
                     <Td className="text-right font-mono tabular-nums text-amber">{def.bounty}</Td>
                     <Td className="text-right font-mono tabular-nums text-muted">
                       {Number.isFinite(def.minWave) ? def.minWave : '—'}
+                    </Td>
+                    <Td>
+                      <a
+                        href={attackUrl(THREAT_ATTACK[id].id)}
+                        className="font-mono text-[11px] text-violet transition hover:text-ink"
+                      >
+                        {THREAT_ATTACK[id].id}
+                      </a>
+                      <div className="mt-0.5 max-w-[220px] text-[11px] leading-snug text-muted">
+                        {THREAT_ATTACK[id].name}
+                      </div>
+                      <div className="mt-0.5 max-w-[220px] text-[10px] leading-snug text-muted/70">
+                        {THREAT_ATTACK[id].note}
+                      </div>
                     </Td>
                   </tr>
                 );

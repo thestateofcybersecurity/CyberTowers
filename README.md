@@ -173,6 +173,22 @@ a submitted score against what was actually possible.
 to canvases at an integer scale on first use. The grids are validated at load,
 so a miscounted row fails loudly rather than rendering slightly clipped.
 
+## Crossover with MITRE ATT&CK Adventure
+
+Every threat is a real ATT&CK technique and every defence a real D3FEND
+countermeasure, taken from the same dataset that powers the sibling project at
+[mitre.cybersecurityalphabetsoup.com](https://mitre.cybersecurityalphabetsoup.com)
+(`src/data/d3fend.json` in that repo). The mapping lives in
+`src/game/data/attack.ts` and is surfaced in the codex: each threat row links to
+its technique on attack.mitre.org, each tower card shows its D3FEND tactic and
+countermeasures.
+
+The two games share the seven D3FEND tactics, so a firewall is Isolate in both
+and a honeypot is Deceive in both. Following the sibling project's rule, nothing
+is invented: where a threat has no D3FEND coverage in that dataset (Botnet and
+Resource Hijacking), the codex still links the real ATT&CK technique rather than
+mapping it to something approximate.
+
 ## Economy
 
 Three income streams, in order of how much they should matter:
