@@ -46,6 +46,11 @@ jobs:
         # repo checked out and is done with `npm run attack:sync` locally.
         run: npm run attack:check
 
+      - name: Economy pressure
+        # Fails if any campaign's late game is trivial (nothing left to buy) or
+        # unwinnable. Playtesting found the former; nothing automated caught it.
+        run: npm run economy
+
       - name: Simulation smoke test
         run: npm run simulate
 

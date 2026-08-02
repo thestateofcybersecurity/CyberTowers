@@ -73,6 +73,7 @@ npm run simulate   # headless engine smoke test, non-zero exit on failure
 npm run balance    # run every map and build order, report waves survived
 npm run diagnose -- cloud-region campaign   # wave-by-wave difficulty trace
 npm run analyze    # per-tower efficiency and dominant-strategy check
+npm run economy    # income against difficulty; fails if a late game is trivial
 ```
 
 `npm run simulate` drives the real engine in Node with no browser involved. It
@@ -208,6 +209,20 @@ names and tactics, but not ATT&CK technique *display names*. Those are ours, and
 the script says so rather than implying it verified them.
 
 ## Economy
+
+The number that decides whether this stays a game is **affordable damage over
+required damage**: how much more the player can buy than the wave demands. Above
+about 2 there is nothing left to think about; below 1 the wave cannot be stopped
+at any placement. `npm run economy` reports it per wave and fails CI if any
+campaign's final third leaves the healthy band. All five currently land at
+1.6×.
+
+Getting there needed one structural fix. A wave spends its budget as
+`count = share / bounty`, so kill income is `count × bounty`, which is the
+budget itself: making threats cheaper only spawns more of them and pays exactly
+the same. "More enemies per wave" and "fewer credits per wave" were
+contradictory requests until `KILL_PAYOUT_RATE` split them apart. Now
+`waveBudget` sets how much is coming and the payout rate sets how well it pays.
 
 Three income streams, in order of how much they should matter:
 
