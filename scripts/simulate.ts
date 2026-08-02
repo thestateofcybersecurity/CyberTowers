@@ -260,11 +260,35 @@ function smokeTest(): void {
     run(game, 1);
     check('a rootkit is untargetable without a detector', rootkit.alive && !rootkit.revealed);
 
+    // Place a sensor deliberately within reach of where the rootkit enters.
+    // Leaning on the generic placement policy here tested the policy, not the
+    // mechanic, and failed for reasons that had nothing to do with detection.
     const detectorGame = new Game({ map: MAPS[0], mode: 'endless', unlocked: TOWER_ORDER });
-    autoBuild(detectorGame, ['ids']);
+    const entry = { x: 0, y: 0 };
+    lanePointAt(detectorGame.board.lanes[0], 0, entry);
+    const idsRange = detectorGame.previewStats('ids').range;
+
+    let sensorPlaced = false;
+    for (let row = 0; row < detectorGame.board.rows && !sensorPlaced; row++) {
+      for (let col = 0; col < detectorGame.board.cols && !sensorPlaced; col++) {
+        const x = col * 40 + 20;
+        const y = row * 40 + 20;
+        if (Math.hypot(x - entry.x, y - entry.y) > idsRange * 0.8) continue;
+        sensorPlaced = detectorGame.build(col, row, 'ids').ok;
+      }
+    }
+    check('a detector can be sited to cover the lane entry', sensorPlaced);
+
     const hidden = detectorGame.spawnThreat('rootkit', 0);
-    run(detectorGame, 6);
-    check('an IDS reveals and kills it', !hidden.alive || hidden.revealed);
+    // `revealed` is recomputed every tick from what currently covers the threat,
+    // so a rootkit that walks past the last sensor re-hides. Sampling only at
+    // the end would test where it finished, not whether detection ever worked.
+    let everRevealed = false;
+    for (let i = 0; i < 20 && hidden.alive; i++) {
+      run(detectorGame, 0.5);
+      if (hidden.revealed) everRevealed = true;
+    }
+    check('an IDS reveals a rootkit', everRevealed || !hidden.alive);
   }
 }
 

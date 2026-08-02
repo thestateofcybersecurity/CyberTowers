@@ -40,17 +40,17 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     targeting: 'first',
     params: {},
     tiers: [
-      { cost: 80, damage: 8, range: 112, fireRate: 2.2, note: 'Baseline packet filtering.' },
-      { cost: 40, damage: 12, range: 122, fireRate: 2.5, note: 'Tighter rule set: +damage, +range.' },
+      { cost: 120, damage: 8, range: 112, fireRate: 2.2, note: 'Baseline packet filtering.' },
+      { cost: 60, damage: 12, range: 122, fireRate: 2.5, note: 'Tighter rule set: +damage, +range.' },
       {
-        cost: 90,
+        cost: 140,
         damage: 17,
         range: 132,
         fireRate: 2.8,
         note: 'Application-aware filtering: faster and harder hitting.',
       },
       {
-        cost: 120,
+        cost: 180,
         damage: 24,
         range: 144,
         fireRate: 3.1,
@@ -72,9 +72,9 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     targeting: 'strongest',
     params: { splashRadius: 42, splashFalloff: 0.45 },
     tiers: [
-      { cost: 140, damage: 14, range: 104, fireRate: 1.0, note: 'Quarantine burst on impact.' },
+      { cost: 210, damage: 14, range: 104, fireRate: 1.0, note: 'Quarantine burst on impact.' },
       {
-        cost: 110,
+        cost: 160,
         damage: 20,
         range: 112,
         fireRate: 1.05,
@@ -82,7 +82,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Wider quarantine radius.',
       },
       {
-        cost: 240,
+        cost: 360,
         damage: 30,
         range: 120,
         fireRate: 1.2,
@@ -90,7 +90,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Heuristics: larger blast, less falloff.',
       },
       {
-        cost: 560,
+        cost: 840,
         damage: 44,
         range: 130,
         fireRate: 1.3,
@@ -114,7 +114,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     params: { detectStealth: true },
     tiers: [
       {
-        cost: 120,
+        cost: 180,
         damage: 9,
         range: 144,
         fireRate: 1.4,
@@ -122,7 +122,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Reveals stealth. Flagged threats take +15% damage.',
       },
       {
-        cost: 50,
+        cost: 70,
         damage: 13,
         range: 158,
         fireRate: 1.5,
@@ -130,7 +130,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Better signatures: +22% damage taken.',
       },
       {
-        cost: 110,
+        cost: 160,
         damage: 18,
         range: 172,
         fireRate: 1.7,
@@ -138,7 +138,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Correlation engine: +32% damage taken.',
       },
       {
-        cost: 190,
+        cost: 290,
         damage: 26,
         range: 192,
         fireRate: 1.9,
@@ -162,7 +162,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     params: { hitsTunneled: true },
     tiers: [
       {
-        cost: 160,
+        cost: 240,
         damage: 5,
         range: 98,
         fireRate: 1.0,
@@ -170,7 +170,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Pulses the field. Slows everything inside by 25%.',
       },
       {
-        cost: 80,
+        cost: 120,
         damage: 8,
         range: 108,
         fireRate: 1.0,
@@ -178,7 +178,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Stronger cipher suite: 33% slow.',
       },
       {
-        cost: 180,
+        cost: 270,
         damage: 12,
         range: 118,
         fireRate: 1.15,
@@ -186,7 +186,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Perfect forward secrecy: 42% slow.',
       },
       {
-        cost: 340,
+        cost: 510,
         damage: 18,
         range: 132,
         fireRate: 1.3,
@@ -208,9 +208,9 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     targeting: 'closest',
     params: { lureRadius: 112, lurePull: 0.35, bountyBonus: 2 },
     tiers: [
-      { cost: 100, damage: 4, range: 112, fireRate: 1.5, note: 'Lures threats; +2 credits per kill in range.' },
+      { cost: 150, damage: 4, range: 112, fireRate: 1.5, note: 'Lures threats; +2 credits per kill in range.' },
       {
-        cost: 90,
+        cost: 140,
         damage: 7,
         range: 122,
         fireRate: 1.6,
@@ -218,7 +218,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Deeper decoy: stronger pull, +3 credits.',
       },
       {
-        cost: 180,
+        cost: 270,
         damage: 11,
         range: 134,
         fireRate: 1.7,
@@ -227,7 +227,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Tarpit: threats take damage over time, +5 credits.',
       },
       {
-        cost: 370,
+        cost: 550,
         damage: 17,
         range: 148,
         fireRate: 1.8,
@@ -250,9 +250,9 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     targeting: 'closest',
     params: { auraDamage: 0.12, auraFireRate: 0.12 },
     tiers: [
-      { cost: 260, damage: 0, range: 124, fireRate: 0, note: '+12% damage and fire rate to towers in range.' },
+      { cost: 390, damage: 0, range: 124, fireRate: 0, note: '+12% damage and fire rate to towers in range.' },
       {
-        cost: 200,
+        cost: 300,
         damage: 0,
         range: 138,
         fireRate: 0,
@@ -260,7 +260,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Tier-2 analysts: +19% to both.',
       },
       {
-        cost: 420,
+        cost: 630,
         damage: 0,
         range: 152,
         fireRate: 0,
@@ -268,7 +268,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Threat intel feed: +27% to both.',
       },
       {
-        cost: 880,
+        cost: 1320,
         damage: 0,
         range: 178,
         fireRate: 0,
@@ -290,10 +290,10 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     targeting: 'strongest',
     params: { rampPerHit: 0.08, rampMax: 1.0 },
     tiers: [
-      { cost: 240, damage: 55, range: 244, fireRate: 1.0, note: 'Ramps +8% damage per consecutive hit, up to +100%.' },
-      { cost: 200, damage: 90, range: 268, fireRate: 1.0, note: 'Larger model: more damage and reach.' },
+      { cost: 360, damage: 55, range: 244, fireRate: 1.0, note: 'Ramps +8% damage per consecutive hit, up to +100%.' },
+      { cost: 300, damage: 90, range: 268, fireRate: 1.0, note: 'Larger model: more damage and reach.' },
       {
-        cost: 360,
+        cost: 540,
         damage: 140,
         range: 292,
         fireRate: 1.0,
@@ -301,7 +301,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Faster convergence: ramps to +150%.',
       },
       {
-        cost: 600,
+        cost: 900,
         damage: 200,
         range: 324,
         fireRate: 1.0,
@@ -323,9 +323,9 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     targeting: 'closest',
     params: { chainJumps: 2, chainFalloff: 0.6, chainRange: 92 },
     tiers: [
-      { cost: 200, damage: 16, range: 132, fireRate: 1.1, note: 'Arcs to 2 additional threats.' },
+      { cost: 300, damage: 16, range: 132, fireRate: 1.1, note: 'Arcs to 2 additional threats.' },
       {
-        cost: 170,
+        cost: 250,
         damage: 23,
         range: 142,
         fireRate: 1.15,
@@ -333,7 +333,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Wider mesh: arcs to 3.',
       },
       {
-        cost: 360,
+        cost: 540,
         damage: 33,
         range: 152,
         fireRate: 1.3,
@@ -341,7 +341,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
         note: 'Arcs to 4 with less damage loss.',
       },
       {
-        cost: 1180,
+        cost: 1770,
         damage: 48,
         range: 166,
         fireRate: 1.4,

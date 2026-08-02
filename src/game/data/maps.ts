@@ -27,6 +27,7 @@ export const MAPS: GameMapDef[] = [
     startIntegrity: 100,
     waveCount: 20,
     threatPool: ['virus', 'worm', 'phishing', 'trojan', 'ransomware', 'ddos', 'cryptominer'],
+    modifiers: { economyScale: 1.41 },
   },
 
   {
@@ -57,6 +58,7 @@ export const MAPS: GameMapDef[] = [
       'botnet',
       'rootkit',
     ],
+    modifiers: { economyScale: 1.34 },
   },
 
   {
@@ -92,6 +94,7 @@ export const MAPS: GameMapDef[] = [
       'tunnel',
       'logicbomb',
     ],
+    modifiers: { economyScale: 1.18 },
   },
 
   {
@@ -135,7 +138,7 @@ export const MAPS: GameMapDef[] = [
       'logicbomb',
       'apt',
     ],
-    modifiers: { healthScale: 1.08, economyScale: 1.15 },
+    modifiers: { healthScale: 1.08, economyScale: 1.61 },
   },
 
   {
@@ -173,7 +176,7 @@ export const MAPS: GameMapDef[] = [
       'logicbomb',
       'apt',
     ],
-    modifiers: { healthScale: 1.12, speedScale: 1.05, economyScale: 1.3 },
+    modifiers: { healthScale: 1.12, speedScale: 1.05, economyScale: 1.54 },
   },
 ];
 

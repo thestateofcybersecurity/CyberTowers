@@ -27,9 +27,27 @@ export function bountyScale(wave: number): number {
   return Math.pow(1.042, wave - 1);
 }
 
+/**
+ * Fraction of a threat's budget value actually paid out as credits.
+ *
+ * This is the one lever that separates difficulty from income. A wave's budget
+ * is spent as `count = share / bounty`, so income is `count * bounty`, which is
+ * the budget itself: making threats cheaper just spawns more of them and pays
+ * exactly the same. Without a payout rate, "more enemies per wave" and "fewer
+ * credits per wave" are contradictory requests.
+ *
+ * With it, `waveBudget` sets how much is coming and this sets how well it pays.
+ */
+export const KILL_PAYOUT_RATE = 0.7;
+
+/** Credits a single kill is worth at a given wave. */
+export function killReward(baseBounty: number, wave: number, economyScale = 1): number {
+  return Math.max(1, Math.round(baseBounty * KILL_PAYOUT_RATE * bountyScale(wave) * economyScale));
+}
+
 /** Rough "threat points" a wave is allowed to spend. */
 function waveBudget(wave: number): number {
-  return 16 * Math.pow(wave, 1.13) + 14 * wave;
+  return 17 * Math.pow(wave, 1.16) + 15 * wave;
 }
 
 export function isBossWave(wave: number): boolean {
@@ -43,7 +61,7 @@ export function isBossWave(wave: number): boolean {
  * the player is actually holding the line.
  */
 export function waveBounty(wave: number): number {
-  return Math.round(60 + wave * 18 + (isBossWave(wave) ? 180 : 0));
+  return Math.round(50 + wave * 12 + (isBossWave(wave) ? 150 : 0));
 }
 
 function eligibleThreats(map: GameMapDef, wave: number): ThreatId[] {

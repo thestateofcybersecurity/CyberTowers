@@ -15,7 +15,7 @@ import { TARGETING_MODES } from '../core/types';
 import { THREATS } from '../data/threats';
 import { TOWERS, resolveTower, sellValue } from '../data/towers';
 import { alertFatigue, depthMultiplier, layerBit } from '../data/doctrine';
-import { bountyScale, buildWave, healthScale, speedScale, waveBounty } from '../data/waves';
+import { buildWave, healthScale, killReward, speedScale, waveBounty } from '../data/waves';
 import { Board, lanePointAt } from './board';
 import {
   allocId,
@@ -253,7 +253,7 @@ export class Game {
    */
   earlyCallBonus(): number {
     if (this.phase !== 'building') return 0;
-    return Math.min(90, Math.round(this.buildTimer * 3));
+    return Math.min(60, Math.round(this.buildTimer * 2));
   }
 
   /** Skips the remaining build time and pays a bonus scaled to the time saved. */
@@ -459,7 +459,7 @@ export class Game {
       shieldTimer: 0,
       speed: def.speed * speedScale(this.wave) * (mods.speedScale ?? 1),
       damage: def.damage,
-      bounty: Math.round(def.bounty * bountyScale(this.wave) * (mods.economyScale ?? 1)),
+      bounty: killReward(def.bounty, this.wave, mods.economyScale ?? 1),
       xp: def.xp,
       statuses: [],
       layers: 0,

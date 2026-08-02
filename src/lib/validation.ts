@@ -3,7 +3,7 @@ import type { GameMode } from '@/game/core/types';
 import { getMap } from '@/game/data/maps';
 import { THREATS } from '@/game/data/threats';
 import { TOWER_ORDER } from '@/game/data/towers';
-import { bountyScale, buildWave, waveBounty } from '@/game/data/waves';
+import { buildWave, killReward, waveBounty } from '@/game/data/waves';
 
 /**
  * Server-side plausibility checks for submitted runs.
@@ -87,8 +87,8 @@ export function runBounds(mapId: string, mode: GameMode, wave: number, integrity
   for (let w = 1; w <= wave; w++) {
     const plan = buildWave(map, w, mode);
     credits += waveBounty(w);
-    // The player can skip the whole build phase for a bonus of 6 per second.
-    credits += 30 * 6;
+    // Sending every wave early, at the capped bonus.
+    credits += 60;
 
     let waveSpan = 0;
     for (const group of plan.groups) {
@@ -100,8 +100,8 @@ export function runBounds(mapId: string, mode: GameMode, wave: number, integrity
       const splitDef = def.traits.splitInto ? THREATS[def.traits.splitInto.id] : null;
 
       kills += group.count * (1 + splitCount);
-      credits += group.count * def.bounty * bountyScale(w) * economy;
-      if (splitDef) credits += group.count * splitCount * splitDef.bounty * bountyScale(w) * economy;
+      credits += group.count * killReward(def.bounty, w, economy);
+      if (splitDef) credits += group.count * splitCount * killReward(splitDef.bounty, w, economy);
       // Best-case honeypot forensics bonus on every kill.
       credits += group.count * (1 + splitCount) * 9;
 
