@@ -64,10 +64,34 @@ export function waveBounty(wave: number): number {
   return Math.round(50 + wave * 12 + (isBossWave(wave) ? 150 : 0));
 }
 
-function eligibleThreats(map: GameMapDef, wave: number): ThreatId[] {
-  return map.threatPool.filter((id) => {
+/**
+ * Threats a wave may draw from.
+ *
+ * `minWave` paces the base campaign, introducing complications gradually. An
+ * operation overrides that for its signature threats: an actor defined by
+ * long-lived implants should be fielding them from the start, not waiting until
+ * wave sixteen of an eighteen-wave run to show its defining behaviour.
+ */
+function eligibleThreats(
+  map: GameMapDef,
+  wave: number,
+  roster: Partial<Record<ThreatId, number>> = {},
+): ThreatId[] {
+  // The board decides the terrain; the actor decides what shows up on it. An
+  // operation contributes its signature threats even where the map's own pool
+  // would not have offered them, which is why an espionage actor can field
+  // long-lived implants on a corporate LAN.
+  const signatureAdds = (Object.entries(roster) as Array<[ThreatId, number]>)
+    .filter(([, mult]) => mult >= 1.5)
+    .map(([id]) => id);
+  const pool = [...new Set([...map.threatPool, ...signatureAdds])];
+
+  return pool.filter((id) => {
     const def = THREATS[id];
-    return def && wave >= def.minWave && !def.traits.boss;
+    if (!def || def.traits.boss) return false;
+    const signature = (roster[id] ?? 1) >= 1.5;
+    const gate = signature ? Math.ceil(def.minWave * 0.45) : def.minWave;
+    return wave >= gate;
   });
 }
 
@@ -76,13 +100,19 @@ function eligibleThreats(map: GameMapDef, wave: number): ThreatId[] {
  * wave 30 is not still 60% viruses just because viruses have the largest base
  * weight.
  */
-function pickThreat(rng: Rng, pool: ThreatId[], wave: number): ThreatId {
+function pickThreat(
+  rng: Rng,
+  pool: ThreatId[],
+  wave: number,
+  roster: Partial<Record<ThreatId, number>> = {},
+): ThreatId {
   const weights = pool.map((id) => {
     const def = THREATS[id];
     const maturity = Math.max(0, wave - def.minWave);
     // Older unlocks decay slowly; recent unlocks get a temporary boost.
     const recency = 1 + Math.max(0, 6 - maturity) * 0.25;
-    return def.weight * recency;
+    // An operation multiplies the odds of what its actor actually does.
+    return def.weight * recency * (roster[id] ?? 1);
   });
 
   const total = weights.reduce((a, b) => a + b, 0);
@@ -106,8 +136,14 @@ function spawnInterval(id: ThreatId, wave: number): number {
  * every player sees the same campaign and the server can rebuild any wave to
  * check a submitted score against it.
  */
-export function buildWave(map: GameMapDef, wave: number, mode: GameMode): WavePlan {
-  const rng = new Rng(hashString(`${map.id}:${mode}:${wave}`));
+export function buildWave(
+  map: GameMapDef,
+  wave: number,
+  mode: GameMode,
+  roster: Partial<Record<ThreatId, number>> = {},
+  seedTag = '',
+): WavePlan {
+  const rng = new Rng(hashString(`${map.id}:${mode}:${seedTag}:${wave}`));
   const laneCount = map.lanes.length;
   const boss = isBossWave(wave);
   const groups: SpawnGroup[] = [];
@@ -125,7 +161,7 @@ export function buildWave(map: GameMapDef, wave: number, mode: GameMode): WavePl
     });
   }
 
-  const pool = eligibleThreats(map, wave);
+  const pool = eligibleThreats(map, wave, roster);
   if (pool.length === 0) {
     // Wave 1 on a pool with nothing unlocked yet: fall back to the basics.
     pool.push('virus');
@@ -140,7 +176,7 @@ export function buildWave(map: GameMapDef, wave: number, mode: GameMode): WavePl
     const share = g === groupCount - 1 ? remaining : remaining * rng.range(0.3, 0.55);
     remaining -= share;
 
-    const threat = pickThreat(rng, pool, wave);
+    const threat = pickThreat(rng, pool, wave, roster);
     const def = THREATS[threat];
     const count = Math.max(1, Math.min(60, Math.round(share / Math.max(2, def.bounty))));
 

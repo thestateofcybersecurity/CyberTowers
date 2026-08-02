@@ -112,7 +112,10 @@ export async function POST(request: Request) {
   // XP is clamped to what the run could plausibly have earned before it is
   // committed, so account progression cannot be inflated either.
   const grantedXp = Math.min(run.xpEarned, Math.ceil(verdict.bounds.maxScore / 4) + 500);
-  const previous = profile.campaign[run.mapId] ?? { bestWave: 0, bestScore: 0, cleared: false };
+  // Operations record against their own key so clearing one unlocks the next
+  // without touching the plain campaign's progress on the same board.
+  const progressKey = run.operationId ? `op:${run.operationId}` : run.mapId;
+  const previous = profile.campaign[progressKey] ?? { bestWave: 0, bestScore: 0, cleared: false };
 
   const nextXp = profile.xp + grantedXp;
   const col = await profiles();
@@ -122,7 +125,7 @@ export async function POST(request: Request) {
       $set: {
         xp: nextXp,
         level: levelFromXp(nextXp),
-        [`campaign.${run.mapId}`]: {
+        [`campaign.${progressKey}`]: {
           bestWave: Math.max(previous.bestWave, run.wave),
           bestScore: Math.max(previous.bestScore, run.score),
           cleared: previous.cleared || run.victory,

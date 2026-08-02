@@ -73,6 +73,8 @@ npm run simulate   # headless engine smoke test, non-zero exit on failure
 npm run balance    # run every map and build order, report waves survived
 npm run diagnose -- cloud-region campaign   # wave-by-wave difficulty trace
 npm run analyze    # per-tower efficiency and dominant-strategy check
+npm run ops:sync   # derive operation rosters from real ATT&CK groups
+npm run ops:check  # offline, verify the roster data is well-formed
 npm run economy    # income against difficulty; fails if a late game is trivial
 ```
 
@@ -173,6 +175,24 @@ a submitted score against what was actually possible.
 **Art is source code.** Sprites are 16x16 character grids with a palette, baked
 to canvases at an integer scale on first use. The grids are validated at load,
 so a miscounted row fails loudly rather than rendering slightly clipped.
+
+## Operations
+
+Ten campaigns against documented threat groups, at `/operations`. What makes
+each play differently is not flavour text: the wave roster is weighted by what
+that actor actually does, derived from its ATT&CK technique list by
+`npm run ops:sync`.
+
+Weighting by raw technique count does not work — broad families dominate every
+group equally and the rosters come out identical. The generator measures
+*distinctiveness* instead, comparing each group's share of a family against the
+average across all groups. That is what makes Lazarus and Sandworm lead with
+ransomware (WannaCry, NotPetya), Volt Typhoon with tunnelling, APT1 with
+phishing, and APT28 with zero-days.
+
+An operation also contributes its signature threats to the board's pool and
+brings them forward in the schedule, so an actor defined by long-lived implants
+fields them from the start rather than at wave sixteen of an eighteen-wave run.
 
 ## Crossover with MITRE ATT&CK Adventure
 

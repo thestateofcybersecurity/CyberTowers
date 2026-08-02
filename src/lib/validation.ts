@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { GameMode } from '@/game/core/types';
 import { getMap } from '@/game/data/maps';
+import { getOperation } from '@/game/data/operations';
 import { THREATS } from '@/game/data/threats';
 import { TOWER_ORDER } from '@/game/data/towers';
 import { buildWave, killReward, waveBounty } from '@/game/data/waves';
@@ -18,6 +19,7 @@ import { buildWave, killReward, waveBounty } from '@/game/data/waves';
 
 export const runResultSchema = z.object({
   mapId: z.string().min(1).max(64),
+  operationId: z.string().min(1).max(64).optional(),
   mode: z.enum(['campaign', 'endless']),
   wave: z.number().int().min(1).max(2000),
   score: z.number().int().min(0).max(50_000_000),
@@ -130,11 +132,14 @@ export function validateRun(run: RunSubmission): ValidationOutcome {
   const map = getMap(run.mapId);
   if (!map) return { ok: false, reason: 'Unknown map', bounds: { maxScore: 0, maxKills: 0, minElapsed: 0 } };
 
-  if (run.mode === 'campaign' && run.wave > map.waveCount) {
+  const operation = run.operationId ? getOperation(run.operationId) : undefined;
+  const finalWave = operation?.waveCount ?? map.waveCount;
+
+  if (run.mode === 'campaign' && run.wave > finalWave) {
     return {
       ok: false,
       reason: 'Wave exceeds campaign length',
-      bounds: runBounds(run.mapId, run.mode, map.waveCount, run.integrity),
+      bounds: runBounds(run.mapId, run.mode, finalWave, run.integrity),
     };
   }
 
@@ -143,7 +148,7 @@ export function validateRun(run: RunSubmission): ValidationOutcome {
   if (run.score > bounds.maxScore) return { ok: false, reason: 'Score above achievable maximum', bounds };
   if (run.threatsKilled > bounds.maxKills) return { ok: false, reason: 'Kill count above achievable maximum', bounds };
   if (run.elapsed < bounds.minElapsed) return { ok: false, reason: 'Run duration too short for wave reached', bounds };
-  if (run.victory && run.mode === 'campaign' && run.wave < map.waveCount) {
+  if (run.victory && run.mode === 'campaign' && run.wave < finalWave) {
     return { ok: false, reason: 'Victory claimed before final wave', bounds };
   }
 
