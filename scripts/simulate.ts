@@ -252,6 +252,44 @@ function smokeTest(): void {
     check('restored run is playable', (() => { run(restored, 30); return restored.elapsed > 0; })());
   }
 
+  console.log('\n\x1b[1mAttacker seat\x1b[0m');
+  {
+    // Reproduces the exact shape every caller writes, where the event callback
+    // closes over the variable being assigned. The attacker constructor
+    // fortifies the board, and each tower placed used to emit during
+    // construction, reaching `game` inside its own initialiser and throwing a
+    // ReferenceError that React swallowed into a blank page.
+    let constructed = true;
+    try {
+      const game: Game = new Game({
+        map: MAPS[0],
+        mode: 'campaign',
+        role: 'attacker',
+        onEvent: () => {
+          void game.wave;
+        },
+      });
+      check('an intrusion can be constructed with a self-referential callback', true);
+      check('the network is fortified before the first wave', game.towers.length > 0, `${game.towers.length} towers`);
+      check('the attacker starts with intel and a deeper target', game.intel > 0 && game.integrity > MAPS[0].startIntegrity);
+
+      const cheapest = ['ddos', 'worm', 'virus'] as const;
+      const pick = cheapest[0];
+      const count = Math.min(20, Math.floor(game.intel / game.intrusionCost(pick)));
+      const launched = game.launchAttack([{ threat: pick, count, lane: 0 }]);
+      check('a composed wave launches', launched.ok, `${count} units`);
+
+      const before = game.intel;
+      for (let i = 0; i < 200 && game.phase !== 'building' && game.phase !== 'victory'; i++) run(game, 1);
+      check('the wave resolves and pays intel', game.intel !== before || game.phase === 'victory');
+      check('over-sized waves are refused', !game.launchAttack([{ threat: pick, count: 999, lane: 0 }]).ok);
+    } catch (error) {
+      constructed = false;
+      check('an intrusion can be constructed with a self-referential callback', false, String(error));
+    }
+    void constructed;
+  }
+
   console.log('\n\x1b[1mStealth and detection\x1b[0m');
   {
     const game = new Game({ map: MAPS[0], mode: 'endless', unlocked: TOWER_ORDER });
