@@ -182,6 +182,8 @@ export class Game {
       fortify(this, opts.defenceBudget ?? this.map.startCredits * 4.6, this.posture);
       this.credits = 0;
     }
+
+    this.ready = true;
   }
 
   /* ------------------------------------------------- AI-side board control */
@@ -307,7 +309,19 @@ export class Game {
     return { ok: true };
   }
 
+  /**
+   * True once the constructor has finished.
+   *
+   * The attacker's network is fortified from inside the constructor, and every
+   * tower placed emits a build event. Callers naturally write
+   * `onEvent: (e) => handle(e, game)`, so firing during construction reaches for
+   * `game` before it has been assigned and throws a ReferenceError that React
+   * swallows into a blank error page. Setup is not gameplay, so it stays quiet.
+   */
+  private ready = false;
+
   private emit(event: GameEvent): void {
+    if (!this.ready) return;
     this.onEvent?.(event);
   }
 
