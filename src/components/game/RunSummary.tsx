@@ -19,6 +19,26 @@ interface Props {
 
 export default function RunSummary({ result, mapName, submit, onRetry }: Props) {
   const won = result.victory;
+  // The two seats win by opposite events, and every figure below reads the
+  // other way round from an intrusion: a breached core is the goal, and the
+  // bodies on the floor are your own.
+  const attacking = result.role === 'attacker';
+
+  const title = attacking
+    ? won
+      ? 'CORE BREACHED'
+      : 'INTRUSION BURNED'
+    : won
+      ? 'NETWORK SECURED'
+      : 'CORE BREACHED';
+
+  const blurb = attacking
+    ? won
+      ? `You got in. ${mapName} lost its core on wave ${result.wave}.`
+      : `The network held. ${mapName} still stands after ${result.wave} waves.`
+    : won
+      ? `You held every wave on ${mapName}. The adversary got nothing.`
+      : `Hostile traffic reached the core on wave ${result.wave}.`;
 
   return (
     <div className="absolute inset-0 z-20 grid place-items-center bg-void/85 p-6 backdrop-blur-sm">
@@ -27,19 +47,21 @@ export default function RunSummary({ result, mapName, submit, onRetry }: Props) 
         <h2
           className={`mt-1 font-mono text-2xl font-bold tracking-tight ${won ? 'text-lime' : 'text-rose'}`}
         >
-          {won ? 'NETWORK SECURED' : 'CORE BREACHED'}
+          {title}
         </h2>
-        <p className="mt-1 text-sm text-muted">
-          {won
-            ? `You held every wave on ${mapName}. The adversary got nothing.`
-            : `Hostile traffic reached the core on wave ${result.wave}.`}
-        </p>
+        <p className="mt-1 text-sm text-muted">{blurb}</p>
 
         <dl className="mt-5 grid grid-cols-2 gap-3">
           <Stat label="Final score" value={result.score.toLocaleString()} big />
           <Stat label="Wave reached" value={String(result.wave)} big />
-          <Stat label="Threats neutralised" value={result.threatsKilled.toLocaleString()} />
-          <Stat label="Integrity left" value={`${result.integrity}`} />
+          <Stat
+            label={attacking ? 'Units lost' : 'Threats neutralised'}
+            value={result.threatsKilled.toLocaleString()}
+          />
+          <Stat
+            label={attacking ? 'Core still up' : 'Integrity left'}
+            value={`${result.integrity}`}
+          />
           <Stat label="Run time" value={formatDuration(result.elapsed)} />
           <Stat label="XP earned" value={`+${result.xpEarned.toLocaleString()}`} />
         </dl>
@@ -65,7 +87,7 @@ export default function RunSummary({ result, mapName, submit, onRetry }: Props) 
             RUN IT BACK
           </button>
           <Link
-            href="/leaderboard"
+            href={attacking ? '/leaderboard?role=attacker' : '/leaderboard'}
             className="rounded-lg border border-edge px-4 py-2.5 font-mono text-sm text-muted transition hover:bg-panel-2 hover:text-ink"
           >
             RANKS

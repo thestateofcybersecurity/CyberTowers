@@ -10,17 +10,23 @@
  * posture, and push each genuine result through the same validator the API
  * uses. Anything rejected here would have been rejected for a player.
  *
+ * The end-of-run summary is checked here too, for the same reason: it is shared
+ * between the seats, and its wording used to congratulate an attacker for
+ * breaching a core by telling them the network was secured.
+ *
  *   npm run leaderboard
  *   npm run leaderboard -- --verbose
  */
 
+import { renderToStaticMarkup } from 'react-dom/server';
+import RunSummary from '../src/components/game/RunSummary';
 import { Game } from '../src/game/engine/Game';
 import { coverageSpots, POSTURES } from '../src/game/engine/ai';
 import { MAPS } from '../src/game/data/maps';
 import { OPERATIONS } from '../src/game/data/operations';
 import { THREATS } from '../src/game/data/threats';
 import { TOWERS, TOWER_ORDER } from '../src/game/data/towers';
-import type { GameMode, ThreatId, TowerId } from '../src/game/core/types';
+import type { GameMode, GameRole, RunResult, ThreatId, TowerId } from '../src/game/core/types';
 import { validateRun, type RunSubmission } from '../src/lib/validation';
 
 const STEP = 1 / 60;
@@ -288,9 +294,55 @@ let failures = 0;
   failures += check(rows, 'Intrusions');
 }
 
+// The summary panel is shared between the seats and reads every figure the
+// opposite way round for an intrusion.
+{
+  console.log('\n\x1b[1mRun summary\x1b[0m');
+  let wrong = 0;
+  const base: RunResult = {
+    mapId: 'home-net', role: 'defender', mode: 'campaign', wave: 20, score: 1000,
+    elapsed: 300, threatsKilled: 42, integrity: 80, victory: true, xpEarned: 100,
+  };
+  const expected: Array<[GameRole, boolean, string]> = [
+    ['defender', true, 'NETWORK SECURED'],
+    ['defender', false, 'CORE BREACHED'],
+    // Breaching the core is how an intrusion wins, not how it loses.
+    ['attacker', true, 'CORE BREACHED'],
+    ['attacker', false, 'INTRUSION BURNED'],
+  ];
+
+  for (const [role, victory, headline] of expected) {
+    const html = renderToStaticMarkup(
+      <RunSummary
+        result={{ ...base, role, victory }}
+        mapName="Home Network"
+        submit={{ status: 'idle' }}
+        onRetry={() => {}}
+      />,
+    );
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    const ok =
+      text.includes(headline) &&
+      // An attacker never neutralises threats, and the integrity shown is the
+      // target's, which is the opposite of an achievement.
+      (role === 'attacker'
+        ? text.includes('Units lost') && text.includes('Core still up')
+        : text.includes('Threats neutralised') && text.includes('Integrity left'));
+    if (!ok) {
+      failures += 1;
+      wrong += 1;
+      console.log(`  \x1b[31m✗\x1b[0m ${role}/${victory ? 'won' : 'lost'} expected "${headline}"`);
+      console.log(`      ${text.slice(0, 160)}`);
+    } else if (verbose) {
+      console.log(`  \x1b[32m✓\x1b[0m ${role}/${victory ? 'won' : 'lost'}  ${headline}`);
+    }
+  }
+  if (wrong === 0) console.log('  \x1b[32mboth seats read correctly\x1b[0m');
+}
+
 console.log('');
 if (failures > 0) {
-  console.error(`\x1b[31m${failures} legitimate run(s) would be rejected at submission.\x1b[0m`);
+  console.error(`\x1b[31m${failures} check(s) failed. A player would hit this.\x1b[0m`);
   process.exit(1);
 }
 console.log('\x1b[32mEvery legitimate run submits cleanly.\x1b[0m');

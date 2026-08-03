@@ -18,7 +18,7 @@
     "ops:sync": "tsx scripts/sync-operations.ts",
     "ops:check": "tsx scripts/sync-operations.ts --check",
     "intrusion": "tsx scripts/intrusion.ts",
-    "leaderboard": "tsx scripts/leaderboard.ts"
+    "leaderboard": "tsx scripts/leaderboard.tsx"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",

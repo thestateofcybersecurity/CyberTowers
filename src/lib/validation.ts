@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { GameMode } from '@/game/core/types';
 import { getMap } from '@/game/data/maps';
-import { getOperation } from '@/game/data/operations';
+import { getOperation, rosterMultipliers } from '@/game/data/operations';
 import { THREATS } from '@/game/data/threats';
 import { TOWER_ORDER } from '@/game/data/towers';
 import {
@@ -84,10 +84,33 @@ export interface RunBounds {
 /**
  * Rebuilds every wave up to `wave` and totals what the game could have paid
  * out, with generous headroom for honeypot bonuses and early-call rewards.
+ *
+ * An operation must be passed through, because it reshapes the very thing being
+ * replayed: it layers its own modifiers over the map's and weights the roster
+ * toward what that threat group actually does. Replaying the bare map instead
+ * models a different game from the one that was played, which is how the
+ * attacker's bound went wrong.
  */
-export function runBounds(mapId: string, mode: GameMode, wave: number, integrity: number): RunBounds {
-  const map = getMap(mapId);
-  if (!map) return { maxScore: 0, maxKills: 0, minElapsed: 0 };
+export function runBounds(
+  mapId: string,
+  mode: GameMode,
+  wave: number,
+  integrity: number,
+  operationId?: string,
+): RunBounds {
+  const base = getMap(mapId);
+  if (!base) return { maxScore: 0, maxKills: 0, minElapsed: 0 };
+
+  const operation = operationId ? getOperation(operationId) : undefined;
+  // Mirrors the merge the engine does in its constructor.
+  const map = operation
+    ? {
+        ...base,
+        waveCount: operation.waveCount,
+        modifiers: { ...(base.modifiers ?? {}), ...(operation.modifiers ?? {}) },
+      }
+    : base;
+  const roster = operation ? rosterMultipliers(operation) : undefined;
 
   const economy = map.modifiers?.economyScale ?? 1;
   let credits = 0;
@@ -95,7 +118,7 @@ export function runBounds(mapId: string, mode: GameMode, wave: number, integrity
   let spawnSeconds = 0;
 
   for (let w = 1; w <= wave; w++) {
-    const plan = buildWave(map, w, mode);
+    const plan = buildWave(map, w, mode, roster, operation?.id ?? '');
     credits += waveBounty(w);
     // Sending every wave early, at the capped bonus.
     credits += 60;
@@ -205,11 +228,11 @@ export function validateRun(run: RunSubmission): ValidationOutcome {
     return {
       ok: false,
       reason: 'Wave exceeds campaign length',
-      bounds: runBounds(run.mapId, run.mode, finalWave, run.integrity),
+      bounds: runBounds(run.mapId, run.mode, finalWave, run.integrity, run.operationId),
     };
   }
 
-  const bounds = runBounds(run.mapId, run.mode, run.wave, run.integrity);
+  const bounds = runBounds(run.mapId, run.mode, run.wave, run.integrity, run.operationId);
 
   if (run.score > bounds.maxScore) return { ok: false, reason: 'Score above achievable maximum', bounds };
   if (run.threatsKilled > bounds.maxKills) return { ok: false, reason: 'Kill count above achievable maximum', bounds };
