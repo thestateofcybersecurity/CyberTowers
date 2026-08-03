@@ -1,5 +1,6 @@
 import { Rng, TILE, clamp, dist2, hashString } from '../core/math';
 import type {
+  GameRole,
   GameMapDef,
   GameMode,
   GamePhase,
@@ -16,7 +17,15 @@ import { THREATS } from '../data/threats';
 import { TOWERS, TOWER_ORDER, resolveTower, sellValue } from '../data/towers';
 import { alertFatigue, depthMultiplier, layerBit } from '../data/doctrine';
 import { type Operation, rosterMultipliers } from '../data/operations';
-import { buildWave, healthScale, killReward, speedScale, waveBounty } from '../data/waves';
+import {
+  buildWave,
+  healthScale,
+  killReward,
+  speedScale,
+  waveBounty,
+  MAX_INTRUSION_UNITS,
+  MAX_INTRUSION_WAVES,
+} from '../data/waves';
 import { Board, lanePointAt } from './board';
 import { fortify, getPosture, type DefencePosture } from './ai';
 import {
@@ -51,7 +60,6 @@ export type GameEvent =
   | { type: 'denied'; reason: string };
 
 /** Which side of the board the player is on. */
-export type GameRole = 'defender' | 'attacker';
 
 export interface GameOptions {
   map: GameMapDef;
@@ -124,7 +132,7 @@ export class Game {
   /** Defensive budget the AI adds between waves. */
   private reinforcement = 0;
   /** Waves an intrusion gets before the network is considered to have held. */
-  readonly maxIntrusionWaves = 12;
+  readonly maxIntrusionWaves = MAX_INTRUSION_WAVES;
   /** Per-threat likelihood multipliers from the operation, if any. */
   private roster: Partial<Record<ThreatId, number>> = {};
   /** Tower occupancy by tile index, so placement checks are O(1). */
@@ -219,7 +227,7 @@ export class Game {
   /* ------------------------------------------------------- attacker actions */
 
   /** Maximum units in a single intrusion, so volume cannot trivialise a board. */
-  readonly maxIntrusionUnits = 45;
+  readonly maxIntrusionUnits = MAX_INTRUSION_UNITS;
 
   /**
    * What one of a threat costs the attacker to field.
@@ -1403,6 +1411,7 @@ export class Game {
       const breached = Math.min(1, this.integrityRemoved / Math.max(1, this.maxIntegrity));
       return {
         mapId: this.map.id,
+        role: 'attacker',
         operationId: this.operation?.id,
         mode: this.mode,
         wave: this.wave,
@@ -1419,6 +1428,7 @@ export class Game {
     );
     return {
       mapId: this.map.id,
+      role: 'defender',
       operationId: this.operation?.id,
       mode: this.mode,
       wave: this.wave,

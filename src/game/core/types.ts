@@ -286,8 +286,12 @@ export interface RunSnapshot {
   }>;
 }
 
+/** Which seat the run was played from. The two score in different currencies. */
+export type GameRole = 'defender' | 'attacker';
+
 export interface RunResult {
   mapId: string;
+  role: GameRole;
   /** Set when the run was an operation rather than the plain campaign. */
   operationId?: string;
   mode: GameMode;

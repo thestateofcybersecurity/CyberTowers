@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import SiteNav from '@/components/SiteNav';
-import type { GameMode } from '@/game/core/types';
+import type { GameMode, GameRole } from '@/game/core/types';
 import { MAPS, getMap } from '@/game/data/maps';
 import { isMongoConfigured, scores } from '@/lib/mongo';
 import { currentUser } from '@/lib/session';
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Leaderboard · CyberTowers' };
 
 interface Props {
-  searchParams: Promise<{ mapId?: string; mode?: string }>;
+  searchParams: Promise<{ mapId?: string; mode?: string; role?: string }>;
 }
 
 interface Row {
@@ -23,11 +23,22 @@ interface Row {
   elapsed: number;
 }
 
+/** Query string for a filter link, keeping the seat you are already looking at. */
+function boardHref(role: GameRole, extra?: Record<string, string>): string {
+  const params = new URLSearchParams(role === 'attacker' ? { role } : {});
+  for (const [k, v] of Object.entries(extra ?? {})) params.set(k, v);
+  const qs = params.toString();
+  return qs ? `/leaderboard?${qs}` : '/leaderboard';
+}
+
 export default async function LeaderboardPage({ searchParams }: Props) {
   const query = await searchParams;
   const mapId = query.mapId && getMap(query.mapId) ? query.mapId : undefined;
   const mode: GameMode | undefined =
     query.mode === 'campaign' || query.mode === 'endless' ? query.mode : undefined;
+  // An intrusion's score is intel earned against a hardened core; a defence's is
+  // credits earned holding one. Ranking them together would be meaningless.
+  const role: GameRole = query.role === 'attacker' ? 'attacker' : 'defender';
 
   const configured = isMongoConfigured();
   let rows: Row[] = [];
@@ -36,7 +47,9 @@ export default async function LeaderboardPage({ searchParams }: Props) {
   if (configured) {
     try {
       const col = await scores();
-      const match: Record<string, unknown> = {};
+      // Runs recorded before the attacker seat existed carry no role at all.
+      const match: Record<string, unknown> =
+        role === 'attacker' ? { role: 'attacker' } : { role: { $ne: 'attacker' } };
       if (mapId) match.mapId = mapId;
       if (mode) match.mode = mode;
 
@@ -85,24 +98,30 @@ export default async function LeaderboardPage({ searchParams }: Props) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
         <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">Leaderboard</h1>
         <p className="mt-2 text-sm text-muted">
-          Best run per operator. Submissions are checked against what the wave generator could
-          actually have produced before they are accepted.
+          Best run per operator. Submissions are checked against what the run could actually have
+          produced before they are accepted.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          <Filter href="/leaderboard" label="All boards" active={!mapId && !mode} />
-          {(['campaign', 'endless'] as const).map((m) => (
-            <Filter
-              key={m}
-              href={`/leaderboard?mode=${m}`}
-              label={m === 'campaign' ? 'Campaign' : 'Endless'}
-              active={mode === m && !mapId}
-            />
-          ))}
+          <Filter href="/leaderboard" label="Defence" active={role === 'defender'} />
+          <Filter href="/leaderboard?role=attacker" label="Intrusion" active={role === 'attacker'} />
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Filter href={boardHref(role)} label="All boards" active={!mapId && !mode} />
+          {role === 'defender' &&
+            (['campaign', 'endless'] as const).map((m) => (
+              <Filter
+                key={m}
+                href={boardHref(role, { mode: m })}
+                label={m === 'campaign' ? 'Campaign' : 'Endless'}
+                active={mode === m && !mapId}
+              />
+            ))}
           {MAPS.map((map) => (
             <Filter
               key={map.id}
-              href={`/leaderboard?mapId=${map.id}`}
+              href={boardHref(role, { mapId: map.id })}
               label={map.name}
               active={mapId === map.id}
             />

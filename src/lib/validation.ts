@@ -4,7 +4,13 @@ import { getMap } from '@/game/data/maps';
 import { getOperation } from '@/game/data/operations';
 import { THREATS } from '@/game/data/threats';
 import { TOWER_ORDER } from '@/game/data/towers';
-import { buildWave, killReward, waveBounty } from '@/game/data/waves';
+import {
+  buildWave,
+  killReward,
+  waveBounty,
+  MAX_INTRUSION_UNITS,
+  MAX_INTRUSION_WAVES,
+} from '@/game/data/waves';
 
 /**
  * Server-side plausibility checks for submitted runs.
@@ -19,6 +25,8 @@ import { buildWave, killReward, waveBounty } from '@/game/data/waves';
 
 export const runResultSchema = z.object({
   mapId: z.string().min(1).max(64),
+  // Older clients predate the attacker seat and only ever sent defender runs.
+  role: z.enum(['defender', 'attacker']).default('defender'),
   operationId: z.string().min(1).max(64).optional(),
   mode: z.enum(['campaign', 'endless']),
   wave: z.number().int().min(1).max(2000),
@@ -122,6 +130,43 @@ export function runBounds(mapId: string, mode: GameMode, wave: number, integrity
   };
 }
 
+/**
+ * The attacker earns in a different currency and must be bounded on its own
+ * terms. Intel is paid per wave as a flat stipend plus thirty times the core
+ * damage done so far, so the ceiling is set by how deep the target is rather
+ * than by anything on the defender's economy.
+ *
+ * Bounding an intrusion against the defending map's kill payouts, which is what
+ * this used to do, rejected any run that breached more than about a quarter of
+ * the core: the better the intrusion, the more certainly it was thrown away.
+ */
+export function intrusionBounds(mapId: string, wave: number): RunBounds {
+  const map = getMap(mapId);
+  if (!map) return { maxScore: 0, maxKills: 0, minElapsed: 0 };
+
+  // The attacker faces a hardened core: see the attacker branch of the Game
+  // constructor, which quadruples it.
+  const coreDepth = map.startIntegrity * 4;
+
+  // Per wave: stipend (60 + 14w) plus 30 per point of cumulative damage. Taking
+  // cumulative damage at its maximum for every wave is unreachable in practice
+  // (a fully breached core ends the run) but it is a true ceiling.
+  let stipends = 0;
+  for (let w = 1; w <= wave; w++) stipends += 60 + w * 14;
+  const damagePayout = 30 * coreDepth * wave;
+
+  // Overkill on the final blow is counted in full, so leave room for it.
+  const maxScore = Math.ceil((stipends + damagePayout) * 1.25 + 4000 + 6000);
+
+  // "Kills" from the attacker's seat are its own units lost. A wave is capped
+  // at MAX_INTRUSION_UNITS, and a botnet node that dies leaves children behind.
+  const maxKills = Math.ceil(MAX_INTRUSION_UNITS * 5 * wave + 50);
+
+  // Waves are composed and launched by the player, so there is no spawn
+  // schedule to floor the clock against. The score ceiling is the real check.
+  return { maxScore, maxKills, minElapsed: 0 };
+}
+
 export interface ValidationOutcome {
   ok: boolean;
   reason?: string;
@@ -131,6 +176,27 @@ export interface ValidationOutcome {
 export function validateRun(run: RunSubmission): ValidationOutcome {
   const map = getMap(run.mapId);
   if (!map) return { ok: false, reason: 'Unknown map', bounds: { maxScore: 0, maxKills: 0, minElapsed: 0 } };
+
+  if (run.role === 'attacker') {
+    if (run.wave > MAX_INTRUSION_WAVES) {
+      return {
+        ok: false,
+        reason: 'Wave exceeds intrusion length',
+        bounds: intrusionBounds(run.mapId, MAX_INTRUSION_WAVES),
+      };
+    }
+
+    const bounds = intrusionBounds(run.mapId, run.wave);
+    if (run.score > bounds.maxScore) {
+      return { ok: false, reason: 'Score above achievable maximum', bounds };
+    }
+    if (run.threatsKilled > bounds.maxKills) {
+      return { ok: false, reason: 'Losses above achievable maximum', bounds };
+    }
+    // An intrusion wins the moment the core falls, which can happen on any
+    // wave. There is no "final wave" to reach.
+    return { ok: true, bounds };
+  }
 
   const operation = run.operationId ? getOperation(run.operationId) : undefined;
   const finalWave = operation?.waveCount ?? map.waveCount;
