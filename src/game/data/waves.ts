@@ -40,6 +40,14 @@ export function bountyScale(wave: number): number {
  */
 export const KILL_PAYOUT_RATE = 0.7;
 
+/**
+ * Intrusion limits. Exported because the server has to bound an attacker's
+ * score without importing the engine, and a second copy of these numbers would
+ * drift the moment either side changed.
+ */
+export const MAX_INTRUSION_WAVES = 12;
+export const MAX_INTRUSION_UNITS = 45;
+
 /** Credits a single kill is worth at a given wave. */
 export function killReward(baseBounty: number, wave: number, economyScale = 1): number {
   return Math.max(1, Math.round(baseBounty * KILL_PAYOUT_RATE * bountyScale(wave) * economyScale));

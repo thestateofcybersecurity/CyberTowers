@@ -1,5 +1,5 @@
 import { MongoClient, type Collection, type Db } from 'mongodb';
-import type { GameMode, RunSnapshot, TowerId } from '@/game/core/types';
+import type { GameRole, GameMode, RunSnapshot, TowerId } from '@/game/core/types';
 
 /**
  * MongoDB holds everything about the *game*: profiles, cloud saves and scores.
@@ -37,6 +37,8 @@ export interface ScoreDoc {
   userId: string;
   handle: string;
   mapId: string;
+  /** Which seat. Absent on documents written before the attacker seat existed. */
+  role?: GameRole;
   mode: GameMode;
   wave: number;
   score: number;
@@ -93,7 +95,7 @@ async function ensureIndexes(db: Db): Promise<void> {
         { unique: true },
       ),
       // Drives the leaderboard query: filter by board, sort by score.
-      db.collection<ScoreDoc>('scores').createIndex({ mapId: 1, mode: 1, score: -1 }),
+      db.collection<ScoreDoc>('scores').createIndex({ role: 1, mapId: 1, mode: 1, score: -1 }),
       db.collection<ScoreDoc>('scores').createIndex({ userId: 1, createdAt: -1 }),
       db.collection<ProfileDoc>('profiles').createIndex({ handle: 1 }),
     ]);

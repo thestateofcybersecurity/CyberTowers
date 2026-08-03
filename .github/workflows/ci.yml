@@ -54,6 +54,9 @@ jobs:
       - name: Simulation smoke test
         run: npm run simulate
 
+      - name: Leaderboard submission bounds
+        run: npm run leaderboard
+
       - name: Production build
         # A throwaway value: the build only needs *a* secret to be present, and
         # no real credential should ever be required to compile this project.

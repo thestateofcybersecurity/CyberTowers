@@ -1,6 +1,6 @@
-import type { GameMode, TowerId } from '@/game/core/types';
+import type { GameMode, GameRole, TowerId } from '@/game/core/types';
 import { levelFromXp } from '@/game/data/progression';
-import { getOrCreateProfile, isMongoConfigured, profiles, scores, type ScoreDoc } from '@/lib/mongo';
+import { getOrCreateProfile, isMongoConfigured, profiles, scores } from '@/lib/mongo';
 import { currentUser, jsonError, requireUser } from '@/lib/session';
 import { rateLimit, runResultSchema, validateRun } from '@/lib/validation';
 
@@ -19,9 +19,15 @@ export async function GET(request: Request) {
   const modeParam = url.searchParams.get('mode');
   const mode: GameMode | undefined =
     modeParam === 'campaign' || modeParam === 'endless' ? modeParam : undefined;
+  const roleParam = url.searchParams.get('role');
+  const role: GameRole = roleParam === 'attacker' ? 'attacker' : 'defender';
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') ?? 25)));
 
-  const match: Partial<Pick<ScoreDoc, 'mapId' | 'mode'>> = {};
+  // Defenders and attackers score in unrelated currencies, so they get separate
+  // boards. Documents written before the attacker seat existed carry no role
+  // and are all defender runs.
+  const match: Record<string, unknown> =
+    role === 'attacker' ? { role: 'attacker' } : { role: { $ne: 'attacker' } };
   if (mapId) match.mapId = mapId;
   if (mode) match.mode = mode;
 
@@ -38,6 +44,7 @@ export async function GET(request: Request) {
           wave: { $first: '$wave' },
           mapId: { $first: '$mapId' },
           mode: { $first: '$mode' },
+          role: { $first: '$role' },
           victory: { $first: '$victory' },
           elapsed: { $first: '$elapsed' },
           createdAt: { $first: '$createdAt' },
@@ -52,6 +59,7 @@ export async function GET(request: Request) {
 
   return Response.json({
     configured: true,
+    role,
     entries: entries.map((e, i) => ({
       rank: i + 1,
       userId: String(e._id),
@@ -60,6 +68,7 @@ export async function GET(request: Request) {
       wave: e.wave,
       mapId: e.mapId,
       mode: e.mode,
+      role: (e.role ?? 'defender') as GameRole,
       victory: e.victory,
       elapsed: e.elapsed,
       createdAt: e.createdAt,
@@ -98,6 +107,7 @@ export async function POST(request: Request) {
     userId: user.id,
     handle: profile.handle,
     mapId: run.mapId,
+    role: run.role,
     mode: run.mode,
     wave: run.wave,
     score: run.score,
@@ -114,7 +124,12 @@ export async function POST(request: Request) {
   const grantedXp = Math.min(run.xpEarned, Math.ceil(verdict.bounds.maxScore / 4) + 500);
   // Operations record against their own key so clearing one unlocks the next
   // without touching the plain campaign's progress on the same board.
-  const progressKey = run.operationId ? `op:${run.operationId}` : run.mapId;
+  const progressKey =
+    run.role === 'attacker'
+      ? `atk:${run.operationId ?? run.mapId}`
+      : run.operationId
+        ? `op:${run.operationId}`
+        : run.mapId;
   const previous = profile.campaign[progressKey] ?? { bestWave: 0, bestScore: 0, cleared: false };
 
   const nextXp = profile.xp + grantedXp;
