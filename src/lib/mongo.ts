@@ -20,6 +20,11 @@ export interface ProfileDoc {
     threatsKilled: number;
     towersBuilt: number;
     bestEndlessWave: number;
+    /** Intrusions launched, and units lost running them. Kept apart from the
+     *  defensive counters: an attacker's losses are not threats neutralised. */
+    intrusions?: number;
+    unitsLost?: number;
+    coresBreached?: number;
   };
   createdAt: Date;
   updatedAt: Date;

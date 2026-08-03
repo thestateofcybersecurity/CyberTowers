@@ -147,11 +147,22 @@ export async function POST(request: Request) {
         },
         updatedAt: new Date(),
       },
-      $inc: {
-        'stats.runs': 1,
-        'stats.wavesCleared': run.wave,
-        'stats.threatsKilled': run.threatsKilled,
-      },
+      // An intrusion's "kills" are its own units lost, and its waves are ones it
+      // launched rather than held. Adding them to the defensive counters made
+      // the career page read as though losing an intrusion killed threats.
+      $inc:
+        run.role === 'attacker'
+          ? {
+              'stats.runs': 1,
+              'stats.intrusions': 1,
+              'stats.unitsLost': run.threatsKilled,
+              'stats.coresBreached': run.victory ? 1 : 0,
+            }
+          : {
+              'stats.runs': 1,
+              'stats.wavesCleared': run.wave,
+              'stats.threatsKilled': run.threatsKilled,
+            },
       $max: {
         'stats.bestEndlessWave': run.mode === 'endless' ? run.wave : 0,
       },

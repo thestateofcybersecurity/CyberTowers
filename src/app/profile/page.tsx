@@ -66,12 +66,19 @@ export default async function ProfilePage() {
           </section>
 
           <section className="rounded-xl border border-edge bg-panel/80 p-5 lg:col-span-2">
-            <div className="label">Career</div>
+            <div className="label">Career · defence</div>
             <dl className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <Stat label="Runs" value={player.stats?.runs ?? 0} />
               <Stat label="Waves cleared" value={player.stats?.wavesCleared ?? 0} />
               <Stat label="Threats killed" value={player.stats?.threatsKilled ?? 0} />
               <Stat label="Best endless" value={player.stats?.bestEndlessWave ?? 0} />
+            </dl>
+
+            <div className="label mt-6">Career · intrusion</div>
+            <dl className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <Stat label="Intrusions" value={player.stats?.intrusions ?? 0} />
+              <Stat label="Cores breached" value={player.stats?.coresBreached ?? 0} />
+              <Stat label="Units lost" value={player.stats?.unitsLost ?? 0} />
             </dl>
 
             <div className="label mt-6">Defences unlocked</div>
